@@ -71,6 +71,9 @@ ALTER TABLE mentors ADD COLUMN IF NOT EXISTS email text;
 |-------------------|----------------|--------------------------------------|
 | AI (Groq)         | **Root** `.env` | `GROQ_API_KEY=gsk_...`               |
 | AI (Claude)       | **Root** `.env` | `ANTHROPIC_API_KEY=sk-ant-...`       |
+| Claude model      | **Root** `.env` | `CLAUDE_MODEL=claude-sonnet-4-6` (or `claude-opus-4-6`) — optional, Sonnet is default |
 | DB + Auth + Feed  | **client/.env** | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+
+**Which Claude for this app?** Use **Sonnet** (`claude-sonnet-4-6`) for the best balance of intelligence and speed. Use **Opus** (`claude-opus-4-6`) only if you want maximum quality and accept higher cost and slower responses.
 
 After this, Opportunities, AI Tutor, Mentor generation, and Vision Board AI use real AI; the feed and auth use Supabase.

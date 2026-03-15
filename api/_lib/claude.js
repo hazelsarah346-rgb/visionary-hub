@@ -1,9 +1,11 @@
 /**
  * Multi-provider AI: Claude (Anthropic) → OpenAI → Groq fallback
- * Set in Vercel Environment Variables:
- *   ANTHROPIC_API_KEY  — Claude (best quality, recommended)
- *   OPENAI_API_KEY     — OpenAI GPT-4o (great alternative)
- *   GROQ_API_KEY       — Groq llama (fast & free tier fallback)
+ * Set in Vercel / .env:
+ *   ANTHROPIC_API_KEY     — Claude (recommended)
+ *   CLAUDE_MODEL          — optional: claude-sonnet-4-6 (default) | claude-opus-4-6 | claude-haiku-4-5
+ *   OPENAI_API_KEY        — OpenAI fallback
+ *   GROQ_API_KEY          — Groq fallback
+ * For this app, Sonnet is the best balance (smart + fast); use Opus only if you need max quality.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -55,13 +57,14 @@ async function _groqChat(system, messages, model = 'llama-3.3-70b-versatile', ma
  */
 export async function askAI({
   system, userMessage,
-  model = 'claude-haiku-4-5',
+  model,
   claudeModel,
   openaiModel = 'gpt-4o-mini',
   groqModel = 'llama-3.3-70b-versatile',
   maxTokens = 400,
 }) {
-  const cm = claudeModel || model;
+  const defaultClaude = process.env.CLAUDE_MODEL || 'claude-sonnet-4-6';
+  const cm = claudeModel || model || defaultClaude;
   // Claude
   const client = getClaudeClient();
   if (client) {
@@ -86,13 +89,14 @@ export async function askAI({
  */
 export async function chatAI({
   system, messages,
-  model = 'claude-haiku-4-5',
+  model,
   claudeModel,
   openaiModel = 'gpt-4o-mini',
   groqModel = 'llama-3.3-70b-versatile',
   maxTokens = 500,
 }) {
-  const cm = claudeModel || model;
+  const defaultClaude = process.env.CLAUDE_MODEL || 'claude-sonnet-4-6';
+  const cm = claudeModel || model || defaultClaude;
   // Claude
   const client = getClaudeClient();
   if (client) {

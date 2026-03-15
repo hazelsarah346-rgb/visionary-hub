@@ -90,8 +90,10 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 2. Under **Redirect URLs**, add:
    - `http://localhost:5173`
    - `http://localhost:5175` (if you use that port)
-   - Your production URL (e.g. `https://your-app.vercel.app`)
+   - Your production URL (e.g. `https://project-u53n4.vercel.app` — use your real Vercel URL)
 3. Save. Without these, Google OAuth won’t redirect back after login.
+
+To enable **Sign in with Google**: **Authentication** → **Providers** → **Google** → turn ON, then add **Client ID** and **Client Secret** from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (create a Web application OAuth 2.0 client; use the redirect URI Supabase shows).
 
 ---
 
