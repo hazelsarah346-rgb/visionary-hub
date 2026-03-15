@@ -1,4 +1,9 @@
 node_modules/
 uploads/
 .env
+.env.local
 *.log
+.DS_Store
+
+# Claude / Cursor worktrees (avoid embedding another git repo)
+.claude/
