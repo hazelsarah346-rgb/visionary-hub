@@ -3785,43 +3785,64 @@ function SettingsTab({ user, onSignOut, onTour }) {
   const avatarUrl = avatarLocal || providerAvatar;
   const initials  = nameVal.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarStatus, setAvatarStatus]       = useState(''); // '' | 'uploading' | 'synced' | 'local'
+
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    // Show base64 preview instantly
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const dataUrl = ev.target.result;
-      setAvatarLocal(dataUrl);
-      localStorage.setItem('vh_profile_avatar', dataUrl); // local fallback
-    };
-    reader.readAsDataURL(file);
-    // Upload to Supabase Storage → get permanent public URL → sync everywhere
-    if (supabase && user?.id) {
-      try {
-        const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
-        const path = `avatars/${user.id}.${ext}`;
-        await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-        if (urlData?.publicUrl) {
-          // Store permanent URL (not base64) — works across all devices
-          setAvatarLocal(urlData.publicUrl);
-          localStorage.setItem('vh_profile_avatar', urlData.publicUrl);
-          // Update Supabase auth metadata so Google photo is fully replaced
-          await supabase.auth.updateUser({ data: { avatar_url: urlData.publicUrl, picture: urlData.publicUrl } });
-          // Immediately write to user_data.profile so it loads on phone/other devices
-          await saveUserData(user.id, {
-            profile: {
-              avatarUrl: urlData.publicUrl,
-              name:     localStorage.getItem('vh_profile_name')     || '',
-              bio:      localStorage.getItem('vh_profile_bio')      || '',
-              field:    localStorage.getItem('vh_profile_field')    || '',
-              location: localStorage.getItem('vh_profile_location') || '',
-              website:  localStorage.getItem('vh_profile_website')  || '',
-            }
-          });
-        }
-      } catch (_) {} // base64 in localStorage is always the fallback
+
+    // Step 1: show base64 preview instantly — always works on this device
+    const dataUrl = await new Promise(res => {
+      const r = new FileReader();
+      r.onload = ev => res(ev.target.result);
+      r.readAsDataURL(file);
+    });
+    setAvatarLocal(dataUrl);
+    localStorage.setItem('vh_profile_avatar', dataUrl);
+    setAvatarStatus('local');
+
+    // Step 2: try to upload to Supabase Storage for cross-device sync
+    if (!supabase || !user?.id) return;
+    setAvatarUploading(true);
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `avatars/${user.id}.${ext}`;
+
+      // Check upload success explicitly — getPublicUrl() returns a URL even if upload failed
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+      if (uploadError) {
+        // Keep base64 in localStorage — shows on this device only
+        setAvatarStatus('local');
+        setAvatarUploading(false);
+        return;
+      }
+
+      // Upload succeeded → get permanent public URL
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+      if (urlData?.publicUrl) {
+        setAvatarLocal(urlData.publicUrl);
+        localStorage.setItem('vh_profile_avatar', urlData.publicUrl);
+        // Sync to auth metadata + user_data so it loads on every device
+        await supabase.auth.updateUser({ data: { avatar_url: urlData.publicUrl, picture: urlData.publicUrl } });
+        await saveUserData(user.id, {
+          profile: {
+            avatarUrl: urlData.publicUrl,
+            name:     localStorage.getItem('vh_profile_name')     || '',
+            bio:      localStorage.getItem('vh_profile_bio')      || '',
+            field:    localStorage.getItem('vh_profile_field')    || '',
+            location: localStorage.getItem('vh_profile_location') || '',
+            website:  localStorage.getItem('vh_profile_website')  || '',
+          }
+        });
+        setAvatarStatus('synced');
+      }
+    } catch (_) {
+      setAvatarStatus('local');
     }
+    setAvatarUploading(false);
   };
 
   const saveProfile = async () => {
@@ -3873,9 +3894,26 @@ function SettingsTab({ user, onSignOut, onTour }) {
             <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, color: avatarLocal ? C.green : C.muted, marginBottom: 6, fontWeight: avatarLocal ? 700 : 400 }}>
-              {avatarLocal ? '✓ Your photo is set — shows on your posts & profile' : '📷 Tap the pencil to upload your own photo (replaces the Google one)'}
-            </div>
+            {avatarUploading && (
+              <div style={{ fontSize: 12, color: C.blueLight, marginBottom: 6, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Uploading to cloud…
+              </div>
+            )}
+            {!avatarUploading && avatarStatus === 'synced' && (
+              <div style={{ fontSize: 12, color: C.green, marginBottom: 6, fontWeight: 700 }}>
+                ✓ Photo synced — shows on all your devices
+              </div>
+            )}
+            {!avatarUploading && avatarStatus === 'local' && (
+              <div style={{ fontSize: 12, color: C.yellow, marginBottom: 6, fontWeight: 700 }}>
+                ⚠️ Photo saved on this device only — create an "avatars" bucket in Supabase Storage to sync everywhere
+              </div>
+            )}
+            {!avatarUploading && !avatarStatus && (
+              <div style={{ fontSize: 12, color: avatarLocal ? C.green : C.muted, marginBottom: 6, fontWeight: avatarLocal ? 700 : 400 }}>
+                {avatarLocal ? '✓ Photo is set — tap pencil to change it' : '📷 Tap the pencil icon to upload your photo'}
+              </div>
+            )}
             <div style={{ fontSize: 12, color: '#334155' }}>
               {user?.app_metadata?.provider === 'google' ? '🔗 Signed in with Google' : user?.app_metadata?.provider ? `🔗 ${user.app_metadata.provider}` : '📧 Email account'} · {email}
             </div>
