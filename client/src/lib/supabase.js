@@ -55,8 +55,9 @@ export async function fetchMentors() {
   if (!supabase) return [];
   const { data, error } = await supabase.from('mentors').select('*').order('name');
   if (error) { console.error('fetchMentors:', error.message); return []; }
+  // Only show mentors that have been explicitly approved — hides all demo/seed data
   return (data || [])
-    .filter(m => !m.status || m.status === 'approved' || !m.status)
+    .filter(m => m.status === 'approved')
     .map(m => ({
       id: m.id,
       name: m.name,
@@ -66,9 +67,24 @@ export async function fetchMentors() {
       persona: m.persona,
       field: m.field || m.persona || 'General',
       verified: m.verified || false,
-      status: m.status || 'approved',
+      status: m.status,
       stats: (() => { try { return m.stats ? (typeof m.stats === 'string' ? JSON.parse(m.stats) : m.stats) : { mentored: 0, rating: 5.0 }; } catch { return { mentored: 0, rating: 5.0 }; } })(),
     }));
+}
+
+export async function deletePost(id) {
+  if (!supabase) return;
+  await supabase.from('posts').delete().eq('id', id);
+}
+
+export async function deleteMentor(id) {
+  if (!supabase) return;
+  await supabase.from('mentors').delete().eq('id', id);
+}
+
+export async function clearAllPosts() {
+  if (!supabase) return;
+  await supabase.from('posts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 }
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
