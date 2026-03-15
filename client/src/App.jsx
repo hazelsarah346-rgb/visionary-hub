@@ -10,7 +10,7 @@ import {
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor, loadUserData, saveUserData } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -289,7 +289,7 @@ const NAV_SECONDARY = [
 
 function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary';
-  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const avatarUrl = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -1009,7 +1009,7 @@ function PeerGroupsModal({ onClose, canvas, user, feed }) {
   const chatEndRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
-  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const avatarUrl = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const toggle = (id) => {
     const next = joined.includes(id) ? joined.filter(x => x !== id) : [...joined, id];
@@ -1257,14 +1257,26 @@ const REACTIONS = [
   { key: 'reflect',    emoji: '🌱', label: 'Reflect',   color: C.green   },
 ];
 
-function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups }) {
+function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(p.content || '');
+  const [saving, setSaving] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
     const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
     if (menuOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
+
+  const saveEdit = async () => {
+    if (!editText.trim() || saving) return;
+    setSaving(true);
+    const updated = await updatePost(p.id, editText, userId);
+    if (updated) setFeed(prev => prev.map(x => x.id === p.id ? { ...x, content: updated.content } : x));
+    setSaving(false);
+    setEditing(false);
+  };
 
   const key = p.id || p.authorName;
   return (
@@ -1292,9 +1304,16 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
               <MoreHorizontal size={18} />
             </button>
             {menuOpen && (
-              <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 140 }}>
+              <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 150 }}>
+                <button onClick={() => { setMenuOpen(false); setEditText(p.content || ''); setEditing(true); }}
+                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '10px 10px 0 0' }}
+                  onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <Edit3 size={13} color={C.blueLight} /> Edit post
+                </button>
+                <div style={{ height: 1, background: C.border }} />
                 <button onClick={async () => { setMenuOpen(false); if (!window.confirm('Delete this post?')) return; await onDelete(); }}
-                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10 }}
+                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '0 0 10px 10px' }}
                   onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Trash2 size={13} /> Delete post
@@ -1315,12 +1334,28 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         <ReelPlayer src={p.mediaUrl} />
       )}
 
-      {/* Caption */}
-      {p.content && (
+      {/* Caption / inline edit */}
+      {editing ? (
+        <div style={{ padding: '12px 16px 10px' }}>
+          <textarea
+            value={editText}
+            onChange={e => setEditText(e.target.value)}
+            autoFocus
+            rows={3}
+            style={{ width: '100%', background: C.card, border: `1.5px solid ${C.blueLight}`, borderRadius: 10, color: C.text, fontSize: 14, padding: '10px 12px', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>
+              {saving ? <Loader2 size={12} className="spin" /> : <Check size={12} />} Save
+            </Btn>
+            <Btn size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Btn>
+          </div>
+        </div>
+      ) : p.content ? (
         <div style={{ padding: '12px 16px 4px' }}>
           <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>{p.content}</p>
         </div>
-      )}
+      ) : null}
 
       {/* Reactions */}
       <div style={{ display: 'flex', gap: 3, padding: '10px 12px 12px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1403,7 +1438,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     setUploadProgress('');
 
     const authorName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
-    const authorImg  = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+    const authorImg  = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
     // 2. Insert into Supabase: everyone can see it in real-time
     const saved = await insertPost({
@@ -1645,6 +1680,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           return (
           <PostCard key={p.id || i} p={p} isVerifiedMentor={isVerifiedMentor} isOwn={isOwn}
             reactions={reactions} setReactions={setReactions} setFeed={setFeed}
+            userId={user?.id}
             onDelete={async () => { await deletePost(p.id, user?.id); setFeed(prev => prev.filter(x => x.id !== p.id)); }}
             onProfileClick={(author, img) => setProfileModal({ author, authorImg: img })}
             onPeerGroups={() => setShowPeerGroups(true)} />
@@ -3289,7 +3325,7 @@ function ReflectTab({ canvas, user, setTab }) {
                 <>
                   <input value={glowText} onChange={e => setGlowText(e.target.value)} placeholder="Send encouragement, a quote, or a win…" onClick={e => e.stopPropagation()}
                     style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '8px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { const u = canvas?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary'; const img = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null; await insertPost({ authorName: u, authorImg: img, content: `✨ ${glowText.trim()}`, mediaType: null, userId: user?.id || null }); } catch (_) {} setGlowSent(true); }}>
+                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { const u = canvas?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary'; const img = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null; await insertPost({ authorName: u, authorImg: img, content: `✨ ${glowText.trim()}`, mediaType: null, userId: user?.id || null }); } catch (_) {} setGlowSent(true); }}>
                     Send
                   </Btn>
                 </>

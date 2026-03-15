@@ -85,6 +85,15 @@ export async function fetchMentors() {
     }));
 }
 
+export async function updatePost(id, content, userId) {
+  if (!supabase || !content?.trim()) return null;
+  let q = supabase.from('posts').update({ content: content.trim() }).eq('id', id);
+  if (userId) q = q.eq('author_id', userId);
+  const { data, error } = await q.select().single();
+  if (error) { console.error('updatePost:', error.message); return null; }
+  return normalizePost(data);
+}
+
 export async function deletePost(id, userId) {
   if (!supabase) return;
   // Only delete your own post — client-side guard (pair with RLS for full security)
