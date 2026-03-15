@@ -72,9 +72,12 @@ export async function fetchMentors() {
     }));
 }
 
-export async function deletePost(id) {
+export async function deletePost(id, userId) {
   if (!supabase) return;
-  await supabase.from('posts').delete().eq('id', id);
+  // Only delete your own post — client-side guard (pair with RLS for full security)
+  let q = supabase.from('posts').delete().eq('id', id);
+  if (userId) q = q.eq('author_id', userId);
+  await q;
 }
 
 export async function deleteMentor(id) {
@@ -82,9 +85,10 @@ export async function deleteMentor(id) {
   await supabase.from('mentors').delete().eq('id', id);
 }
 
-export async function clearAllPosts() {
-  if (!supabase) return;
-  await supabase.from('posts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+// Clears ONLY the current user's own posts — never touches other users' data
+export async function clearMyPosts(userId) {
+  if (!supabase || !userId) return;
+  await supabase.from('posts').delete().eq('author_id', userId);
 }
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
@@ -109,6 +113,7 @@ export async function uploadMedia(file) {
 function normalizePost(p) {
   return {
     id: p.id,
+    authorId: p.author_id || null,
     authorName: p.author_name || 'Visionary',
     authorImg: p.author_img || null,
     content: p.content || '',

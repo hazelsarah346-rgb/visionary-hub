@@ -10,7 +10,7 @@ import {
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor, clearAllPosts } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor, clearMyPosts } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -27,45 +27,45 @@ const DAILY_PROMPTS = [
   'What am I most grateful for right now?',
   'What is one thing I can do today to move my vision forward?',
   'Who inspired me recently, and why?',
-  'What fear is holding me back — and what would I do without it?',
+  'What fear is holding me back: and what would I do without it?',
   'What would I attempt if I knew I could not fail?',
-  'What does "success" actually mean to me — today?',
+  'What does "success" actually mean to me: today?',
   'What did I learn this week that I didn\'t know before?',
 ];
 
 // ─── DAILY CHALLENGES POOL ────────────────────────────────────────────────────
-// 30 psychology-backed challenges — one per day of month
+// 30 psychology-backed challenges: one per day of month
 const CHALLENGE_POOL = [
-  { type: 'Cognitive Reframe',    emoji: '🧠', color: '#8B5CF6', prompt: "Name one belief that's been holding you back. Now argue the OPPOSITE — write 3 reasons why that belief is wrong.", insight: 'cognitive behavioral therapy', xp: 30 },
+  { type: 'Cognitive Reframe',    emoji: '🧠', color: '#8B5CF6', prompt: "Name one belief that's been holding you back. Now argue the OPPOSITE: write 3 reasons why that belief is wrong.", insight: 'cognitive behavioral therapy', xp: 30 },
   { type: 'Growth Edge',          emoji: '💪', color: '#F59E0B', prompt: "What's the one thing you keep avoiding because it scares you? Write exactly what you would do TODAY if fear wasn't a factor.", insight: 'exposure therapy', xp: 35 },
   { type: 'Blind Spot Finder',    emoji: '🔍', color: '#EF4444', prompt: "Ask yourself: What am I NOT seeing about my situation right now? What would someone you respect say you're missing?", insight: 'Johari window', xp: 40 },
   { type: 'Vision Sprint',        emoji: '🎯', color: '#2563EB', prompt: "In the next 5 minutes, write the most vivid description you can of your life 3 years from now. Be dangerously specific.", insight: 'mental contrasting', xp: 30 },
   { type: 'Thought Experiment',   emoji: '💡', color: '#06B6D4', prompt: "You wake up tomorrow with every resource, connection, and skill you need. What's the FIRST thing you do? What does that tell you about your priorities?", insight: 'possibility thinking', xp: 25 },
   { type: 'Emotional IQ',         emoji: '❤️', color: '#EC4899', prompt: "Name the emotion you've felt most this week. Where do you feel it in your body? What is it trying to tell you?", insight: 'somatic intelligence', xp: 30 },
-  { type: 'Identity Shift',       emoji: '🦋', color: '#10B981', prompt: "Write 3 sentences starting with 'I am a person who...' that describe who you're BECOMING — not who you've been.", insight: 'identity-based habit change', xp: 35 },
+  { type: 'Identity Shift',       emoji: '🦋', color: '#10B981', prompt: "Write 3 sentences starting with 'I am a person who...' that describe who you're BECOMING: not who you've been.", insight: 'identity-based habit change', xp: 35 },
   { type: 'Gratitude Amplifier',  emoji: '✨', color: '#F59E0B', prompt: "Write about one person who believed in you before you believed in yourself. What would you tell them today?", insight: 'positive psychology', xp: 20 },
   { type: 'First Principles',     emoji: '⚡', color: '#2563EB', prompt: "Take your biggest current goal. Strip it down to its absolute basics. What is the CORE thing you're actually trying to achieve, underneath all the layers?", insight: 'first-principles thinking', xp: 40 },
-  { type: 'Anti-Goals',           emoji: '🚫', color: '#EF4444', prompt: "What does failure look like for you in 5 years? Describe it in detail. Now — what ONE decision today would guarantee you never get there?", insight: 'inversion thinking', xp: 35 },
+  { type: 'Anti-Goals',           emoji: '🚫', color: '#EF4444', prompt: "What does failure look like for you in 5 years? Describe it in detail. Now: what ONE decision today would guarantee you never get there?", insight: 'inversion thinking', xp: 35 },
   { type: 'Strengths Audit',      emoji: '💎', color: '#8B5CF6', prompt: "What are you in the top 10% of the people you know at? How could you turn that strength into your biggest opportunity right now?", insight: 'strengths-based psychology', xp: 30 },
-  { type: 'Limiting Story',       emoji: '📖', color: '#EC4899', prompt: "What's the story you keep telling yourself about why you CAN'T? Rewrite it: same facts, but a completely different — and empowering — interpretation.", insight: 'narrative therapy', xp: 40 },
+  { type: 'Limiting Story',       emoji: '📖', color: '#EC4899', prompt: "What's the story you keep telling yourself about why you CAN'T? Rewrite it: same facts, but a completely different: and empowering: interpretation.", insight: 'narrative therapy', xp: 40 },
   { type: 'Energy Audit',         emoji: '🔋', color: '#10B981', prompt: "List 3 things that drain your energy and 3 things that fill it up. What would your life look like if you did MORE of the filling things this week?", insight: 'energy management theory', xp: 25 },
   { type: 'Decision Matrix',      emoji: '⚖️', color: '#06B6D4', prompt: "You're facing a decision you keep postponing. Apply the 10/10/10 rule: How will you feel about this in 10 minutes, 10 months, 10 years?", insight: 'temporal discounting', xp: 35 },
   { type: 'Comparison Detox',     emoji: '🌱', color: '#F59E0B', prompt: "Who have you been comparing yourself to? Write about ONE thing YOU have that they don't. What unique path are you on that no one else can take?", insight: 'social comparison theory', xp: 25 },
   { type: 'Curiosity Spark',      emoji: '🔭', color: '#2563EB', prompt: "What's something in your field that genuinely fascinates you and you still don't fully understand? Write 3 questions you'd love to find answers to.", insight: 'intrinsic motivation', xp: 25 },
   { type: 'Courage Inventory',    emoji: '🦁', color: '#EF4444', prompt: "Think of the last time you were truly brave. What did you do? What would it look like to be THAT version of yourself in your current situation?", insight: 'self-efficacy theory', xp: 35 },
-  { type: 'Systems Check',        emoji: '⚙️', color: '#8B5CF6', prompt: "You don't rise to your goals — you fall to your systems. Name one daily habit that, if done consistently, would change everything for you.", insight: 'systems thinking', xp: 30 },
+  { type: 'Systems Check',        emoji: '⚙️', color: '#8B5CF6', prompt: "You don't rise to your goals: you fall to your systems. Name one daily habit that, if done consistently, would change everything for you.", insight: 'systems thinking', xp: 30 },
   { type: 'Perspective Shift',    emoji: '🌍', color: '#10B981', prompt: "Describe your current biggest challenge from the perspective of someone 20 years older and wiser looking back at this moment in your life.", insight: 'temporal self-appraisal', xp: 35 },
-  { type: 'Deep Why',             emoji: '🎇', color: '#EC4899', prompt: "Ask 'Why?' five times about your main goal. Start with the goal, then keep asking why until you hit something that genuinely moves you.", insight: '5 Whys — Ikigai', xp: 40 },
-  { type: 'Present Power',        emoji: '🧘', color: '#06B6D4', prompt: "What if this exact moment — with everything you have and don't have — is exactly where you need to be to reach your vision? What would you do differently right now?", insight: 'mindfulness + acceptance', xp: 25 },
+  { type: 'Deep Why',             emoji: '🎇', color: '#EC4899', prompt: "Ask 'Why?' five times about your main goal. Start with the goal, then keep asking why until you hit something that genuinely moves you.", insight: '5 Whys: Ikigai', xp: 40 },
+  { type: 'Present Power',        emoji: '🧘', color: '#06B6D4', prompt: "What if this exact moment: with everything you have and don't have: is exactly where you need to be to reach your vision? What would you do differently right now?", insight: 'mindfulness + acceptance', xp: 25 },
   { type: 'Network Audit',        emoji: '🤝', color: '#2563EB', prompt: "You are the average of the 5 people closest to you. Who are those 5 people? Who do you need to meet to become the person your vision requires?", insight: 'social network theory', xp: 30 },
   { type: 'Failure Mining',       emoji: '💥', color: '#EF4444', prompt: "Describe a recent failure or setback honestly. Now extract 3 specific lessons that only THAT failure could have taught you. What's the gift inside it?", insight: 'post-traumatic growth', xp: 40 },
-  { type: 'Value Clarity',        emoji: '🏔️', color: '#F59E0B', prompt: "List your top 5 values. Now check: Are your daily actions actually aligned with them? Where's the gap — and what one change would close it?", insight: 'values clarification', xp: 35 },
-  { type: 'Imposter Audit',       emoji: '🎭', color: '#8B5CF6', prompt: "When do you feel like a fraud? Write it honestly. Now write all the EVIDENCE that you actually belong — accomplishments, feedback, skills you've earned.", insight: 'imposter syndrome research', xp: 30 },
+  { type: 'Value Clarity',        emoji: '🏔️', color: '#F59E0B', prompt: "List your top 5 values. Now check: Are your daily actions actually aligned with them? Where's the gap: and what one change would close it?", insight: 'values clarification', xp: 35 },
+  { type: 'Imposter Audit',       emoji: '🎭', color: '#8B5CF6', prompt: "When do you feel like a fraud? Write it honestly. Now write all the EVIDENCE that you actually belong: accomplishments, feedback, skills you've earned.", insight: 'imposter syndrome research', xp: 30 },
   { type: 'Body Wisdom',          emoji: '🫀', color: '#EC4899', prompt: "Your body keeps score. Right now, is your body tense or relaxed? Energised or depleted? What is it telling you about something you've been ignoring?", insight: 'somatic psychology', xp: 25 },
-  { type: 'Bold Bet',             emoji: '🎲', color: '#10B981', prompt: "What's the BOLDEST version of what you could attempt this month? Not realistic — outrageous. Now write one small step toward THAT version.", insight: 'moonshot thinking', xp: 35 },
+  { type: 'Bold Bet',             emoji: '🎲', color: '#10B981', prompt: "What's the BOLDEST version of what you could attempt this month? Not realistic: outrageous. Now write one small step toward THAT version.", insight: 'moonshot thinking', xp: 35 },
   { type: 'Mentorship Mirror',    emoji: '🪞', color: '#06B6D4', prompt: "Think of your greatest mentor (real or imagined). What advice would they give you about where you're stuck RIGHT NOW?", insight: 'social learning theory', xp: 30 },
-  { type: 'Flow Finder',          emoji: '🌊', color: '#2563EB', prompt: "When were you last completely absorbed in something — time disappeared? What were you doing? How could you engineer more of that into your life this week?", insight: 'flow state — Csikszentmihalyi', xp: 30 },
-  { type: 'Legacy Letter',        emoji: '📜', color: '#F59E0B', prompt: "Write a 3-sentence letter from your 80-year-old self to you — right now. What do they most want you to know about this phase of your life?", insight: 'terror management theory', xp: 40 },
+  { type: 'Flow Finder',          emoji: '🌊', color: '#2563EB', prompt: "When were you last completely absorbed in something: time disappeared? What were you doing? How could you engineer more of that into your life this week?", insight: 'flow state: Csikszentmihalyi', xp: 30 },
+  { type: 'Legacy Letter',        emoji: '📜', color: '#F59E0B', prompt: "Write a 3-sentence letter from your 80-year-old self to you: right now. What do they most want you to know about this phase of your life?", insight: 'terror management theory', xp: 40 },
 ];
 
 // ─── DAILY CHALLENGE COMPONENT ────────────────────────────────────────────────
@@ -95,7 +95,7 @@ function DailyChallengeCard({ canvas, user }) {
       const system = `You are a brilliant psychologist and growth coach who gives the most insightful, personalised feedback on self-reflection exercises.
 
 The user just completed a "${challenge.type}" challenge inspired by ${challenge.insight}.
-Their response shows what they're thinking — your job is to:
+Their response shows what they're thinking: your job is to:
 1. Validate what's insightful about what they wrote (be specific, not generic)
 2. Add ONE psychological insight or reframe they may not have considered
 3. Give them ONE concrete action to take within the next 24 hours
@@ -111,7 +111,7 @@ Be warm, sharp, and specific. Under 80 words. End with something energising.`;
         }),
       });
       const d = await r.json();
-      const fb = d.reply || "That's a powerful reflection. The fact that you engaged deeply with this challenge shows real self-awareness — that's the foundation of everything.";
+      const fb = d.reply || "That's a powerful reflection. The fact that you engaged deeply with this challenge shows real self-awareness: that's the foundation of everything.";
       setFeedback(fb);
 
       // Mark complete, update streak + XP
@@ -127,8 +127,8 @@ Be warm, sharp, and specific. Under 80 words. End with something energising.`;
       localStorage.setItem('vh_last_challenge', today);
       localStorage.setItem('vh_xp', String(xp + challenge.xp));
     } catch (_) {
-      setFeedback("Great reflection. Keep showing up like this — consistency is the whole game.");
-      const newState = { response, feedback: "Great reflection. Keep showing up like this — consistency is the whole game.", completed: true };
+      setFeedback("Great reflection. Keep showing up like this: consistency is the whole game.");
+      const newState = { response, feedback: "Great reflection. Keep showing up like this: consistency is the whole game.", completed: true };
       localStorage.setItem(storageKey, JSON.stringify(newState));
       setState(newState);
     }
@@ -180,7 +180,7 @@ Be warm, sharp, and specific. Under 80 words. End with something energising.`;
         </div>
       )}
 
-      {/* Expanded — active challenge */}
+      {/* Expanded: active challenge */}
       {!isComplete && expanded && (
         <div style={{ padding: '0 18px 18px' }}>
           <div style={{ background: `${challenge.color}0D`, border: `1px solid ${challenge.color}22`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
@@ -189,10 +189,10 @@ Be warm, sharp, and specific. Under 80 words. End with something energising.`;
             <div style={{ fontSize: 10, color: C.muted }}>Based on: <em>{challenge.insight}</em></div>
           </div>
           <textarea value={response} onChange={e => setResponse(e.target.value)}
-            placeholder="Write your honest reflection here — no judgment, no filter. This is just for you and your growth…"
+            placeholder="Write your honest reflection here: no judgment, no filter. This is just for you and your growth…"
             rows={4} style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '12px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.6, boxSizing: 'border-box', marginBottom: 12 }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: C.muted }}>{response.length < 30 ? 'Keep going — go deeper…' : response.length < 100 ? 'Good start — push further' : '✓ Ready to get your insight'}</span>
+            <span style={{ fontSize: 11, color: C.muted }}>{response.length < 30 ? 'Keep going: go deeper…' : response.length < 100 ? 'Good start: push further' : '✓ Ready to get your insight'}</span>
             <Btn onClick={submit} disabled={response.length < 20 || loading} size="sm" style={{ background: `linear-gradient(135deg, ${challenge.color}, ${challenge.color}cc)` }}>
               {loading ? <><Spinner /> Thinking…</> : <>✨ Get AI Insight</>}
             </Btn>
@@ -217,7 +217,7 @@ Be warm, sharp, and specific. Under 80 words. End with something energising.`;
   );
 }
 
-// Demo data removed — all data is live from Supabase
+// Demo data removed: all data is live from Supabase
 
 const ROADMAP_DEFAULT = {
   phases: [
@@ -227,7 +227,7 @@ const ROADMAP_DEFAULT = {
     { phase: 4, label: 'Scale', timeframe: 'Year 2+', theme: 'Grow impact and build legacy', milestones: ['Mentor someone one step behind you', 'Expand your work to affect more people', 'Define your 3-year horizon clearly', 'Build 5+ deep professional relationships'], focusArea: 'Leadership and legacy', successSign: 'You\'re creating opportunities for others' },
   ],
   northStar: 'Build something meaningful that outlasts you',
-  firstStep: 'Write your vision in one sentence — right now, today',
+  firstStep: 'Write your vision in one sentence: right now, today',
 };
 
 // ─── MINI COMPONENTS ──────────────────────────────────────────────────────────
@@ -379,7 +379,7 @@ function AICoachPanel({ canvas, onClose }) {
   useEffect(() => {
     const intro = contextSummary
       ? `I've analyzed your profile:\n\n${contextSummary}\n\nHere's what stands out: your vision and goals are clear. The biggest leverage point is usually turning your stated obstacle into a specific 30-day action.\n\nWhat would you like me to dig into? I can analyze your progress, suggest next steps, or challenge your assumptions.`
-      : `I'm your AI Coach — I analyze your progress and help you stay on track.\n\nStart by building your Visionary Canvas so I can give you personalized insights. Or just ask me anything about your goals, strategy, or next steps.`;
+      : `I'm your AI Coach: I analyze your progress and help you stay on track.\n\nStart by building your Visionary Canvas so I can give you personalized insights. Or just ask me anything about your goals, strategy, or next steps.`;
     setMessages([{ role: 'ai', content: intro }]);
   }, []);
 
@@ -391,12 +391,12 @@ function AICoachPanel({ canvas, onClose }) {
     setMessages(newMsgs); setInput(''); setLoading(true);
     try {
       const apiMsgs = newMsgs.slice(-10).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-      const system = `You are an elite AI life coach and strategic advisor. You have full context of this user's profile:\n${contextSummary || 'No canvas built yet.'}\n\nYou give specific, honest, strategic coaching. You analyze patterns, challenge assumptions, and give concrete next steps. Be direct and impactful — not generic. Max 150 words per response.`;
+      const system = `You are an elite AI life coach and strategic advisor. You have full context of this user's profile:\n${contextSummary || 'No canvas built yet.'}\n\nYou give specific, honest, strategic coaching. You analyze patterns, challenge assumptions, and give concrete next steps. Be direct and impactful: not generic. Max 150 words per response.`;
       const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, mode: 'vision', canvas, fileContent: '' }) });
       const d = await r.json();
       setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Let's dig deeper. What's the real question?" }]);
     } catch (_) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. Keep thinking though — what's your real question?" }]);
+      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. Keep thinking though: what's your real question?" }]);
     }
     setLoading(false);
   };
@@ -498,7 +498,7 @@ function OnboardingWizard({ user, onComplete }) {
   ];
   const [customField, setCustomField] = useState('');
 
-  // Instant canvas — used if AI is slow/unavailable
+  // Instant canvas: used if AI is slow/unavailable
   const buildInstantCanvas = (finalField) => ({
     name: firstName,
     major: finalField || 'My Field',
@@ -514,7 +514,7 @@ function OnboardingWizard({ user, onComplete }) {
     if (!goal.trim()) { onComplete(null); return; }
     setGenerating(true);
 
-    // Race the AI call against a 6-second timeout — whichever wins
+    // Race the AI call against a 6-second timeout: whichever wins
     try {
       const aiPromise = fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [{ role: 'user', content: `Create a Visionary Canvas for a student. Name: "${firstName}". Field: "${finalField || 'undecided'}". Their goal: "${goal}". Return ONLY valid JSON: {"name":"${firstName}","major":"${finalField || goal.split(' ').slice(0,3).join(' ')}","bigVision":"...","purpose":"...","strengths":"...","obstacle":"...","goal12Month":"..."}. Make it specific, ambitious, personal to their goal.` }], mode: 'vision', canvas: {} }) })
@@ -532,7 +532,7 @@ function OnboardingWizard({ user, onComplete }) {
       }
     } catch { /* fall through to instant */ }
 
-    // Instant fallback — never leave the user waiting
+    // Instant fallback: never leave the user waiting
     const canvas = buildInstantCanvas(finalField);
     localStorage.setItem('vh_canvas', JSON.stringify({ ...canvas, completedAt: new Date().toISOString() }));
     onComplete(canvas);
@@ -540,24 +540,24 @@ function OnboardingWizard({ user, onComplete }) {
   };
 
   const STEPS = [
-    // Step 0 — Welcome
+    // Step 0: Welcome
     <div key={0} style={{ textAlign: 'center', padding: '10px 0' }}>
       <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
       <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 12px', color: C.text }}>Welcome, {firstName}!</h1>
       <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
         You've just joined a community of visionaries who refuse to build their futures alone.<br/><br/>
-        Let's take <strong style={{ color: C.blueLight }}>60 seconds</strong> to build your personal Vision Canvas — it unlocks your AI Coach, personalised Roadmap, and Mentor matching.
+        Let's take <strong style={{ color: C.blueLight }}>60 seconds</strong> to build your personal Vision Canvas: it unlocks your AI Coach, personalised Roadmap, and Mentor matching.
       </p>
       <Btn size="lg" onClick={() => setStep(1)} style={{ marginBottom: 14 }}>Let's build my vision →</Btn>
       <br/>
       <button onClick={() => onComplete(null)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Skip for now</button>
     </div>,
 
-    // Step 1 — Field
+    // Step 1: Field
     <div key={1}>
       <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Step 1 of 2</div>
       <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What's your field or career path?</h2>
-      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px' }}>Pick the closest match — personalises your mentors, AI Tutor, and opportunities.</p>
+      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px' }}>Pick the closest match: personalises your mentors, AI Tutor, and opportunities.</p>
       <div style={{ maxHeight: 260, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 7, marginBottom: 14, paddingRight: 2 }}>
         {FIELDS.map(f => (
           <button key={f.label} onClick={() => { setField(f.label); setCustomField(''); }}
@@ -576,11 +576,11 @@ function OnboardingWizard({ user, onComplete }) {
       <Btn size="lg" onClick={() => setStep(2)} disabled={!field && !customField.trim()} style={{ width: '100%', justifyContent: 'center' }}>Next →</Btn>
     </div>,
 
-    // Step 2 — Big goal
+    // Step 2: Big goal
     <div key={2}>
       <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Step 2 of 2</div>
       <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What's your big goal or ambition?</h2>
-      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>One sentence — be bold. This becomes your personal Vision Canvas.</p>
+      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>One sentence: be bold. This becomes your personal Vision Canvas.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
         {[
           'Become a CEO and build a company that impacts millions',
@@ -601,7 +601,7 @@ function OnboardingWizard({ user, onComplete }) {
       <Btn size="lg" onClick={finish} disabled={!goal.trim() || generating} style={{ width: '100%', justifyContent: 'center' }}>
         {generating ? <><Spinner /> Building your canvas… (up to 6s)</> : '✨ Build my Vision Canvas →'}
       </Btn>
-      {generating && <p style={{ textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 10 }}>AI is crafting your personal canvas — if it takes too long we'll build it instantly for you.</p>}
+      {generating && <p style={{ textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 10 }}>AI is crafting your personal canvas: if it takes too long we'll build it instantly for you.</p>}
     </div>,
   ];
 
@@ -666,7 +666,8 @@ function AuthPage() {
   const handleGoogle = async () => {
     setError(''); setInfo(''); setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}${window.location.pathname || '/'}`.replace(/\/$/, '') || window.location.origin;
+      // Use exact origin only so it matches Supabase Redirect URLs list (e.g. https://project-u53n4.vercel.app)
+      const redirectTo = window.location.origin;
       const { data, error: e } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
       if (e) { setError(e.message || 'Google sign-in failed.'); setLoading(false); return; }
       if (data?.url) window.location.href = data.url;
@@ -697,7 +698,7 @@ function AuthPage() {
         try {
           const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
-            // 2FA required — find enrolled factor
+            // 2FA required: find enrolled factor
             const { data: factors } = await supabase.auth.mfa.listFactors();
             const totp = factors?.totp?.[0];
             if (totp) {
@@ -708,7 +709,7 @@ function AuthPage() {
               return;
             }
           }
-        } catch (_) { /* 2FA not set up — proceed normally */ }
+        } catch (_) { /* 2FA not set up: proceed normally */ }
       }
     }
     setLoading(false);
@@ -731,11 +732,11 @@ function AuthPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
           <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Lightbulb size={22} color="#fff" />
-          </div>
+        </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
-          </div>
+        </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, background: `${C.blue}20`, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
@@ -765,7 +766,7 @@ function AuthPage() {
             ← Back to sign in
           </button>
           <div style={{ marginTop: 20, padding: '12px 16px', background: `${C.blue}10`, borderRadius: 10, fontSize: 11, color: C.muted, lineHeight: 1.6 }}>
-            🔒 <strong>Horizontal-scalable 2FA</strong> — TOTP codes are verified server-side with zero shared state, enabling millions of concurrent authentications across any number of instances.
+            🔒 <strong>Horizontal-scalable 2FA</strong>: TOTP codes are verified server-side with zero shared state, enabling millions of concurrent authentications across any number of instances.
           </div>
         </div>
       </div>
@@ -835,7 +836,7 @@ function AuthPage() {
               </div>
             </div>
 
-            {/* Password strength meter — signup only */}
+            {/* Password strength meter: signup only */}
             {mode === 'signup' && password.length > 0 && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
@@ -844,12 +845,12 @@ function AuthPage() {
                   ))}
                 </div>
                 <div style={{ fontSize: 11, color: strength.color, fontWeight: 600 }}>
-                  {strength.label} — {strength.label === 'Weak' ? 'Add uppercase, numbers & symbols' : strength.label === 'Fair' ? 'Getting better — try a symbol' : strength.label === 'Good' ? 'Almost there — add more variety' : 'Great password! 🔒'}
+                  {strength.label}: {strength.label === 'Weak' ? 'Add uppercase, numbers & symbols' : strength.label === 'Fair' ? 'Getting better: try a symbol' : strength.label === 'Good' ? 'Almost there: add more variety' : 'Great password! 🔒'}
                 </div>
               </div>
             )}
 
-            {/* Confirm password — signup only */}
+            {/* Confirm password: signup only */}
             {mode === 'signup' && (
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.muted, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.8 }}>Confirm Password</label>
@@ -957,7 +958,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     const isVideo = file.type.startsWith('video/');
     const isImage = file.type.startsWith('image/');
     if (!isImage && !isVideo) return;
-    if (file.size > 50 * 1024 * 1024) { alert('File too large — max 50 MB'); return; }
+    if (file.size > 50 * 1024 * 1024) { alert('File too large: max 50 MB'); return; }
     setMediaFile(file);
     const url = URL.createObjectURL(file);
     setMediaPreview({ url, type: isVideo ? 'video' : 'image', name: file.name });
@@ -974,7 +975,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       setUploadProgress('Uploading media…');
       hostedUrl = await uploadMedia(mediaFile);
       if (!hostedUrl && mediaPreview) {
-        // Storage bucket not set up yet — use local blob URL as temporary fallback
+        // Storage bucket not set up yet: use local blob URL as temporary fallback
         hostedUrl = mediaPreview.url;
       }
     }
@@ -983,7 +984,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     const authorName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
     const authorImg  = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
-    // 2. Insert into Supabase posts table — real-time subscription will push it to everyone
+    // 2. Insert into Supabase: everyone can see it in real-time
     const saved = await insertPost({
       authorName,
       authorImg,
@@ -993,19 +994,19 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       userId: user?.id || null,
     });
 
-    // 3. Optimistic fallback if Supabase isn't reachable
-    if (!saved) {
-      setFeed(p => [{
-        id: Date.now(),
-        authorName, authorImg,
-        content: content.trim(),
-        mediaUrl: hostedUrl,
-        mediaType: mediaPreview?.type || null,
-        inspired: 0, time: 'Just now',
-      }, ...p]);
-    }
-    // (if saved, the real-time subscription will add it — but deduplicate)
-    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowPost(false);
+    // 3. Always add to feed immediately (saved post uses DB id; fallback uses temp id)
+    const newPost = saved || {
+      id: `temp-${Date.now()}`,
+      authorId: user?.id || null,
+      authorName, authorImg,
+      content: content.trim(),
+      mediaUrl: hostedUrl,
+      mediaType: mediaPreview?.type || null,
+      inspired: 0, encouraged: 0, learned: 0, time: 'Just now',
+    };
+    setFeed(prev => prev.find(p => p.id === newPost.id) ? prev : [newPost, ...prev]);
+
+    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false);
   };
 
   // Unique recent posters for stories bar
@@ -1023,10 +1024,10 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           </h1>
           <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Social Productivity · Share your journey</p>
         </div>
-        {feed.length > 0 && (
-          <button onClick={async () => { if (window.confirm('Clear ALL posts? Cannot be undone.')) { await clearAllPosts(); setFeed([]); } }}
+        {feed.some(p => p.authorId === user?.id) && (
+          <button onClick={async () => { if (window.confirm('Remove your posts from the feed?')) { await clearMyPosts(user?.id); setFeed(f => f.filter(p => p.authorId !== user?.id)); } }}
             style={{ fontSize: 11, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Trash2 size={11} /> Clear all
+            <Trash2 size={11} /> Clear my posts
           </button>
         )}
       </div>
@@ -1208,14 +1209,15 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           const isVerifiedMentor = mentors.some(m => m.verified && m.name === p.authorName);
           return (
           <div key={p.id || i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px', transition: 'border-color 0.2s', position: 'relative' }}>
-            {/* Delete button — visible on hover */}
+            {/* Delete button: visible on hover */}
             <button onClick={async () => {
                 if (!window.confirm('Delete this post?')) return;
-                await deletePost(p.id);
+                await deletePost(p.id, user?.id);
                 setFeed(prev => prev.filter(x => x.id !== p.id));
               }}
-              title="Delete post"
-              style={{ position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: '50%', background: `${C.card}`, border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}
+              title={p.authorId && p.authorId !== user?.id ? "Can only delete your own posts" : "Delete post"}
+              disabled={!!(p.authorId && p.authorId !== user?.id)}
+              style={{ position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: '50%', background: `${C.card}`, border: `1px solid ${C.border}`, cursor: (p.authorId && p.authorId !== user?.id) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}
               onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = `${C.red}18`; }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.background = C.card; }}>
               <Trash2 size={11} color={C.red} />
@@ -1284,11 +1286,11 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
 const CANVAS_STEPS = [
   { key: 'name', label: 'Who Are You?', icon: '👤', multi: false, placeholder: 'Your name or how you want to be known', coach: 'This canvas belongs to you. How do you want the world to know you as a visionary?', example: '"Amara Osei" or "Future Founder from Lagos"' },
   { key: 'major', label: 'Your Domain', icon: '🎯', multi: false, placeholder: 'Field, major, or problem space you\'re in', coach: 'Great visionaries know their arena. What field or problem space are you entering?', example: '"EdTech & Curriculum Design" or "Biomedical Engineering"' },
-  { key: 'bigVision', label: 'The Big Vision', icon: '🌟', multi: true, placeholder: 'In one bold sentence — what future are you trying to create?', coach: 'Don\'t play small. Think 5–10 years out. What does the world look like because you showed up?', example: '"I will build the platform that connects African students to global opportunities."' },
-  { key: 'purpose', label: 'Your Why', icon: '🔥', multi: true, placeholder: 'Why does this vision matter — beyond money?', coach: 'Purpose is what keeps you going when things get hard. What\'s the deeper reason behind your vision?', example: '"Because I grew up watching smart people stay invisible. I refuse to be one of them."' },
+  { key: 'bigVision', label: 'The Big Vision', icon: '🌟', multi: true, placeholder: 'In one bold sentence: what future are you trying to create?', coach: 'Don\'t play small. Think 5–10 years out. What does the world look like because you showed up?', example: '"I will build the platform that connects African students to global opportunities."' },
+  { key: 'purpose', label: 'Your Why', icon: '🔥', multi: true, placeholder: 'Why does this vision matter: beyond money?', coach: 'Purpose is what keeps you going when things get hard. What\'s the deeper reason behind your vision?', example: '"Because I grew up watching smart people stay invisible. I refuse to be one of them."' },
   { key: 'strengths', label: 'Your Superpowers', icon: '⚡', multi: true, placeholder: 'List 3–5 things you do better than most', coach: 'Your vision must be built on what\'s already in you. What gifts do you bring that others don\'t?', example: '"Systems thinking, storytelling, building trust quickly, design, relentlessness"' },
-  { key: 'obstacle', label: 'The Real Obstacle', icon: '🧱', multi: true, placeholder: 'What is actually in your way right now?', coach: 'Naming your obstacle is the first step to defeating it. What is the real thing stopping you?', example: '"Fear of visibility — I have the skills but avoid putting my work out there."' },
-  { key: 'goal12Month', label: '12-Month North Star', icon: '🚀', multi: true, placeholder: 'One specific, measurable, meaningful goal for the next 12 months', coach: 'Not a wish — a commitment. What will you point back to as proof you moved?', example: '"Launch my MVP and get 50 paying users by December 2026."' },
+  { key: 'obstacle', label: 'The Real Obstacle', icon: '🧱', multi: true, placeholder: 'What is actually in your way right now?', coach: 'Naming your obstacle is the first step to defeating it. What is the real thing stopping you?', example: '"Fear of visibility: I have the skills but avoid putting my work out there."' },
+  { key: 'goal12Month', label: '12-Month North Star', icon: '🚀', multi: true, placeholder: 'One specific, measurable, meaningful goal for the next 12 months', coach: 'Not a wish: a commitment. What will you point back to as proof you moved?', example: '"Launch my MVP and get 50 paying users by December 2026."' },
 ];
 
 function CanvasTab({ canvas, setCanvas }) {
@@ -1368,7 +1370,7 @@ function CanvasTab({ canvas, setCanvas }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 3px' }}>Visionary Canvas Builder</h1>
-              <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI-powered — every field can be suggested or auto-generated</p>
+              <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI-powered: every field can be suggested or auto-generated</p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 24, fontWeight: 900, color: C.blueLight }}>{pct}%</div>
@@ -1383,7 +1385,7 @@ function CanvasTab({ canvas, setCanvas }) {
           {/* AI Generate All */}
           <div style={{ background: `${C.purple}0A`, border: `1px solid ${C.purple}22`, borderRadius: 11, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'center' }}>
             <Sparkles size={14} color={C.purple} style={{ flexShrink: 0 }} />
-            <input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder='Let AI build your whole canvas — type "I want to build an EdTech startup for rural students"'
+            <input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder='Let AI build your whole canvas: type "I want to build an EdTech startup for rural students"'
               style={{ flex: 1, background: 'none', border: 'none', color: C.text, fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
               onKeyDown={e => { if (e.key === 'Enter') generateAll(); }} />
             <Btn variant="purple" size="sm" onClick={generateAll} disabled={!prompt.trim() || generating}>
@@ -1507,7 +1509,7 @@ function CanvasTab({ canvas, setCanvas }) {
         </div>
       )}
 
-      {/* Vision Board — image upload + AI insight */}
+      {/* Vision Board: image upload + AI insight */}
       <VisionBoardSection canvas={canvas} />
     </div>
   );
@@ -1559,7 +1561,7 @@ function VisionBoardSection({ canvas }) {
         body: JSON.stringify({ messages: [{ role: 'user', content: `Analyze this student's vision board and give them 3 sharp, personalised insights and 1 bold action for this week:\n\n${context}\n\nBe direct, specific, motivating. Max 120 words.` }], mode: 'vision', canvas }) });
       const d = await r.json();
       setAiInsight(d.reply || '');
-    } catch { setAiInsight('Could not load insight — check your connection.'); }
+    } catch { setAiInsight('Could not load insight: check your connection.'); }
     setLoadingInsight(false);
   };
 
@@ -1584,7 +1586,7 @@ function VisionBoardSection({ canvas }) {
         </div>
       )}
 
-      {/* Photo upload — compact strip */}
+      {/* Photo upload: compact strip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <div
           onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setDragging(true); }}
@@ -1765,7 +1767,7 @@ function RoadmapTab({ canvas }) {
   );
 }
 
-// ─── AI TUTOR (split panel — her-stewardship style) ───────────────────────────
+// ─── AI TUTOR (split panel: her-stewardship style) ───────────────────────────
 function TutorTab({ canvas }) {
   const [mode, setMode] = useState('study');
   const [messages, setMessages] = useState([]);
@@ -1825,7 +1827,7 @@ function TutorTab({ canvas }) {
       .map(m => `[${m.role === 'ai' ? 'AI Tutor' : 'You'}]\n${m.content}`)
       .join('\n\n---\n\n');
     if (!text.trim()) return;
-    const blob = new Blob([`AI Tutor Session — ${new Date().toLocaleDateString()}\nMode: ${mode}\n\n${text}`], { type: 'text/plain' });
+    const blob = new Blob([`AI Tutor Session: ${new Date().toLocaleDateString()}\nMode: ${mode}\n\n${text}`], { type: 'text/plain' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = `tutor-session-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(a.href);
   };
@@ -1852,9 +1854,9 @@ function TutorTab({ canvas }) {
   };
 
   const WELCOME = {
-    study:    "Hi! I'm your AI Learning Tutor.\n\nUpload any material on the left — notes, PDFs, images — and ask me anything. I can explain concepts, quiz you, break down complex ideas, or go deep on any topic.\n\nWhat do you want to master today?",
-    vision:   `I'm your Vision Coach — let's build strategic clarity.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}" — let's sharpen it.` : "You haven't set a vision yet. Let's build one together."}\n\nWhat's the biggest thing you're figuring out right now?`,
-    career:   `I'm your Career Strategist — specific, honest, high-impact guidance.\n\n${canvas?.major ? `Domain: ${canvas.major}.` : ''} ${canvas?.goal12Month ? `12-month goal: ${canvas.goal12Month}` : "Tell me where you want to be in the next 12 months."}\n\nWhat's your most pressing career question?`,
+    study:    "Hi! I'm your AI Learning Tutor.\n\nUpload any material on the left: notes, PDFs, images: and ask me anything. I can explain concepts, quiz you, break down complex ideas, or go deep on any topic.\n\nWhat do you want to master today?",
+    vision:   `I'm your Vision Coach: let's build strategic clarity.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}": let's sharpen it.` : "You haven't set a vision yet. Let's build one together."}\n\nWhat's the biggest thing you're figuring out right now?`,
+    career:   `I'm your Career Strategist: specific, honest, high-impact guidance.\n\n${canvas?.major ? `Domain: ${canvas.major}.` : ''} ${canvas?.goal12Month ? `12-month goal: ${canvas.goal12Month}` : "Tell me where you want to be in the next 12 months."}\n\nWhat's your most pressing career question?`,
     creative: "I'm your Creative Thinking Partner.\n\nBring me your half-formed ideas, stuck problems, or blank-page moments. I use lateral thinking, reframing, and unconventional angles to unlock what's already in your mind.\n\nWhat are you working on or wrestling with?",
   };
 
@@ -1893,16 +1895,16 @@ function TutorTab({ canvas }) {
         } else if (isText) {
           content = (await f.text()).slice(0, 40000);
         } else {
-          content = `[${f.name} — ${ext.toUpperCase()} file, ${(f.size/1024).toFixed(0)} KB]`;
+          content = `[${f.name}: ${ext.toUpperCase()} file, ${(f.size/1024).toFixed(0)} KB]`;
         }
 
         const newFile = { id: Date.now() + Math.random(), name: f.name, content, ext, imageUrl, pdfUrl, size: f.size };
         setFiles(prev => { const u = [...prev, newFile]; setActiveFile(newFile.id); return u; });
         setLeftTab('document');
         const aiMsg = isImage
-          ? `🖼️ Loaded "${f.name}" — I can see it on the left. Ask me to describe, analyse, or help you study from it.`
+          ? `🖼️ Loaded "${f.name}": I can see it on the left. Ask me to describe, analyse, or help you study from it.`
           : isPdf
-          ? `📄 Loaded "${f.name}" (${(f.size/1024).toFixed(0)} KB). It's displayed on the left. Ask me anything — summarise, explain, quiz me, or go deep.`
+          ? `📄 Loaded "${f.name}" (${(f.size/1024).toFixed(0)} KB). It's displayed on the left. Ask me anything: summarise, explain, quiz me, or go deep.`
           : `📄 Loaded "${f.name}" (${(f.size/1024).toFixed(0)} KB). Ask me anything about it.`;
         setMessages(prev => [...prev, { role: 'ai', content: aiMsg }]);
       } catch (_) {}
@@ -1919,8 +1921,8 @@ function TutorTab({ canvas }) {
       const allContent = files.map(f => `=== ${f.name} ===\n${f.content}`).join('\n\n').slice(0, 30000) + (notes.trim() ? `\n\n=== My Notes ===\n${notes}` : '');
       const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, mode, canvas, fileContent: allContent }) });
       const d = await r.json();
-      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "I'm here — what would you like to explore?" }]);
-    } catch (_) { setMessages(prev => [...prev, { role: 'ai', content: "Connection issue — please try again." }]); }
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "I'm here: what would you like to explore?" }]);
+    } catch (_) { setMessages(prev => [...prev, { role: 'ai', content: "Connection issue: please try again." }]); }
     setLoading(false);
   };
 
@@ -2036,7 +2038,7 @@ function TutorTab({ canvas }) {
                   <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.6, marginBottom: 16 }}>Upload notes, PDFs, images, any file. I'll read them and help you learn.</div>
                   <input type="file" ref={fileRef} style={{ display: 'none' }} accept="*" multiple onChange={handleUpload} />
                   <Btn onClick={() => fileRef.current?.click()} disabled={uploading} size="sm">{uploading ? <Spinner /> : <><Upload size={11} />Upload Files</>}</Btn>
-                  <div style={{ fontSize: 10, color: '#334155', marginTop: 8 }}>Images, docs, text, PDFs — all supported</div>
+                  <div style={{ fontSize: 10, color: '#334155', marginTop: 8 }}>Images, docs, text, PDFs: all supported</div>
                 </div>
               )}
               {files.length > 0 && (
@@ -2050,14 +2052,14 @@ function TutorTab({ canvas }) {
             </div>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, gap: 8 }}>
-              <div style={{ fontSize: 10, color: C.muted, fontWeight: 700 }}>YOUR NOTES — tutor reads these too</div>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Write notes here — key ideas, questions, summaries. The AI will reference them."
+              <div style={{ fontSize: 10, color: C.muted, fontWeight: 700 }}>YOUR NOTES: tutor reads these too</div>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Write notes here: key ideas, questions, summaries. The AI will reference them."
                 style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: 12, fontSize: 12, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.65 }} />
             </div>
           )}
         </div>
 
-        {/* RIGHT — chat */}
+        {/* RIGHT: chat */}
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 13, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
@@ -2162,7 +2164,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
 
   const openChat = m => {
     setChatMentor(m);
-    setMessages([{ role: 'ai', content: `Hi! I'm ${m.name}, ${m.title}.\n\n"${m.quote}"\n\nI'm here to give you real guidance — not generic advice. What specific challenge are you working through right now?` }]);
+    setMessages([{ role: 'ai', content: `Hi! I'm ${m.name}, ${m.title}.\n\n"${m.quote}"\n\nI'm here to give you real guidance: not generic advice. What specific challenge are you working through right now?` }]);
     setInput('');
   };
 
@@ -2342,7 +2344,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
           <div style={{ background: `${C.teal}0A`, border: `1px solid ${C.teal}25`, borderRadius: 16, padding: '18px 20px', marginBottom: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 6 }}>Find your accountability partner 🤝</div>
             <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px', lineHeight: 1.65 }}>
-              50% of students say they need someone to grow with. Tell us what you're working on — we'll match you with peers on the same journey.
+              50% of students say they need someone to grow with. Tell us what you're working on: we'll match you with peers on the same journey.
             </p>
             <div style={{ display: 'flex', gap: 9 }}>
               <input value={peerGoal} onChange={e => setPeerGoal(e.target.value)} placeholder='e.g. "launching my startup", "getting into grad school", "building a daily study habit"'
@@ -2365,7 +2367,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
 
           {peers.length > 0 && !peerLoading && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 4 }}>Matched peers — reach out in the Flow feed or DM them</div>
+              <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 4 }}>Matched peers: reach out in the Flow feed or DM them</div>
               {peers.map((p, i) => (
                 <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg, ${C.teal}, ${C.blue})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{p.emoji || '👤'}</div>
@@ -2403,7 +2405,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
                 We'll review your background and impact within <strong style={{ color: C.text }}>48 hours</strong>. If approved, your profile goes live in the mentor directory with a
               </p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '5px 14px', margin: '8px 0 20px', fontSize: 13, color: C.blue, fontWeight: 700 }}>✓ Verified Mentor</div>
-              <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 28, maxWidth: 360, margin: '0 auto 28px' }}>Verified means you did real work — not just a title. Students will trust and book you.</p>
+              <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 28, maxWidth: 360, margin: '0 auto 28px' }}>Verified means you did real work: not just a title. Students will trust and book you.</p>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                 <Btn onClick={() => { setBSubmitted(false); setView('mentors'); }}>← Back to Mentors</Btn>
                 <Btn variant="secondary" onClick={() => { setBSubmitted(false); setBName(''); setBEmail(''); setBTitle(''); setBProof(''); setBLinkedIn(''); }}>Apply Again</Btn>
@@ -2445,7 +2447,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
                   </div>
                 </div>
                 <div style={{ marginTop: 12 }}>
-                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>LinkedIn / Portfolio <span style={{ color: '#334155' }}>(optional — speeds up verification)</span></label>
+                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>LinkedIn / Portfolio <span style={{ color: '#334155' }}>(optional)</span></label>
                   <input value={bLinkedIn} onChange={e => setBLinkedIn(e.target.value)} placeholder="https://linkedin.com/in/yourname or your portfolio"
                     style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                 </div>
@@ -2458,16 +2460,16 @@ function MentorshipTab({ mentors: mentorsProp }) {
                   YOUR BACKGROUND &amp; IMPACT
                 </div>
                 <div style={{ marginBottom: 12 }}>
-                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>What you do / know * <span style={{ color: C.blue, fontWeight: 400 }}>— AI generates your title &amp; profile quote from this</span></label>
+                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>What you do / know *</label>
                   <input value={bTitle} onChange={e => setBTitle(e.target.value)} placeholder='e.g. "Software engineer at Digicel, 4 years, helped 20+ students break into tech from Jamaica"'
                     style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>Real-world proof of impact * <span style={{ color: '#334155', fontWeight: 400 }}>— this is how we verify you, not just your title</span></label>
+                  <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>Real-world proof of impact *</label>
                   <textarea value={bProof} onChange={e => setBProof(e.target.value)} rows={3}
                     placeholder='What have you actually done? e.g. "Mentored 3 students who got Google offers. Run free weekly coding sessions. Founded a startup. Speak at schools about careers in tech."'
                     style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.65 }} />
-                  <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>Verified mentors have done real work — not just claimed a title. The more specific, the better.</div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>Be specific. Verified mentors have real proof of work.</div>
                 </div>
               </div>
 
@@ -2530,7 +2532,7 @@ function ReflectTab({ canvas }) {
       const r = await fetch('/api/ai/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ journalEntries: entries.slice(0, 10).map(e => e.content) }) });
       const d = await r.json();
       setInsights(d);
-    } catch (_) { setInsights({ pattern: 'Keep journaling consistently for deeper pattern analysis.', insight: 'Your reflections show self-awareness — a key trait of visionaries.', nextStep: 'Write one entry daily for 7 days to unlock deeper AI insights.' }); }
+    } catch (_) { setInsights({ pattern: 'Keep journaling consistently for deeper pattern analysis.', insight: 'Your reflections show self-awareness: a key trait of visionaries.', nextStep: 'Write one entry daily for 7 days to unlock deeper AI insights.' }); }
     setLoadingInsights(false); setView('insights');
   };
 
@@ -2543,7 +2545,7 @@ function ReflectTab({ canvas }) {
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 18px', marginBottom: 14 }}>
         <div style={{ fontSize: 11, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Today's Prompt</div>
         <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 14, lineHeight: 1.55 }}>"{prompt}"</div>
-        <textarea value={journalText} onChange={e => setJournalText(e.target.value)} placeholder="Write your thoughts here — this is private and just for you..." rows={7}
+        <textarea value={journalText} onChange={e => setJournalText(e.target.value)} placeholder="Write your thoughts here: this is private and just for you..." rows={7}
           style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '12px 14px', fontSize: 14, outline: 'none', fontFamily: 'inherit', resize: 'vertical', lineHeight: 1.7, boxSizing: 'border-box' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
           <span style={{ fontSize: 11, color: C.muted }}>Saved on your device</span>
@@ -2704,7 +2706,7 @@ function OpportunitiesTab({ canvas }) {
   const doSearch = async (query) => {
     const q = (query || searchQuery).trim();
     if (!q) return;
-    const fullQuery = location ? `${q} (student based in ${location} — include both local Jamaican/Caribbean programs and internationally open programs)` : q;
+    const fullQuery = location ? `${q} (student based in ${location}: include both local Jamaican/Caribbean programs and internationally open programs)` : q;
     setSearchQuery(q); setSearching(true); setError(''); setSearched(true); setResults([]);
     try {
       const r = await fetch('/api/ai/opportunities', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2718,9 +2720,9 @@ function OpportunitiesTab({ canvas }) {
           if (parsed.length > 0) {
             setResults(parsed.map((o, i) => ({ ...o, id: 'r-' + i })));
           } else { setError('No results found. Try more specific terms like your field of study or specific program type.'); }
-        } catch { setError('Could not parse results — try again.'); }
-      } else { setError('No results found. Be specific — e.g. "fellowships for first-gen students" or "Jamaica scholarship 2026".'); setResults([]); }
-    } catch (_) { setError('Search failed — check your connection and try again.'); }
+        } catch { setError('Could not parse results: try again.'); }
+      } else { setError('No results found. Be specific: e.g. "fellowships for first-gen students" or "Jamaica scholarship 2026".'); setResults([]); }
+    } catch (_) { setError('Search failed: check your connection and try again.'); }
     setSearching(false);
   };
 
@@ -2729,7 +2731,7 @@ function OpportunitiesTab({ canvas }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 5px' }}>Real Opportunities</h1>
-          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI search + directly posted by verified institutions — local and international.</p>
+          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI search + directly posted by verified institutions: local and international.</p>
         </div>
         <Btn size="sm" variant="secondary" onClick={() => setOppView('submit')} style={{ whiteSpace: 'nowrap' }}>
           🏛️ Post an Opportunity
@@ -2798,7 +2800,7 @@ function OpportunitiesTab({ canvas }) {
               </div>
               <div style={{ marginBottom: 22 }}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.muted, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.8 }}>Short Description</label>
-                <textarea value={form.description} onChange={e => setF('description', e.target.value)} placeholder="Two sentences about the opportunity — what makes it worth applying for?" rows={3}
+                <textarea value={form.description} onChange={e => setF('description', e.target.value)} placeholder="Two sentences about the opportunity: what makes it worth applying for?" rows={3}
                   style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.65 }} />
               </div>
               <Btn onClick={submitOpp} disabled={!form.institution.trim() || !form.title.trim() || !form.url.trim() || submitting} size="lg" style={{ width: '100%', justifyContent: 'center' }}>
@@ -2832,7 +2834,7 @@ function OpportunitiesTab({ canvas }) {
             <div style={{ textAlign: 'center', padding: '56px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
               <div style={{ fontSize: 40, marginBottom: 14 }}>🏛️</div>
               <div style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>No institution posts yet</div>
-              <div style={{ color: C.muted, fontSize: 13, maxWidth: 340, margin: '0 auto 20px' }}>Be the first to bring real opportunities here. If you're from a school, NGO, or company — post your program.</div>
+              <div style={{ color: C.muted, fontSize: 13, maxWidth: 340, margin: '0 auto 20px' }}>Be the first to bring real opportunities here. If you're from a school, NGO, or company: post your program.</div>
               <Btn onClick={() => setOppView('submit')}>🏛️ Post an Opportunity</Btn>
             </div>
           )}
@@ -2929,7 +2931,7 @@ function OpportunitiesTab({ canvas }) {
         <div style={{ textAlign: 'center', padding: '56px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
           <Compass size={36} color={C.border} style={{ marginBottom: 14 }} />
           <div style={{ color: C.text, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Find your real opportunity</div>
-          <div style={{ color: C.muted, fontSize: 13, maxWidth: 340, margin: '0 auto' }}>Type what you're looking for above or tap a quick search. The AI finds real, active programs — not fake examples.</div>
+          <div style={{ color: C.muted, fontSize: 13, maxWidth: 340, margin: '0 auto' }}>Type what you're looking for above or tap a quick search. The AI finds real, active programs: not fake examples.</div>
         </div>
       )}
 
@@ -2968,7 +2970,7 @@ function OpportunitiesTab({ canvas }) {
 function WellbeingModal({ onClose }) {
   const [tab, setTab] = useState(0);
   const [note, setNote] = useState('');
-  const [msgs, setMsgs] = useState([{ role: 'ai', content: "Hey — I see you. No pressure here, no performance.\n\nThis is a space to rest, breathe, and be honest with yourself. What's on your mind?" }]);
+  const [msgs, setMsgs] = useState([{ role: 'ai', content: "Hey: I see you. No pressure here, no performance.\n\nThis is a space to rest, breathe, and be honest with yourself. What's on your mind?" }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [breath, setBreath] = useState(0);
@@ -2995,7 +2997,7 @@ function WellbeingModal({ onClose }) {
       <div style={{ width: '100%', maxWidth: 500 }}>
         <div style={{ textAlign: 'center', marginBottom: 22 }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: '0 0 5px' }}>Rest & Recharge 🌿</h2>
-          <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>Take care of yourself — it's part of the journey.</p>
+          <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>Take care of yourself: it's part of the journey.</p>
         </div>
         <div style={{ display: 'flex', gap: 7, marginBottom: 18 }}>
           {['Breathe', 'Private Note', 'Talk to AI'].map((l, i) => (
@@ -3012,7 +3014,7 @@ function WellbeingModal({ onClose }) {
         )}
         {tab === 1 && (
           <div>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Write anything — how you're feeling, what's weighing on you. This stays on your device only." rows={6}
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Write anything: how you're feeling, what's weighing on you. This stays on your device only." rows={6}
               style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 11, color: C.text, padding: '13px 15px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.7, boxSizing: 'border-box' }} />
             <p style={{ fontSize: 11, color: '#334155', marginTop: 6 }}>🔒 Not stored anywhere. Private to this browser session.</p>
           </div>
@@ -3045,13 +3047,51 @@ function WellbeingModal({ onClose }) {
   );
 }
 
+// ─── PASSWORD RESET (used in Security card) ───────────────────────────────────
+function SecurityPasswordReset({ email }) {
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const send = async () => {
+    setErr(''); setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (e) { setErr(e.message || 'Failed to send reset email.'); }
+    setLoading(false);
+  };
+  if (sent) return (
+    <div style={{ background: `${C.green}15`, border: `1px solid ${C.green}35`, borderRadius: 9, padding: '12px 14px', fontSize: 12, color: '#6EE7B7', lineHeight: 1.6 }}>
+      ✅ Password reset email sent to <strong>{email}</strong>. Check your inbox!
+    </div>
+  );
+  return (
+    <div>
+      {err && <div style={{ background: `${C.red}12`, border: `1px solid ${C.red}30`, borderRadius: 8, padding: '8px 12px', fontSize: 11, color: '#FCA5A5', marginBottom: 10 }}>{err}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Change password</div>
+          <div style={{ fontSize: 11, color: C.muted }}>We'll email you a secure reset link</div>
+        </div>
+        <Btn size="sm" variant="secondary" onClick={send} disabled={loading}>
+          {loading ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Lock size={12} />}
+          {loading ? 'Sending…' : 'Send Reset Email'}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
 // ─── SETTINGS / ACCOUNT TAB ───────────────────────────────────────────────────
 function SettingsTab({ user, onSignOut }) {
   const meta = user?.user_metadata || {};
   const providerAvatar = meta.avatar_url || meta.picture || null;
   const email = user?.email || '';
 
-  // Profile fields — persisted in localStorage + Supabase metadata
+  // Profile fields: persisted in localStorage + Supabase metadata
   const [nameVal,     setNameVal]     = useState(meta.full_name || meta.name || localStorage.getItem('vh_profile_name') || email.split('@')[0] || 'Visionary');
   const [bio,         setBio]         = useState(meta.bio       || localStorage.getItem('vh_profile_bio') || '');
   const [location,    setLocation]    = useState(meta.location  || localStorage.getItem('vh_profile_location') || '');
@@ -3062,66 +3102,6 @@ function SettingsTab({ user, onSignOut }) {
   const [saved,       setSaved]       = useState(false);
   const [notifs,      setNotifs]      = useState(() => { try { return JSON.parse(localStorage.getItem('vh_notifs') || 'true'); } catch { return true; } });
   const avatarInputRef = useRef(null);
-
-  // ── 2FA state ─────────────────────────────────────────────────────────────
-  const [twoFAStatus,   setTwoFAStatus]   = useState('idle');   // idle | loading | enrolling | verifying | enabled | disabled
-  const [twoFAQR,       setTwoFAQR]       = useState('');       // SVG/data-URL QR code
-  const [twoFASecret,   setTwoFASecret]   = useState('');       // TOTP secret for manual entry
-  const [twoFAFactorId, setTwoFAFactorId] = useState('');       // enrolled factor ID
-  const [twoFACode,     setTwoFACode]     = useState('');       // user's OTP input
-  const [twoFAError,    setTwoFAError]    = useState('');
-  const [twoFAMsg,      setTwoFAMsg]      = useState('');
-  const [is2FAEnabled,  setIs2FAEnabled]  = useState(false);
-
-  // Check 2FA status on mount
-  useEffect(() => {
-    if (!supabase) return;
-    (async () => {
-      try {
-        const { data: factors } = await supabase.auth.mfa.listFactors();
-        const verified = factors?.totp?.find(f => f.status === 'verified');
-        setIs2FAEnabled(!!verified);
-        if (verified) setTwoFAFactorId(verified.id);
-      } catch (_) {}
-    })();
-  }, []);
-
-  const handleEnable2FA = async () => {
-    setTwoFAError(''); setTwoFAMsg(''); setTwoFAStatus('loading');
-    try {
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Visionary Hub' });
-      if (error) throw error;
-      setTwoFAQR(data.totp.qr_code);
-      setTwoFASecret(data.totp.secret);
-      setTwoFAFactorId(data.id);
-      setTwoFAStatus('enrolling');
-    } catch (err) { setTwoFAError(err.message || 'Failed to start 2FA setup.'); setTwoFAStatus('idle'); }
-  };
-
-  const handleVerify2FASetup = async (e) => {
-    e.preventDefault(); setTwoFAError('');
-    if (twoFACode.length !== 6) { setTwoFAError('Enter the 6-digit code from your authenticator app.'); return; }
-    setTwoFAStatus('verifying');
-    try {
-      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: twoFAFactorId, code: twoFACode });
-      if (error) throw error;
-      setIs2FAEnabled(true);
-      setTwoFAStatus('idle');
-      setTwoFAQR(''); setTwoFASecret(''); setTwoFACode('');
-      setTwoFAMsg('✅ Two-factor authentication enabled! Your account is now protected.');
-    } catch (err) { setTwoFAError('Invalid code — try again. Make sure your device clock is synced.'); setTwoFAStatus('enrolling'); }
-  };
-
-  const handleDisable2FA = async () => {
-    if (!window.confirm('Disable two-factor authentication? Your account will be less secure.')) return;
-    setTwoFAStatus('loading');
-    try {
-      const { error } = await supabase.auth.mfa.unenroll({ factorId: twoFAFactorId });
-      if (error) throw error;
-      setIs2FAEnabled(false); setTwoFAFactorId(''); setTwoFAStatus('idle');
-      setTwoFAMsg('2FA disabled. You can re-enable it at any time.');
-    } catch (err) { setTwoFAError(err.message || 'Failed to disable 2FA.'); setTwoFAStatus('idle'); }
-  };
 
   const avatarUrl = avatarLocal || providerAvatar;
   const initials  = nameVal.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -3199,7 +3179,7 @@ function SettingsTab({ user, onSignOut }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>
-              {providerAvatar && !avatarLocal ? `Photo from ${user?.app_metadata?.provider || 'account'} — click ✏️ to upload your own` : 'Tap ✏️ to change your photo'}
+              {providerAvatar && !avatarLocal ? `Photo from ${user?.app_metadata?.provider || 'account'}: click ✏️ to upload your own` : 'Tap ✏️ to change your photo'}
             </div>
             <div style={{ fontSize: 12, color: '#334155' }}>
               {user?.app_metadata?.provider === 'google' ? '🔗 Signed in with Google' : user?.app_metadata?.provider ? `🔗 ${user.app_metadata.provider}` : '📧 Email account'} · {email}
@@ -3266,115 +3246,38 @@ function SettingsTab({ user, onSignOut }) {
         </div>
       </Card>
 
-      {/* ── 2FA SECURITY CARD ───────────────────────────────────────────────── */}
+      {/* ── SECURITY CARD ───────────────────────────────────────────────────── */}
       <Card style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.blueLight, textTransform: 'uppercase', letterSpacing: 1.2 }}>Two-Factor Authentication</div>
-          {is2FAEnabled && <span style={{ fontSize: 10, fontWeight: 700, background: `${C.green}20`, color: C.green, borderRadius: 99, padding: '2px 8px' }}>ENABLED</span>}
-        </div>
-        <div style={{ fontSize: 12, color: C.muted, marginBottom: 16, lineHeight: 1.6 }}>
-          Add an extra layer of security using an authenticator app (Google Authenticator, Authy, 1Password). Architecture is stateless and horizontally scalable — works across unlimited server instances.
-        </div>
-
-        {twoFAMsg && <div style={{ background: `${C.green}15`, border: `1px solid ${C.green}35`, borderRadius: 9, padding: '10px 14px', fontSize: 12, color: '#6EE7B7', marginBottom: 14 }}>{twoFAMsg}</div>}
-        {twoFAError && <div style={{ background: `${C.red}15`, border: `1px solid ${C.red}35`, borderRadius: 9, padding: '10px 14px', fontSize: 12, color: '#FCA5A5', marginBottom: 14 }}>{twoFAError}</div>}
-
-        {/* Idle / disabled state */}
-        {!is2FAEnabled && twoFAStatus === 'idle' && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Lock size={16} color={C.muted} />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Not enabled</div>
-                <div style={{ fontSize: 11, color: C.muted }}>Your account uses password only</div>
-              </div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.blueLight, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 14 }}>Security</div>
+        {/* Provider row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.green}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Shield size={16} color={C.green} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>
+              {user?.app_metadata?.provider === 'google' ? 'Secured by Google' : 'Email & password account'}
             </div>
-            <Btn size="sm" onClick={handleEnable2FA} style={{ background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, color: '#fff', border: 'none' }}>
-              Enable 2FA
-            </Btn>
-          </div>
-        )}
-
-        {/* Loading */}
-        {twoFAStatus === 'loading' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.muted, fontSize: 13 }}>
-            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Setting up 2FA…
-          </div>
-        )}
-
-        {/* Enrolling — show QR code */}
-        {twoFAStatus === 'enrolling' && twoFAQR && (
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>Step 1 — Scan this QR code</div>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 18 }}>
-              {/* QR Code display */}
-              <div style={{ background: '#fff', borderRadius: 12, padding: 10, flexShrink: 0 }}>
-                <img src={twoFAQR} alt="2FA QR Code" width={120} height={120} style={{ display: 'block' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: C.muted, marginBottom: 10, lineHeight: 1.6 }}>
-                  Open <strong style={{ color: C.text }}>Google Authenticator</strong>, <strong style={{ color: C.text }}>Authy</strong>, or any TOTP app and scan the QR code.
-                </div>
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>Or enter the key manually:</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 10px' }}>
-                  <code style={{ fontSize: 11, color: C.text, fontFamily: 'monospace', letterSpacing: 1, flex: 1, wordBreak: 'break-all' }}>{twoFASecret}</code>
-                  <button onClick={() => { navigator.clipboard.writeText(twoFASecret); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 2, display: 'flex', flexShrink: 0 }} title="Copy secret">
-                    <Copy size={13} />
-                  </button>
-                </div>
-              </div>
+            <div style={{ fontSize: 11, color: C.muted }}>
+              {user?.app_metadata?.provider === 'google'
+                ? "Your account uses Google's security. No password needed."
+                : `Signed in as ${email}`}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>Step 2 — Enter the 6-digit code</div>
-            <form onSubmit={handleVerify2FASetup} style={{ display: 'flex', gap: 10 }}>
-              <input
-                value={twoFACode}
-                onChange={e => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                maxLength={6}
-                autoFocus
-                style={{ flex: 1, background: C.card, border: `2px solid ${twoFACode.length === 6 ? C.blue : C.border}`, borderRadius: 10, color: C.text, padding: '11px 14px', fontSize: 20, fontWeight: 700, outline: 'none', fontFamily: 'monospace', textAlign: 'center', letterSpacing: 6, transition: 'border-color 0.2s', boxSizing: 'border-box' }}
-              />
-              <Btn type="submit" disabled={twoFAStatus === 'verifying' || twoFACode.length !== 6}
-                style={{ background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, color: '#fff', border: 'none', opacity: twoFACode.length !== 6 ? 0.5 : 1 }}>
-                {twoFAStatus === 'verifying' ? 'Verifying…' : 'Activate'}
-              </Btn>
-            </form>
-            <button onClick={() => { setTwoFAStatus('idle'); setTwoFAQR(''); setTwoFACode(''); setTwoFAError(''); }}
-              style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, marginTop: 12, padding: 0 }}>
-              Cancel setup
-            </button>
           </div>
-        )}
-
-        {/* Enabled state */}
-        {is2FAEnabled && twoFAStatus === 'idle' && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.green}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Shield size={16} color={C.green} />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Authenticator app connected</div>
-                <div style={{ fontSize: 11, color: C.muted }}>Your account is protected with TOTP 2FA</div>
-              </div>
-            </div>
-            <Btn size="sm" variant="secondary" onClick={handleDisable2FA}
-              style={{ borderColor: `${C.red}44`, color: C.red, fontSize: 12 }}>
-              Disable
-            </Btn>
-          </div>
-        )}
-
-        {/* Architecture badge */}
-        <div style={{ marginTop: 14, padding: '8px 12px', background: `${C.blue}08`, border: `1px solid ${C.blue}20`, borderRadius: 9, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <AlertCircle size={13} color={C.blue} style={{ marginTop: 1, flexShrink: 0 }} />
-          <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.6 }}>
-            <strong style={{ color: C.text }}>Scalable architecture:</strong> TOTP verification is stateless — no session storage required, supports thousands of concurrent authentications per instance with linear horizontal scaling.
-          </div>
+          <span style={{ fontSize: 10, fontWeight: 700, background: `${C.green}18`, color: C.green, borderRadius: 99, padding: '3px 10px', flexShrink: 0 }}>
+            {user?.app_metadata?.provider === 'google' ? '🔗 Google' : '✓ Verified'}
+          </span>
         </div>
+        {/* Password reset for email users */}
+        {user?.app_metadata?.provider !== 'google' && (
+          <SecurityPasswordReset email={email} />
+        )}
+        {/* Google users get a security tip */}
+        {user?.app_metadata?.provider === 'google' && (
+          <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.7 }}>
+            🛡️ Your session is managed by Google OAuth 2.0. To add extra security, enable 2-Step Verification in your <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" style={{ color: C.blue, textDecoration: 'none' }}>Google Account</a>.
+          </div>
+        )}
       </Card>
 
       {/* Danger zone */}
@@ -3386,7 +3289,7 @@ function SettingsTab({ user, onSignOut }) {
               <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Clear local data</div>
               <div style={{ fontSize: 11, color: C.muted }}>Removes Vision Canvas, uploaded notes, and preferences from this device</div>
             </div>
-            <Btn size="sm" variant="secondary" onClick={() => { if (window.confirm('Clear all local data? Your posts stay in the community. This only clears your canvas and saved notes.')) { localStorage.clear(); window.location.reload(); } }}>Clear</Btn>
+            <Btn size="sm" variant="secondary" onClick={() => { if (window.confirm('Clear all local data? Your posts stay in the community. This only clears your canvas and saved notes.')) { Object.keys(localStorage).filter(k => k.startsWith('vh_')).forEach(k => localStorage.removeItem(k)); window.location.reload(); } }}>Clear</Btn>
           </div>
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -3537,10 +3440,13 @@ export default function App() {
 
   const handleSignOut = async () => {
     if (supabase) await supabase.auth.signOut();
+    // Clear all app-specific keys so the next user starts completely fresh
+    const vhKeys = Object.keys(localStorage).filter(k => k.startsWith('vh_'));
+    vhKeys.forEach(k => localStorage.removeItem(k));
     setSession(null);
   };
 
-  // Still resolving session — show minimal loader
+  // Still resolving session: show minimal loader
   if (session === undefined) {
     return (
       <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -3559,7 +3465,7 @@ export default function App() {
   // Supabase configured but not logged in → show Auth page
   if (supabase && !session) return <AuthPage />;
 
-  // No Supabase OR logged in — use legacy landing gate or go straight to app
+  // No Supabase OR logged in: use legacy landing gate or go straight to app
   if (!supabase && !entered) {
     const enter = () => { localStorage.setItem('vh_entered', '1'); setEntered(true); };
     return <LandingPage onEnter={enter} />;
