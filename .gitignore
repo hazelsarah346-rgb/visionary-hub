@@ -7,3 +7,5 @@ uploads/
 
 # Claude / Cursor worktrees (avoid embedding another git repo)
 .claude/
+.vercel
+.env*.local
