@@ -6,7 +6,7 @@ import {
   TrendingUp, Award, Clock, RefreshCw, Loader2, Heart, AlignLeft,
   BarChart2, Briefcase, GraduationCap, Globe, Search, Edit3, Check,
   Download, Menu, Mic, BookMarked, Flame, Wind, ChevronDown, ChevronUp,
-  Activity, PenLine, Share2, Bot, SidebarOpen, Settings, LogOut,
+  Activity, PenLine, Share2, Bot, Settings, LogOut,
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
@@ -332,7 +332,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>AI Coach</div>
             <div style={{ fontSize: 10, color: '#7C3AED66' }}>Analyze my progress</div>
           </div>
-          <SidebarOpen size={11} color={`${C.purple}88`} />
+          <ChevronRight size={11} color={`${C.purple}88`} />
         </button>
 
         {/* Settings + Profile row */}
@@ -350,7 +350,9 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
           </button>
           {onSignOut && (
             <button onClick={onSignOut} title="Sign Out"
-              style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${C.red}12`; e.currentTarget.style.borderColor = `${C.red}44`; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.border; }}>
               <LogOut size={13} color={C.muted} />
             </button>
           )}
@@ -664,19 +666,23 @@ function AuthPage() {
   const inputStyle = { width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '11px 14px', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
 
   const handleGoogle = async () => {
+    if (!supabase) { setError('Authentication is not configured. Please contact support.'); return; }
     setError(''); setInfo(''); setLoading(true);
     try {
-      // Use exact origin only so it matches Supabase Redirect URLs list (e.g. https://project-u53n4.vercel.app)
       const redirectTo = window.location.origin;
-      const { data, error: e } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-      if (e) { setError(e.message || 'Google sign-in failed.'); setLoading(false); return; }
+      const { data, error: e } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo, queryParams: { prompt: 'select_account' } },
+      });
+      if (e) { setError(e.message || 'Google sign-in failed. Please try email/password below.'); setLoading(false); return; }
       if (data?.url) window.location.href = data.url;
       else setLoading(false);
-    } catch (err) { setError(err?.message || 'Something went wrong.'); setLoading(false); }
+    } catch (err) { setError(err?.message || 'Something went wrong. Please try email/password below.'); setLoading(false); }
   };
 
   const handleEmail = async (e) => {
     e.preventDefault(); setError(''); setInfo('');
+    if (!supabase) { setError('Authentication is not configured. Please contact support.'); return; }
     if (!email || !password) { setError('Please fill in all fields.'); return; }
     if (mode === 'signup') {
       if (password !== confirmPassword) { setError('Passwords do not match. Please check and try again.'); return; }
@@ -2709,13 +2715,8 @@ function MentorshipTab({ mentors: mentorsProp }) {
           <div className="vh-grid-2" style={{ gap: 16 }}>
             {filtered.map(m => (
               <div key={m.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, transition: 'border-color 0.2s', position: 'relative' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = C.blue + '66'; e.currentTarget.querySelector('.mentor-del')?.style && (e.currentTarget.querySelector('.mentor-del').style.opacity = '1'); }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.querySelector('.mentor-del')?.style && (e.currentTarget.querySelector('.mentor-del').style.opacity = '0'); }}>
-                {/* Admin delete button */}
-                <button className="mentor-del" title="Remove mentor" onClick={() => removeMentor(m.id)}
-                  style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: '50%', background: `${C.red}18`, border: `1px solid ${C.red}33`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}>
-                  <Trash2 size={11} color={C.red} />
-                </button>
+                onMouseEnter={e => e.currentTarget.style.borderColor = C.blue + '66'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'flex-start' }}>
                   <Avatar src={m.img} name={m.name} size={52} />
                   <div style={{ flex: 1 }}>
@@ -3762,6 +3763,7 @@ function MainApp({ user, onSignOut }) {
   const [tab, setTab] = useState('flow');
   const [showCoach, setShowCoach] = useState(false);
   const [showWellbeing, setShowWellbeing] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [canvas, setCanvas] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_canvas') || 'null'); } catch { return null; } });
   const [feed, setFeed] = useState([]);
   const [mentors, setMentors] = useState([]);
@@ -3913,19 +3915,54 @@ function MainApp({ user, onSignOut }) {
         {MOBILE_NAV.map(item => {
           const active = tab === item.id;
           return (
-            <button key={item.id} onClick={() => setTab(item.id)}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', color: active ? C.blueLight : C.muted, fontFamily: 'inherit', minWidth: 48 }}>
+            <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: active ? C.blueLight : C.muted, fontFamily: 'inherit', minWidth: 44 }}>
               <item.icon size={20} color={active ? C.blueLight : C.muted} />
               <span style={{ fontSize: 9, fontWeight: active ? 700 : 500 }}>{item.label}</span>
             </button>
           );
         })}
         <button onClick={() => setShowCoach(s => !s)}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', color: C.purple, fontFamily: 'inherit', minWidth: 48 }}>
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: C.purple, fontFamily: 'inherit', minWidth: 44 }}>
           <Bot size={20} color={C.purple} />
           <span style={{ fontSize: 9, fontWeight: 600 }}>Coach</span>
         </button>
+        {/* More drawer trigger */}
+        <button onClick={() => setShowMobileMenu(s => !s)}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: showMobileMenu ? C.blueLight : C.muted, fontFamily: 'inherit', minWidth: 44 }}>
+          <Menu size={20} color={showMobileMenu ? C.blueLight : C.muted} />
+          <span style={{ fontSize: 9, fontWeight: showMobileMenu ? 700 : 500 }}>More</span>
+        </button>
       </nav>
+
+      {/* Mobile slide-up "More" drawer */}
+      {showMobileMenu && (
+        <div className="vh-mobile-nav" style={{ position: 'fixed', bottom: 64, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 799, padding: '12px 10px', flexDirection: 'column', gap: 4, boxShadow: '0 -8px 32px rgba(0,0,0,0.4)' }}>
+          {NAV.filter(n => !MOBILE_NAV.find(m => m.id === n.id)).map(item => {
+            const active = tab === item.id;
+            return (
+              <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderRadius: 11, border: 'none', cursor: 'pointer', background: active ? `${C.blue}1A` : 'transparent', fontFamily: 'inherit', color: active ? C.text : C.muted, textAlign: 'left' }}>
+                <item.icon size={16} color={active ? C.blueLight : C.muted} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: active ? 700 : 500 }}>{item.label}</div>
+                  <div style={{ fontSize: 10, color: active ? C.blueLight : '#334155' }}>{item.sub}</div>
+                </div>
+              </button>
+            );
+          })}
+          <div style={{ borderTop: `1px solid ${C.border}`, margin: '4px 0', paddingTop: 8, display: 'flex', gap: 8, alignItems: 'center', padding: '8px 14px 0' }}>
+            <button onClick={() => setShowWellbeing(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, border: `1px solid ${C.teal}30`, background: `${C.teal}0A`, cursor: 'pointer', color: C.teal, fontFamily: 'inherit', fontSize: 12, fontWeight: 600 }}>
+              <Wind size={13} /> Rest & Recharge
+            </button>
+            {onSignOut && (
+              <button onClick={onSignOut} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10, border: `1px solid ${C.red}25`, background: `${C.red}0A`, cursor: 'pointer', color: '#FCA5A5', fontFamily: 'inherit', fontSize: 12, fontWeight: 600 }}>
+                <LogOut size={13} /> Sign Out
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {showCoach && <AICoachPanel canvas={canvas} onClose={() => setShowCoach(false)} />}
       {showWellbeing && <WellbeingModal onClose={() => setShowWellbeing(false)} />}
