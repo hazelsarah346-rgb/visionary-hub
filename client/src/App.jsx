@@ -297,12 +297,12 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
       {/* Logo */}
       <div style={{ padding: '18px 16px 12px', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Lightbulb size={18} color="#fff" />
+          <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Star size={18} color={C.yellow} fill={C.yellow} />
         </div>
         <div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>Visionary</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Space</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>North</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, lineHeight: 1.1 }}>Star</div>
           </div>
         </div>
       </div>
@@ -332,7 +332,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10, border: `1px solid ${C.purple}33`, background: `${C.purple}0A`, cursor: 'pointer', fontFamily: 'inherit' }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: `${C.purple}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color={C.purple} /></div>
           <div style={{ textAlign: 'left', flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>Vision AI</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>North Star</div>
             <div style={{ fontSize: 10, color: '#7C3AED66' }}>Your personal guide</div>
           </div>
           <ChevronRight size={11} color={`${C.purple}88`} />
@@ -383,8 +383,8 @@ function AICoachPanel({ canvas, onClose }) {
 
   useEffect(() => {
     const intro = contextSummary
-      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm Vision AI — your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal — and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
-      : `Hey 👋 I'm Vision AI — built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything — I won't give you generic answers.`;
+      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm North Star — your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal — and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
+      : `Hey 👋 I'm North Star — built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything — I won't give you generic answers.`;
     setMessages([{ role: 'ai', content: intro }]);
   }, []);
 
@@ -396,7 +396,7 @@ function AICoachPanel({ canvas, onClose }) {
     setMessages(newMsgs); setInput(''); setLoading(true);
     try {
       const apiMsgs = newMsgs.slice(-10).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-      const system = `You are Vision AI — a sharp, practical advisor built exclusively for undergraduate students and career switchers who are figuring out their path.
+      const system = `You are North Star — a sharp, practical advisor built exclusively for undergraduate students and career switchers who are figuring out their path.
 
 Your user's profile:
 ${contextSummary || 'No Vision Canvas filled in yet — encourage them to do so for personalised advice.'}
@@ -439,7 +439,7 @@ Rules:
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.purple}, ${C.blue})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Bot size={17} color="#fff" /></div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>Vision AI</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>North Star</div>
             <div style={{ fontSize: 11, color: C.purple }}>● Your personal guide</div>
           </div>
         </div>
@@ -579,7 +579,7 @@ function OnboardingWizard({ user, onComplete }) {
       </p>
       <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.75, margin: '0 0 10px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
         Most students and career switchers feel overwhelmed — no clear path, no one who gets their stage, no structure.<br/><br/>
-        Visionary Space gives you a <strong style={{ color: C.blueLight }}>vision and roadmap</strong>, AI and mentors tuned to your goals, and peers on the same journey.
+        North Star gives you a <strong style={{ color: C.blueLight }}>vision and roadmap</strong>, AI and mentors tuned to your goals, and peers on the same journey.
       </p>
       <p style={{ fontSize: 13, color: C.blueLight, fontWeight: 700, margin: '0 0 24px' }}>
         Let's take <strong>60 seconds</strong> to build your Vision Canvas — everything personalises from here.
@@ -647,8 +647,8 @@ function OnboardingWizard({ user, onComplete }) {
       <div style={{ width: '100%', maxWidth: 520 }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 36 }}>
-          <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Lightbulb size={18} color="#fff" /></div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Visionary <span style={{ color: C.blueLight }}>Space</span></div>
+          <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Star size={18} color={C.yellow} fill={C.yellow} /></div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>North <span style={{ color: C.yellow }}>Star</span></div>
         </div>
         {/* Progress dots */}
         {step > 0 && (
@@ -770,12 +770,12 @@ function AuthPage() {
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
-          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Lightbulb size={22} color="#fff" />
+          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Star size={22} color={C.yellow} fill={C.yellow} />
         </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>North</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
         </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
@@ -820,12 +820,12 @@ function AuthPage() {
         {/* Logo + tagline */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Lightbulb size={22} color="#fff" />
+            <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Star size={22} color={C.yellow} fill={C.yellow} />
             </div>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>North</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
             </div>
           </div>
           <p style={{ fontSize: 12, color: C.muted, textAlign: 'center', margin: 0, maxWidth: 320 }}>Turning "figuring it out" into clear, structured, and supported</p>
@@ -956,11 +956,11 @@ function LandingPage({ onEnter }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter', system-ui, sans-serif", color: C.text }}>
       <div style={{ textAlign: 'center', maxWidth: 580 }}>
-        <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.blue}44` }}>
-          <Lightbulb size={34} color="#fff" />
+        <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.yellow}44` }}>
+          <Star size={34} color={C.yellow} fill={C.yellow} />
         </div>
-        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 12, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Visionary Space
+        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 12, background: `linear-gradient(135deg, ${C.text}, ${C.yellow})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          North Star
         </h1>
         <p style={{ fontSize: 18, color: C.muted, marginBottom: 36, fontWeight: 500, lineHeight: 1.6 }}>
           Your vision. Your roadmap. Your people.<br/>
@@ -2307,7 +2307,7 @@ function RoadmapTab({ canvas, setTab }) {
         </div>
         {chatA && (
           <div style={{ background: `${C.purple}08`, border: `1px solid ${C.purple}22`, borderRadius: 11, padding: '14px 16px' }}>
-            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Vision AI</div>
+            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>North Star</div>
             <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{chatA}</div>
           </div>
         )}
@@ -4232,7 +4232,7 @@ function MainApp({ user, onSignOut }) {
         {views[tab]}
       </main>
 
-      {/* Mobile bottom nav — 5 tabs: 4 main + Vision AI */}
+      {/* Mobile bottom nav — 5 tabs: 4 main + North Star */}
       <nav className="vh-mobile-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 800, paddingBottom: 'env(safe-area-inset-bottom)', justifyContent: 'space-around', alignItems: 'center' }}>
         {MOBILE_NAV.map(item => {
           const active = tab === item.id;
@@ -4244,13 +4244,13 @@ function MainApp({ user, onSignOut }) {
             </button>
           );
         })}
-        {/* Vision AI tab — purple, prominent */}
+        {/* North Star tab — purple, prominent */}
         <button onClick={() => { setShowCoach(s => !s); setShowMobileMenu(false); }}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 6px 6px', fontFamily: 'inherit', flex: 1 }}>
           <div style={{ width: 32, height: 32, borderRadius: 10, background: showCoach ? `${C.purple}` : `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 1 }}>
             <Bot size={17} color={showCoach ? '#fff' : C.purple} />
           </div>
-          <span style={{ fontSize: 10, fontWeight: 600, color: C.purple }}>Vision AI</span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: C.purple }}>North Star</span>
         </button>
       </nav>
 
