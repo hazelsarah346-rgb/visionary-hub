@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Lightbulb, Home, BookOpen, Map, Brain, Users, Compass, Shield,
-  Sparkles, Send, Plus, CheckSquare, Square, Target, X, ChevronRight,
+  Sparkles, Send, Plus, CheckSquare, Square, Target, X, ChevronRight, ChevronLeft,
   ArrowRight, Upload, FileText, Trash2, MessageCircle, Star, Zap,
   TrendingUp, Award, Clock, RefreshCw, Loader2, Heart, AlignLeft,
   BarChart2, Briefcase, GraduationCap, Globe, Search, Edit3, Check,
@@ -50,7 +50,7 @@ const CHALLENGE_POOL = [
   { type: 'Limiting Story',       emoji: '📖', color: '#EC4899', prompt: "What's the story you keep telling yourself about why you CAN'T? Rewrite it: same facts, but a completely different: and empowering: interpretation.", insight: 'narrative therapy', xp: 40 },
   { type: 'Energy Audit',         emoji: '🔋', color: '#10B981', prompt: "List 3 things that drain your energy and 3 things that fill it up. What would your life look like if you did MORE of the filling things this week?", insight: 'energy management theory', xp: 25 },
   { type: 'Decision Matrix',      emoji: '⚖️', color: '#06B6D4', prompt: "You're facing a decision you keep postponing. Apply the 10/10/10 rule: How will you feel about this in 10 minutes, 10 months, 10 years?", insight: 'temporal discounting', xp: 35 },
-  { type: 'Comparison Detox',     emoji: '🌱', color: '#F59E0B', prompt: "Who have you been comparing yourself to? Write about ONE thing YOU have that they don't. What unique path are you on that no one else can take?", insight: 'social comparison theory', xp: 25 },
+  { type: 'Opportunity Hunter',   emoji: '🌱', color: '#F59E0B', prompt: "Name ONE opportunity in your field you've been putting off — an internship, a course, a person to message, or a project to start. Write exactly what the first step is and when you'll do it today.", insight: 'action bias & opportunity cost', xp: 25 },
   { type: 'Curiosity Spark',      emoji: '🔭', color: '#2563EB', prompt: "What's something in your field that genuinely fascinates you and you still don't fully understand? Write 3 questions you'd love to find answers to.", insight: 'intrinsic motivation', xp: 25 },
   { type: 'Courage Inventory',    emoji: '🦁', color: '#EF4444', prompt: "Think of the last time you were truly brave. What did you do? What would it look like to be THAT version of yourself in your current situation?", insight: 'self-efficacy theory', xp: 35 },
   { type: 'Systems Check',        emoji: '⚙️', color: '#8B5CF6', prompt: "You don't rise to your goals: you fall to your systems. Name one daily habit that, if done consistently, would change everything for you.", insight: 'systems thinking', xp: 30 },
@@ -276,12 +276,11 @@ function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = f
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const NAV = [
   { id: 'flow',          icon: Home,       label: 'Flow',            sub: 'Peers at your stage' },
-  { id: 'canvas',        icon: Lightbulb,  label: 'Vision Canvas',   sub: 'Clarity on your direction' },
+  { id: 'canvas',        icon: Lightbulb,  label: 'Vision Canvas',   sub: 'Your vision & roadmap' },
   { id: 'opportunities', icon: Compass,    label: 'Opportunities',   sub: 'Programs that match your goal' },
-  { id: 'tutor',         icon: Brain,      label: 'AI Tutor',        sub: 'AI tuned to your vision' },
   { id: 'mentorship',    icon: Users,      label: 'Mentorship',      sub: 'Guided support for your stage' },
-  { id: 'roadmap',       icon: Map,        label: 'Life Roadmap',    sub: 'Structured path forward' },
 ];
+// Reflect & Roadmap are accessed from Vision Canvas shortcut cards
 
 // Secondary tabs — accessible via mobile More drawer
 const NAV_SECONDARY = [
@@ -1191,6 +1190,40 @@ function ProfileModal({ author, authorImg, posts, onClose }) {
   );
 }
 
+// ─── REEL PLAYER ─────────────────────────────────────────────────────────────
+function ReelPlayer({ src }) {
+  const videoRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const toggleMute = () => {
+    setMuted(m => {
+      const next = !m;
+      if (videoRef.current) videoRef.current.muted = next;
+      return next;
+    });
+  };
+  return (
+    <div style={{ background: '#000', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 340, aspectRatio: '9/16', overflow: 'hidden' }}>
+        <video ref={videoRef} src={src} playsInline loop autoPlay muted={muted}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {/* Bottom overlay: reel label + mute toggle */}
+        <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: 'rgba(0,0,0,0.5)', borderRadius: 6, padding: '2px 8px', fontSize: 10, color: '#fff', fontWeight: 700, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Video size={9} /> Reel
+          </div>
+          <button onClick={toggleMute}
+            style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+            {muted
+              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── POST CARD (Instagram-style) ───────────────────────────────────────────────
 const REACTIONS = [
   { key: 'inspired',   emoji: '🔥', label: 'Inspired',  color: C.yellow  },
@@ -1254,9 +1287,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         </div>
       )}
       {p.mediaUrl && p.mediaType === 'video' && (
-        <div style={{ background: '#000' }}>
-          <video src={p.mediaUrl} controls playsInline style={{ width: '100%', maxHeight: 480, display: 'block' }} />
-        </div>
+        <ReelPlayer src={p.mediaUrl} />
       )}
 
       {/* Caption */}
@@ -1407,77 +1438,70 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         </div>
       )}
 
-      {/* ── COMPOSE BOX — media-first (photo or video + caption) ──── */}
-      <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.blue + '60' : C.border}`, borderRadius: 16, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
+      {/* ── COMPOSE BOX — compact bar ──── */}
+      <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.blue + '60' : C.border}`, borderRadius: 14, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
         onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
         onDragLeave={() => setMediaDragging(false)}
         onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
 
-        {/* No media yet → big tap-to-add area */}
-        {!mediaPreview ? (
-          <div>
-            <div style={{ display: 'flex', gap: 1 }}>
-              <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
-                style={{ flex: 1, padding: '22px 0', background: `${C.blue}08`, border: 'none', borderRight: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, borderRadius: '16px 0 0 0', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.blue}16`}
-                onMouseLeave={e => e.currentTarget.style.background = `${C.blue}08`}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: `${C.blue}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Image size={20} color={C.blue} />
+        {/* Compact input row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
+          <Avatar src={avatarUrl} name={displayName} size={30} />
+          <input value={content} onChange={e => setContent(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !submitting && (content.trim() || mediaFile) && post()}
+            placeholder="Share a milestone, win or thought…"
+            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+          {/* Photo / Video icon buttons */}
+          <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
+            title="Add photo"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.muted, display: 'flex', alignItems: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.color = C.blue}
+            onMouseLeave={e => e.currentTarget.style.color = C.muted}>
+            <Image size={17} />
+          </button>
+          <button onClick={() => { mediaInputRef.current.accept = 'video/*'; mediaInputRef.current?.click(); }}
+            title="Add video"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.muted, display: 'flex', alignItems: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.color = C.purple}
+            onMouseLeave={e => e.currentTarget.style.color = C.muted}>
+            <Video size={17} />
+          </button>
+          <Btn size="sm" onClick={post} disabled={submitting || (!content.trim() && !mediaFile)}>
+            {submitting ? <Spinner /> : <Send size={12} />}
+          </Btn>
+        </div>
+
+        {/* Media preview (only when file selected) */}
+        {mediaPreview && (
+          <div style={{ borderTop: `1px solid ${C.border}` }}>
+            {mediaPreview.type === 'video' ? (
+              /* ── REEL-STYLE VIDEO PREVIEW ── */
+              <div style={{ position: 'relative' }}>
+                <ReelPlayer src={mediaPreview.url} />
+                <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                  style={{ position: 'absolute', top: 10, left: 10, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', zIndex: 2 }}>
+                  <X size={12} color="#fff" />
+                </button>
+              </div>
+            ) : (
+              /* ── IMAGE PREVIEW ── */
+              <div style={{ position: 'relative', background: '#000' }}>
+                <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'contain', display: 'block' }} />
+                <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                  style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                  <X size={12} color="#fff" />
+                </button>
+                <div style={{ position: 'absolute', bottom: 9, left: 9, background: 'rgba(0,0,0,0.55)', borderRadius: 6, padding: '2px 8px', fontSize: 10, color: '#fff', fontWeight: 700 }}>
+                  📷 Photo
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: C.blueLight }}>Photo</span>
-              </button>
-              <button onClick={() => { mediaInputRef.current.accept = 'video/*'; mediaInputRef.current?.click(); }}
-                style={{ flex: 1, padding: '22px 0', background: `${C.purple}08`, border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, borderRadius: '0 16px 0 0', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = `${C.purple}16`}
-                onMouseLeave={e => e.currentTarget.style.background = `${C.purple}08`}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: `${C.purple}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Video size={20} color={C.purple} />
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>Video</span>
-              </button>
-            </div>
-            {mediaDragging && (
-              <div style={{ padding: '12px 16px', background: `${C.blue}08`, borderTop: `1px dashed ${C.blue}`, textAlign: 'center', fontSize: 12, color: C.blueLight }}>
-                Drop your photo or video here
               </div>
             )}
-            <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Avatar src={avatarUrl} name={displayName} size={28} />
-              <span style={{ fontSize: 12, color: C.muted }}>Share a photo or video with the community…</span>
-            </div>
+            {uploadProgress && <div style={{ padding: '6px 14px 8px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
           </div>
-        ) : (
-          /* Media selected → preview + caption + post */
-          <div>
-            {/* Media preview */}
-            <div style={{ position: 'relative', background: '#000' }}>
-              {mediaPreview.type === 'image'
-                ? <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 400, objectFit: 'contain', display: 'block' }} />
-                : <video src={mediaPreview.url} controls playsInline style={{ width: '100%', maxHeight: 400, display: 'block' }} />
-              }
-              <button onClick={() => { setMediaFile(null); setMediaPreview(null); setContent(''); }}
-                style={{ position: 'absolute', top: 9, right: 9, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={14} color="#fff" />
-              </button>
-              <div style={{ position: 'absolute', bottom: 9, left: 9, background: 'rgba(0,0,0,0.55)', borderRadius: 6, padding: '2px 8px', fontSize: 10, color: '#fff', fontWeight: 700 }}>
-                {mediaPreview.type === 'image' ? '📷 Photo' : '🎬 Video'}
-              </div>
-            </div>
-            {/* Caption + poster row */}
-            <div style={{ padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start', borderTop: `1px solid ${C.border}` }}>
-              <Avatar src={avatarUrl} name={displayName} size={34} />
-              <textarea value={content} onChange={e => setContent(e.target.value)}
-                placeholder="Write a caption… (optional)" rows={2} autoFocus
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit', resize: 'none', lineHeight: 1.65, paddingTop: 2 }} />
-            </div>
-            {/* Post bar */}
-            <div style={{ padding: '8px 14px 12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
-              {uploadProgress && <span style={{ fontSize: 11, color: C.blueLight, flex: 1 }}>{uploadProgress}</span>}
-              <Btn variant="secondary" size="sm" onClick={() => { setMediaFile(null); setMediaPreview(null); setContent(''); }}>Cancel</Btn>
-              <Btn size="sm" onClick={post} disabled={submitting}>
-                {submitting ? <><Spinner /> {uploadProgress || 'Posting…'}</> : <><Send size={12} /> Share</>}
-              </Btn>
-            </div>
+        )}
+        {mediaDragging && (
+          <div style={{ padding: '10px 16px', background: `${C.blue}08`, borderTop: `1px dashed ${C.blue}`, textAlign: 'center', fontSize: 12, color: C.blueLight }}>
+            Drop photo or video here
           </div>
         )}
         <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
@@ -2050,7 +2074,7 @@ function VisionBoardSection({ canvas }) {
 }
 
 // ─── LIFE ROADMAP ─────────────────────────────────────────────────────────────
-function RoadmapTab({ canvas }) {
+function RoadmapTab({ canvas, setTab }) {
   const [roadmap, setRoadmap] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } });
   const [loading, setLoading]   = useState(false);
   const [active, setActive]     = useState(0);
@@ -2107,11 +2131,17 @@ function RoadmapTab({ canvas }) {
 
   return (
     <div>
-      {/* ── HEADER ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 4px' }}>Life Roadmap</h1>
-          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI analyses your activity and vision to map your path forward</p>
+      {/* ── BACK + HEADER ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+        <button onClick={() => setTab?.('canvas')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', flexShrink: 0, transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.blueLight}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+          <ChevronLeft size={18} color={C.text} />
+        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>Vision Canvas</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Life Roadmap</div>
         </div>
         <Btn onClick={generate} disabled={loading} variant={roadmap ? 'secondary' : 'primary'}>
           {loading ? <><Spinner />Analysing…</> : <><RefreshCw size={13} />{roadmap ? 'Refresh' : 'Generate My Roadmap'}</>}
@@ -3096,7 +3126,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
 }
 
 // ─── REFLECT TAB ──────────────────────────────────────────────────────────────
-function ReflectTab({ canvas, user }) {
+function ReflectTab({ canvas, user, setTab }) {
   const [view, setView] = useState('home'); // home | journal | insights
   const [journalText, setJournalText] = useState('');
   const [entries, setEntries] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_journal') || '[]'); } catch { return []; } });
@@ -3185,12 +3215,17 @@ function ReflectTab({ canvas, user }) {
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ width: 60, height: 60, background: `linear-gradient(135deg, ${C.blue}22, ${C.purple}18)`, border: `1px solid ${C.blue}33`, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-          <PenLine size={26} color={C.blueLight} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+        <button onClick={() => setTab?.('canvas')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', flexShrink: 0, transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.blueLight}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+          <ChevronLeft size={18} color={C.text} />
+        </button>
+        <div>
+          <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>Vision Canvas</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Reflect & Journal</div>
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 6px' }}>Visionary Reflect</h1>
-        <p style={{ color: C.muted, margin: 0, fontSize: 14 }}>See your growth in real time</p>
       </div>
 
       {/* Today's Reflection */}
@@ -4029,14 +4064,14 @@ function MainApp({ user, onSignOut }) {
   const views = {
     flow:          <FlowTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
     canvas:        <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} setTab={setTab} />,
-    roadmap:       <RoadmapTab canvas={canvas} />,
+    roadmap:       <RoadmapTab canvas={canvas} setTab={setTab} />,
     tutor:         <TutorTab canvas={canvas} files={tutorFiles} setFiles={setTutorFiles}
                      timerRunning={timerRunning} setTimerRunning={setTimerRunning}
                      timerSeconds={timerSeconds} setTimerSeconds={setTimerSeconds}
                      timerIsBreak={timerIsBreak} setTimerIsBreak={setTimerIsBreak}
                      startTimer={startTimer} resetTimer={resetTimer} />,
     mentorship:    <MentorshipTab mentors={mentors} />,
-    reflect:       <ReflectTab canvas={canvas} user={user} />,
+    reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
     settings:      <SettingsTab user={user} onSignOut={onSignOut} />,
   };
