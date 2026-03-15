@@ -1405,7 +1405,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   const mediaInputRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
-  const avatarUrl   = user?.user_metadata?.avatar_url  || user?.user_metadata?.picture || null;
+  const avatarUrl   = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const dayIdx = new Date().getDay();
   const prompt = DAILY_PROMPTS[dayIdx % DAILY_PROMPTS.length];
@@ -3762,7 +3762,7 @@ function SecurityPasswordReset({ email }) {
 }
 
 // ─── SETTINGS / ACCOUNT TAB ───────────────────────────────────────────────────
-function SettingsTab({ user, onSignOut }) {
+function SettingsTab({ user, onSignOut, onTour }) {
   const meta = user?.user_metadata || {};
   const providerAvatar = meta.avatar_url || meta.picture || null;
   const email = user?.email || '';
@@ -3784,41 +3784,57 @@ function SettingsTab({ user, onSignOut }) {
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    // Convert to base64 for localStorage storage
+    // Show base64 preview instantly
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const dataUrl = ev.target.result;
       setAvatarLocal(dataUrl);
-      localStorage.setItem('vh_profile_avatar', dataUrl);
-      // Also try to upload to Supabase Storage
-      if (supabase) {
-        try {
-          const ext = file.name.split('.').pop();
-          const path = `avatars/${user.id}.${ext}`;
-          await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-          if (data?.publicUrl) {
-            await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } });
-          }
-        } catch (_) {} // localStorage copy always works
-      }
+      localStorage.setItem('vh_profile_avatar', dataUrl); // local fallback
     };
     reader.readAsDataURL(file);
+    // Upload to Supabase Storage → get permanent public URL → sync everywhere
+    if (supabase && user?.id) {
+      try {
+        const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+        const path = `avatars/${user.id}.${ext}`;
+        await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+        if (urlData?.publicUrl) {
+          // Store permanent URL (not base64) — works across all devices
+          setAvatarLocal(urlData.publicUrl);
+          localStorage.setItem('vh_profile_avatar', urlData.publicUrl);
+          // Update Supabase auth metadata so Google photo is fully replaced
+          await supabase.auth.updateUser({ data: { avatar_url: urlData.publicUrl, picture: urlData.publicUrl } });
+          // Immediately write to user_data.profile so it loads on phone/other devices
+          await saveUserData(user.id, {
+            profile: {
+              avatarUrl: urlData.publicUrl,
+              name:     localStorage.getItem('vh_profile_name')     || '',
+              bio:      localStorage.getItem('vh_profile_bio')      || '',
+              field:    localStorage.getItem('vh_profile_field')    || '',
+              location: localStorage.getItem('vh_profile_location') || '',
+              website:  localStorage.getItem('vh_profile_website')  || '',
+            }
+          });
+        }
+      } catch (_) {} // base64 in localStorage is always the fallback
+    }
   };
 
   const saveProfile = async () => {
     setSaving(true);
-    // Save to localStorage
-    localStorage.setItem('vh_profile_name',     nameVal.trim());
-    localStorage.setItem('vh_profile_bio',       bio.trim());
-    localStorage.setItem('vh_profile_location',  location.trim());
-    localStorage.setItem('vh_profile_website',   website.trim());
-    localStorage.setItem('vh_profile_field',     field.trim());
-    // Save to Supabase if connected
-    if (supabase) {
+    const n = nameVal.trim(), b = bio.trim(), l = location.trim(), w = website.trim(), f = field.trim();
+    localStorage.setItem('vh_profile_name',     n);
+    localStorage.setItem('vh_profile_bio',       b);
+    localStorage.setItem('vh_profile_location',  l);
+    localStorage.setItem('vh_profile_website',   w);
+    localStorage.setItem('vh_profile_field',     f);
+    if (supabase && user?.id) {
       try {
-        await supabase.auth.updateUser({
-          data: { full_name: nameVal.trim(), bio: bio.trim(), location: location.trim(), website: website.trim(), field: field.trim() },
+        await supabase.auth.updateUser({ data: { full_name: n, bio: b, location: l, website: w, field: f } });
+        const av = localStorage.getItem('vh_profile_avatar') || '';
+        await saveUserData(user.id, {
+          profile: { avatarUrl: av.startsWith('data:') ? '' : av, name: n, bio: b, field: f, location: l, website: w }
         });
       } catch (_) {}
     }
@@ -3854,8 +3870,8 @@ function SettingsTab({ user, onSignOut }) {
             <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>
-              {providerAvatar && !avatarLocal ? `Photo from ${user?.app_metadata?.provider || 'account'}: click ✏️ to upload your own` : 'Tap ✏️ to change your photo'}
+            <div style={{ fontSize: 12, color: avatarLocal ? C.green : C.muted, marginBottom: 6, fontWeight: avatarLocal ? 700 : 400 }}>
+              {avatarLocal ? '✓ Your photo is set — shows on your posts & profile' : '📷 Tap the pencil to upload your own photo (replaces the Google one)'}
             </div>
             <div style={{ fontSize: 12, color: '#334155' }}>
               {user?.app_metadata?.provider === 'google' ? '🔗 Signed in with Google' : user?.app_metadata?.provider ? `🔗 ${user.app_metadata.provider}` : '📧 Email account'} · {email}
@@ -3913,12 +3929,22 @@ function SettingsTab({ user, onSignOut }) {
             <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: notifs ? 22 : 2, transition: 'left 0.2s' }} />
           </button>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Vision Canvas privacy</div>
             <div style={{ fontSize: 11, color: C.muted }}>Canvas data is stored securely in your browser</div>
           </div>
           <span style={{ fontSize: 11, color: C.green, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Shield size={11} /> Private</span>
+        </div>
+        {/* App guide */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>App Guide</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Replay the navigation tour that explains each section</div>
+          </div>
+          <Btn size="sm" variant="secondary" onClick={onTour}>
+            <Map size={11} /> Take Tour
+          </Btn>
         </div>
       </Card>
 
@@ -4158,6 +4184,56 @@ function ConnectTab({ canvas, user, feed }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
+// ─── NAV TOUR (first-time navigation guide) ───────────────────────────────────
+function NavTour({ user, onDone }) {
+  const firstName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer').split(' ')[0];
+
+  const FEATURES = [
+    { icon: Home,          color: C.blue,    label: 'Flow',          desc: 'Your peer feed — share progress, see what others are building, and stay motivated together.' },
+    { icon: Lightbulb,     color: C.yellow,  label: 'Vision Canvas', desc: 'Define your big goal and get an AI-built roadmap. Everything in North Star personalises around this.' },
+    { icon: Compass,       color: C.teal,    label: 'Explore',       desc: 'Scholarships, internships, fellowships and programs matched to your field and goals.' },
+    { icon: MessageCircle, color: C.green,   label: 'Connect',       desc: 'Peer group chats — find people at your exact stage and build real connections.' },
+    { icon: Users,         color: C.purple,  label: 'Mentorship',    desc: 'Connect with mentors who have walked your path. Get real guidance, not just advice.' },
+    { icon: Bot,           color: '#EC4899', label: 'North Star AI', desc: 'Your personal AI coach — ask anything about your vision, roadmap, opportunities or growth.' },
+  ];
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,15,30,0.94)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: "'Inter', system-ui, sans-serif", overflowY: 'auto' }}>
+      <div style={{ width: '100%', maxWidth: 580, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: '32px 26px 28px' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <div style={{ fontSize: 44, marginBottom: 10 }}>🌟</div>
+          <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 8px', color: C.text }}>You're in, {firstName}!</h2>
+          <p style={{ fontSize: 14, color: C.muted, margin: 0, lineHeight: 1.65 }}>Here's a quick map of your 6 spaces — each one is built to move you forward.</p>
+        </div>
+
+        {/* Feature cards — 2 col grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 22 }}>
+          {FEATURES.map((f, i) => (
+            <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '13px 13px', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: `${f.color}18`, border: `1px solid ${f.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <f.icon size={15} color={f.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 3 }}>{f.label}</div>
+                <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.55 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <Btn size="lg" onClick={onDone} style={{ width: '100%', justifyContent: 'center', fontSize: 15 }}>
+          Let's go! →
+        </Btn>
+        <p style={{ textAlign: 'center', fontSize: 11, color: '#334155', margin: '10px 0 0' }}>
+          You can replay this guide anytime from <strong style={{ color: C.muted }}>Settings → App Guide</strong>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MainApp({ user, onSignOut }) {
   const [tab, setTab] = useState('flow');
   const [showCoach, setShowCoach] = useState(false);
@@ -4167,6 +4243,7 @@ function MainApp({ user, onSignOut }) {
   const [feed, setFeed] = useState([]);
   const [mentors, setMentors] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
+  const [showNavTour, setShowNavTour] = useState(() => !localStorage.getItem('vh_tour_done'));
 
   // ── Tutor state lifted here so files + timer survive tab switches ──────────
   const [tutorFiles, setTutorFiles] = useState([]);
@@ -4257,6 +4334,14 @@ function MainApp({ user, onSignOut }) {
       if (remote.streak != null) localStorage.setItem('vh_streak', String(remote.streak));
       if (remote.tutor_notes)   localStorage.setItem('vh_tutor_notes', remote.tutor_notes);
       if (remote.vb_goals)      localStorage.setItem('vh_vb', JSON.stringify(remote.vb_goals));
+      // Restore profile fields — avatar, name, bio, field etc.
+      const p = remote.profile || {};
+      if (p.avatarUrl)  localStorage.setItem('vh_profile_avatar',   p.avatarUrl);
+      if (p.name)       localStorage.setItem('vh_profile_name',     p.name);
+      if (p.bio)        localStorage.setItem('vh_profile_bio',      p.bio);
+      if (p.field)      localStorage.setItem('vh_profile_field',    p.field);
+      if (p.location)   localStorage.setItem('vh_profile_location', p.location);
+      if (p.website)    localStorage.setItem('vh_profile_website',  p.website);
     });
   }, [user?.id]);
 
@@ -4271,6 +4356,8 @@ function MainApp({ user, onSignOut }) {
       const uid = userIdRef.current;
       if (!uid) return;
       const get = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || fallback); } catch { return JSON.parse(fallback); } };
+      const avatarRaw = localStorage.getItem('vh_profile_avatar') || '';
+      const avatarUrl = avatarRaw.startsWith('data:') ? '' : avatarRaw; // never sync base64 blobs
       saveUserData(uid, {
         canvas:       get('vh_canvas', 'null'),
         journal:      get('vh_journal', '[]'),
@@ -4280,6 +4367,14 @@ function MainApp({ user, onSignOut }) {
         streak:       parseInt(localStorage.getItem('vh_streak') || '0'),
         tutor_notes:  localStorage.getItem('vh_tutor_notes') || '',
         vb_goals:     get('vh_vb', '[]'),
+        profile: {
+          avatarUrl,
+          name:     localStorage.getItem('vh_profile_name')     || '',
+          bio:      localStorage.getItem('vh_profile_bio')      || '',
+          field:    localStorage.getItem('vh_profile_field')    || '',
+          location: localStorage.getItem('vh_profile_location') || '',
+          website:  localStorage.getItem('vh_profile_website')  || '',
+        },
         ...patch,
       });
     }, 2000);
@@ -4298,6 +4393,8 @@ function MainApp({ user, onSignOut }) {
       const uid = userIdRef.current;
       if (!uid) return;
       const get = (key, fb) => { try { return JSON.parse(localStorage.getItem(key) || fb); } catch { return JSON.parse(fb); } };
+      const avatarRaw2 = localStorage.getItem('vh_profile_avatar') || '';
+      const avatarUrl2 = avatarRaw2.startsWith('data:') ? '' : avatarRaw2;
       saveUserData(uid, {
         canvas:       get('vh_canvas', 'null'),
         journal:      get('vh_journal', '[]'),
@@ -4307,6 +4404,14 @@ function MainApp({ user, onSignOut }) {
         streak:       parseInt(localStorage.getItem('vh_streak') || '0'),
         tutor_notes:  localStorage.getItem('vh_tutor_notes') || '',
         vb_goals:     get('vh_vb', '[]'),
+        profile: {
+          avatarUrl: avatarUrl2,
+          name:     localStorage.getItem('vh_profile_name')     || '',
+          bio:      localStorage.getItem('vh_profile_bio')      || '',
+          field:    localStorage.getItem('vh_profile_field')    || '',
+          location: localStorage.getItem('vh_profile_location') || '',
+          website:  localStorage.getItem('vh_profile_website')  || '',
+        },
       });
     };
     const interval = setInterval(fullSync, 30000);
@@ -4333,7 +4438,7 @@ function MainApp({ user, onSignOut }) {
     reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
     connect:       <ConnectTab canvas={canvas} user={user} feed={feed} />,
-    settings:      <SettingsTab user={user} onSignOut={onSignOut} />,
+    settings:      <SettingsTab user={user} onSignOut={onSignOut} onTour={() => { localStorage.removeItem('vh_tour_done'); setShowNavTour(true); }} />,
   };
 
   const MOBILE_NAV = [
@@ -4383,10 +4488,35 @@ function MainApp({ user, onSignOut }) {
 
       {/* Main content */}
       <main className="vh-main" style={{ flex: 1, overflowY: 'auto', maxHeight: '100vh', marginRight: showCoach ? 380 : 0, transition: 'margin-right 0.3s ease' }}>
+        {/* Desktop: Rest & Recharge button */}
         <div className="vh-topbar-btn" style={{ justifyContent: 'flex-end', marginBottom: 14, gap: 8 }}>
           <button onClick={() => setShowWellbeing(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.teal}10`, border: `1px solid ${C.teal}28`, borderRadius: 8, padding: '7px 14px', cursor: 'pointer', color: C.teal, fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>
             <Wind size={12} /> Rest & Recharge
           </button>
+        </div>
+        {/* Mobile-only top bar: North Star logo + profile avatar */}
+        <div className="vh-mobile-topbar" style={{ display: 'none' }}>
+          <style>{`.vh-mobile-topbar { display: none !important; } @media (max-width: 768px) { .vh-mobile-topbar { display: flex !important; align-items: center; justify-content: space-between; margin-bottom: 14px; } }`}</style>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lightbulb size={14} color="#fff" />
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 900, color: C.text }}>North <span style={{ color: C.blueLight }}>Star</span></span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setShowWellbeing(true)} style={{ background: `${C.teal}14`, border: `1px solid ${C.teal}30`, borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: C.teal, fontSize: 11, fontFamily: 'inherit', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Wind size={11} /> Rest
+            </button>
+            <button onClick={() => setTab('settings')}
+              style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', border: `2px solid ${tab === 'settings' ? C.blueLight : C.border}`, background: C.surface, cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+              {(localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture)
+                ? <img src={localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                    {(user?.user_metadata?.full_name || user?.email || 'U')[0].toUpperCase()}
+                  </div>
+              }
+            </button>
+          </div>
         </div>
         {views[tab]}
       </main>
@@ -4417,6 +4547,14 @@ function MainApp({ user, onSignOut }) {
 
       {showCoach && <AICoachPanel canvas={canvas} onClose={() => setShowCoach(false)} />}
       {showWellbeing && <WellbeingModal onClose={() => setShowWellbeing(false)} />}
+
+      {/* First-time navigation guide */}
+      {showNavTour && (
+        <NavTour user={user} onDone={() => {
+          localStorage.setItem('vh_tour_done', '1');
+          setShowNavTour(false);
+        }} />
+      )}
     </div>
   );
 }
@@ -4426,6 +4564,9 @@ export default function App() {
   // session: undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState(undefined);
   const [entered, setEntered] = useState(() => !!localStorage.getItem('vh_entered'));
+  // appReady: wait for remote data check before deciding to show onboarding wizard
+  // This prevents returning users from seeing the wizard on a new device
+  const [appReady, setAppReady] = useState(!supabase); // skip check if no Supabase
 
   useEffect(() => {
     if (!supabase) {
@@ -4444,18 +4585,52 @@ export default function App() {
     return () => { cancelled = true; clearTimeout(timeout); subscription?.unsubscribe(); };
   }, []);
 
+  // Once session is known, pre-load remote user data so returning users skip onboarding
+  useEffect(() => {
+    if (!supabase) return;
+    if (session === undefined) return; // session still resolving
+    if (!session?.user?.id) { setAppReady(true); return; } // not logged in
+    if (appReady) return; // already checked
+    loadUserData(session.user.id).then(remote => {
+      if (remote) {
+        // Restore canvas & profile so returning users skip the wizard
+        if (remote.canvas)       localStorage.setItem('vh_canvas',          JSON.stringify(remote.canvas));
+        if (remote.xp != null)   localStorage.setItem('vh_xp',              String(remote.xp));
+        if (remote.streak != null) localStorage.setItem('vh_streak',        String(remote.streak));
+        if (remote.journal)      localStorage.setItem('vh_journal',         JSON.stringify(remote.journal));
+        if (remote.tutor_notes)  localStorage.setItem('vh_tutor_notes',     remote.tutor_notes);
+        if (remote.vb_goals)     localStorage.setItem('vh_vb',              JSON.stringify(remote.vb_goals));
+        const p = remote.profile || {};
+        if (p.avatarUrl)  localStorage.setItem('vh_profile_avatar',   p.avatarUrl);
+        if (p.name)       localStorage.setItem('vh_profile_name',     p.name);
+        if (p.bio)        localStorage.setItem('vh_profile_bio',      p.bio);
+        if (p.field)      localStorage.setItem('vh_profile_field',    p.field);
+        if (p.location)   localStorage.setItem('vh_profile_location', p.location);
+        if (p.website)    localStorage.setItem('vh_profile_website',  p.website);
+        // If user has any saved data, they've already done onboarding
+        if (remote.canvas || (remote.xp && remote.xp > 0)) {
+          localStorage.setItem('vh_onboarded', '1');
+          localStorage.setItem('vh_tour_done',   '1'); // also skip the tour for existing users
+        }
+      }
+      setAppReady(true);
+    }).catch(() => setAppReady(true));
+  }, [session, appReady]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSignOut = async () => {
     if (supabase) await supabase.auth.signOut();
     // Clear all app-specific keys so the next user starts completely fresh
     const vhKeys = Object.keys(localStorage).filter(k => k.startsWith('vh_'));
     vhKeys.forEach(k => localStorage.removeItem(k));
     setSession(null);
+    setAppReady(false);
   };
 
-  // Still resolving session: show minimal loader
-  if (session === undefined) {
+  // Loading spinner — shown while session resolves OR while checking remote data
+  if (session === undefined || (supabase && session?.user?.id && !appReady)) {
     return (
       <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <style>{`@keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.2);opacity:1} }`}</style>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
             <Lightbulb size={22} color="#fff" />
@@ -4477,16 +4652,15 @@ export default function App() {
     return <LandingPage onEnter={enter} />;
   }
 
-  // Show onboarding wizard for fresh users (no canvas yet)
+  // Show onboarding wizard only for genuinely new users (no canvas anywhere)
   const hasCanvas = !!localStorage.getItem('vh_canvas');
   const onboardingDone = !!localStorage.getItem('vh_onboarded');
   if (!hasCanvas && !onboardingDone) {
     return (
       <OnboardingWizard
         user={session?.user ?? null}
-        onComplete={(canvas) => {
+        onComplete={() => {
           localStorage.setItem('vh_onboarded', '1');
-          // canvas already saved inside wizard; force re-render
           window.location.reload();
         }}
       />
