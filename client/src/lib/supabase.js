@@ -21,13 +21,25 @@ export async function fetchPosts() {
 
 export async function insertPost({ authorName, authorImg, content, imageUrl, mediaType, userId }) {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('posts')
-    .insert([{ author_name: authorName, author_img: authorImg, content, image_url: imageUrl || null, media_type: mediaType || null, author_id: userId || 'anon' }])
-    .select()
-    .single();
-  if (error) { console.error('insertPost:', error.message); return null; }
-  return normalizePost(data);
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([{
+        author_name: authorName || 'Visionary',
+        author_img: authorImg || null,
+        content: content || '',
+        image_url: imageUrl || null,
+        media_type: mediaType || null,
+        author_id: userId || null,
+      }])
+      .select()
+      .single();
+    if (error) { console.error('insertPost error:', error.message, error.details); return null; }
+    return normalizePost(data);
+  } catch (e) {
+    console.error('insertPost exception:', e.message);
+    return null;
+  }
 }
 
 export async function reactToPost(id, reaction) {
