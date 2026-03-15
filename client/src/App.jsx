@@ -931,18 +931,12 @@ function LandingPage({ onEnter }) {
         <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.blue}44` }}>
           <Lightbulb size={34} color="#fff" />
         </div>
-        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 10, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 12, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Visionary Space
         </h1>
-        <p style={{ fontSize: 20, color: C.text, marginBottom: 12, fontWeight: 700, letterSpacing: -0.3 }}>
-          Stop figuring it out alone.
-        </p>
-        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.8, marginBottom: 14, maxWidth: 500, margin: '0 auto 14px' }}>
-          Students, career switchers, and builders lack the <strong style={{ color: C.text }}>clarity, structure, and support</strong> that matches their stage.<br/>
-          Visionary Space fixes that — with a personal roadmap, AI and mentors tuned to your goals, and a peer community so you're never building alone.
-        </p>
-        <p style={{ fontSize: 13, color: C.blueLight, fontWeight: 700, marginBottom: 30, letterSpacing: 0.3 }}>
-          "Figuring it out" → Clear · Structured · Supported
+        <p style={{ fontSize: 18, color: C.muted, marginBottom: 36, fontWeight: 500, lineHeight: 1.6 }}>
+          Your vision. Your roadmap. Your people.<br/>
+          <span style={{ fontSize: 14 }}>For undergrads & career switchers who are ready to stop guessing and start building.</span>
         </p>
         <Btn onClick={onEnter} size="lg" style={{ fontSize: 16, padding: '14px 36px' }}>
           Start My Journey <ArrowRight size={18} />
