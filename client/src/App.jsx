@@ -275,13 +275,13 @@ function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = f
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const NAV = [
-  { id: 'flow',          icon: Home,       label: 'Flow',            sub: 'Community feed' },
-  { id: 'canvas',        icon: Lightbulb,  label: 'Vision Canvas',   sub: 'Your foundation' },
-  { id: 'opportunities', icon: Compass,    label: 'Opportunities',   sub: 'Discover & apply' },
-  { id: 'tutor',         icon: Brain,      label: 'AI Tutor',        sub: 'Learn & create' },
-  { id: 'mentorship',    icon: Users,      label: 'Mentorship',      sub: 'Expert guidance' },
-  { id: 'roadmap',       icon: Map,        label: 'Life Roadmap',    sub: 'AI path' },
-  { id: 'reflect',       icon: PenLine,    label: 'Reflect',         sub: 'Journal + insights' },
+  { id: 'flow',          icon: Home,       label: 'Flow',            sub: 'Peers at your stage' },
+  { id: 'canvas',        icon: Lightbulb,  label: 'Vision Canvas',   sub: 'Clarity on your direction' },
+  { id: 'opportunities', icon: Compass,    label: 'Opportunities',   sub: 'Programs that match your goal' },
+  { id: 'tutor',         icon: Brain,      label: 'AI Tutor',        sub: 'AI tuned to your vision' },
+  { id: 'mentorship',    icon: Users,      label: 'Mentorship',      sub: 'Guided support for your stage' },
+  { id: 'roadmap',       icon: Map,        label: 'Life Roadmap',    sub: 'Structured path forward' },
+  { id: 'reflect',       icon: PenLine,    label: 'Reflect',         sub: 'Track your growth' },
 ];
 
 function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
@@ -299,7 +299,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
         </div>
         <div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>Visionary</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Space</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Hub</div>
           </div>
         </div>
       </div>
@@ -545,12 +545,18 @@ function OnboardingWizard({ user, onComplete }) {
     // Step 0: Welcome
     <div key={0} style={{ textAlign: 'center', padding: '10px 0' }}>
       <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
-      <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 12px', color: C.text }}>Welcome, {firstName}!</h1>
-      <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-        You've just joined a community of visionaries who refuse to build their futures alone.<br/><br/>
-        Let's take <strong style={{ color: C.blueLight }}>60 seconds</strong> to build your personal Vision Canvas: it unlocks your AI Coach, personalised Roadmap, and Mentor matching.
+      <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 10px', color: C.text }}>Hey {firstName}, you made it.</h1>
+      <p style={{ fontSize: 15, color: C.text, fontWeight: 700, margin: '0 0 10px' }}>
+        You don't have to figure this out alone anymore.
       </p>
-      <Btn size="lg" onClick={() => setStep(1)} style={{ marginBottom: 14 }}>Let's build my vision →</Btn>
+      <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.75, margin: '0 0 10px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+        Most students and career switchers feel overwhelmed — no clear path, no one who gets their stage, no structure.<br/><br/>
+        Visionary Space gives you a <strong style={{ color: C.blueLight }}>vision and roadmap</strong>, AI and mentors tuned to your goals, and peers on the same journey.
+      </p>
+      <p style={{ fontSize: 13, color: C.blueLight, fontWeight: 700, margin: '0 0 24px' }}>
+        Let's take <strong>60 seconds</strong> to build your Vision Canvas — everything personalises from here.
+      </p>
+      <Btn size="lg" onClick={() => setStep(1)} style={{ marginBottom: 14 }}>Build my Vision Canvas →</Btn>
       <br/>
       <button onClick={() => onComplete(null)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>Skip for now</button>
     </div>,
@@ -558,8 +564,8 @@ function OnboardingWizard({ user, onComplete }) {
     // Step 1: Field
     <div key={1}>
       <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Step 1 of 2</div>
-      <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What's your field or career path?</h2>
-      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px' }}>Pick the closest match: personalises your mentors, AI Tutor, and opportunities.</p>
+      <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What are you studying or pursuing?</h2>
+      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px' }}>This tunes your AI tutor, mentors, roadmap and opportunities to your actual stage and field.</p>
       <div style={{ maxHeight: 260, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 7, marginBottom: 14, paddingRight: 2 }}>
         {FIELDS.map(f => (
           <button key={f.label} onClick={() => { setField(f.label); setCustomField(''); }}
@@ -581,8 +587,8 @@ function OnboardingWizard({ user, onComplete }) {
     // Step 2: Big goal
     <div key={2}>
       <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Step 2 of 2</div>
-      <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What's your big goal or ambition?</h2>
-      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>One sentence: be bold. This becomes your personal Vision Canvas.</p>
+      <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What are you trying to achieve?</h2>
+      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>Be honest, be bold. This becomes the centre of your personal roadmap — everything we build points back to it.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
         {[
           'Become a CEO and build a company that impacts millions',
@@ -741,7 +747,7 @@ function AuthPage() {
         </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
         </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
@@ -783,23 +789,28 @@ function AuthPage() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 36 }}>
-          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Lightbulb size={22} color="#fff" />
+        {/* Logo + tagline */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lightbulb size={22} color="#fff" />
+            </div>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
-          </div>
+          <p style={{ fontSize: 12, color: C.muted, textAlign: 'center', margin: 0, maxWidth: 320 }}>Turning "figuring it out" into clear, structured, and supported</p>
         </div>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px' }}>
           <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: C.text, textAlign: 'center' }}>
-            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+            {mode === 'signin' ? 'Welcome back' : 'Your vision. Your path. Your people.'}
           </h2>
-          <p style={{ margin: '0 0 26px', fontSize: 13, color: C.muted, textAlign: 'center' }}>
-            {mode === 'signin' ? 'Sign in to continue your vision journey.' : 'Join visionaries building the future.'}
+          <p style={{ margin: '0 0 26px', fontSize: 13, color: C.muted, textAlign: 'center', lineHeight: 1.6 }}>
+            {mode === 'signin'
+              ? 'Sign in to pick up where you left off.'
+              : 'For undergrads, career switchers & anyone figuring it out — get a clear roadmap, AI tuned to your goals, and peers at your stage. No more going it alone.'}
           </p>
 
           {/* Google OAuth */}
@@ -916,23 +927,37 @@ function AuthPage() {
 function LandingPage({ onEnter }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter', system-ui, sans-serif", color: C.text }}>
-      <div style={{ textAlign: 'center', maxWidth: 560 }}>
+      <div style={{ textAlign: 'center', maxWidth: 580 }}>
         <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.blue}44` }}>
           <Lightbulb size={34} color="#fff" />
         </div>
-        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 8, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 10, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Visionary Space
         </h1>
-        <p style={{ fontSize: 20, color: C.muted, marginBottom: 10, fontWeight: 500 }}>Where vision becomes reality</p>
-        <p style={{ fontSize: 15, color: '#334155', lineHeight: 1.7, marginBottom: 36 }}>The platform where visionaries connect with mentors, build with AI, and turn ideas into impact.</p>
+        <p style={{ fontSize: 20, color: C.text, marginBottom: 12, fontWeight: 700, letterSpacing: -0.3 }}>
+          Stop figuring it out alone.
+        </p>
+        <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.8, marginBottom: 14, maxWidth: 500, margin: '0 auto 14px' }}>
+          Students, career switchers, and builders lack the <strong style={{ color: C.text }}>clarity, structure, and support</strong> that matches their stage.<br/>
+          Visionary Space fixes that — with a personal roadmap, AI and mentors tuned to your goals, and a peer community so you're never building alone.
+        </p>
+        <p style={{ fontSize: 13, color: C.blueLight, fontWeight: 700, marginBottom: 30, letterSpacing: 0.3 }}>
+          "Figuring it out" → Clear · Structured · Supported
+        </p>
         <Btn onClick={onEnter} size="lg" style={{ fontSize: 16, padding: '14px 36px' }}>
-          Enter Visionary Space <ArrowRight size={18} />
+          Start My Journey <ArrowRight size={18} />
         </Btn>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 48 }}>
-          {[['AI-Powered Canvas', Brain], ['Real Mentorship', Users], ['Life Roadmap', Map], ['Community', MessageCircle]].map(([label, Icon]) => (
-            <div key={label} style={{ textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 48, flexWrap: 'wrap' }}>
+          {[
+            ['Vision & Roadmap', Map,         'Your path, structured'],
+            ['AI Tuned to You', Brain,        'Mentors + AI for your stage'],
+            ['Peer Community', MessageCircle,  'Never alone again'],
+            ['Real Opportunities', Compass,   'Programs that match your goal'],
+          ].map(([label, Icon, sub]) => (
+            <div key={label} style={{ textAlign: 'center', minWidth: 100 }}>
               <div style={{ width: 44, height: 44, background: `${C.blue}18`, border: `1px solid ${C.blue}33`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}><Icon size={19} color={C.blueLight} /></div>
-              <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{label}</div>
+              <div style={{ fontSize: 11, color: C.text, fontWeight: 700, marginBottom: 2 }}>{label}</div>
+              <div style={{ fontSize: 10, color: C.muted }}>{sub}</div>
             </div>
           ))}
         </div>
@@ -1364,7 +1389,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
             {canvas?.name ? `${canvas.name.split(' ')[0]}'s Feed` : 'Community Feed'}
           </h1>
-          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Photos & videos · Milestones & visions</p>
+          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Your peer community — share milestones, stay inspired, never go it alone</p>
         </div>
         <button onClick={() => setShowPeerGroups(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.purple}14`, border: `1px solid ${C.purple}30`, borderRadius: 10, padding: '7px 13px', cursor: 'pointer', color: C.purple, fontSize: 12, fontFamily: 'inherit', fontWeight: 700 }}>
@@ -1377,8 +1402,8 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: `${C.blue}0C`, border: `1px solid ${C.blue}22`, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
           <Lightbulb size={18} color={C.blue} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Set up your Vision Canvas</div>
-            <div style={{ fontSize: 11, color: C.muted }}>Personalises your AI Tutor, Roadmap & Coach</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Set your Vision Canvas — it changes everything</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Your goal becomes the centre: AI, roadmap & mentors all tune to it so nothing feels random again</div>
           </div>
           <Btn size="sm" onClick={() => setTab('canvas')}>Start →</Btn>
         </div>
@@ -1582,7 +1607,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           <div style={{ textAlign: 'center', padding: '56px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
             <MessageCircle size={32} color={C.border} style={{ marginBottom: 12 }} />
             <div style={{ color: C.muted, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Be the first to share</div>
-            <div style={{ color: '#334155', fontSize: 12 }}>Post a win, insight, or challenge to inspire the community.</div>
+            <div style={{ color: '#334155', fontSize: 12 }}>Share a win, a challenge, or where you're at — your community is here so you don't have to figure it out alone.</div>
           </div>
         )}
       </div>
