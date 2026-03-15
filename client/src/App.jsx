@@ -288,7 +288,7 @@ const NAV_SECONDARY = [
 ];
 
 function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary';
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer';
   const avatarUrl = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
@@ -491,7 +491,7 @@ function OnboardingWizard({ user, onComplete }) {
   const [goal, setGoal] = useState('');
   const [field, setField] = useState('');
   const [generating, setGenerating] = useState(false);
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Visionary';
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Explorer';
   const firstName = displayName.split(' ')[0];
 
   const FIELDS = [
@@ -1008,7 +1008,7 @@ function PeerGroupsModal({ onClose, canvas, user, feed }) {
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef(null);
 
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
   const avatarUrl = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const toggle = (id) => {
@@ -1403,7 +1403,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   const [mediaDragging, setMediaDragging] = useState(false);
   const mediaInputRef = useRef(null);
 
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
   const avatarUrl   = user?.user_metadata?.avatar_url  || user?.user_metadata?.picture || null;
 
   const dayIdx = new Date().getDay();
@@ -1437,7 +1437,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     }
     setUploadProgress('');
 
-    const authorName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Visionary';
+    const authorName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
     const authorImg  = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
     // 2. Insert into Supabase: everyone can see it in real-time
@@ -1465,9 +1465,6 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false);
   };
 
-  // Unique recent posters for stories bar
-  const recentPosters = [...new globalThis.Map(feed.map(p => [p.authorName, p])).values()].slice(0, 10);
-  const mediaPosts = feed.filter(p => p.mediaUrl);
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -1595,59 +1592,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       {/* ── DAILY BRAIN CHALLENGE ────────────────────────────────────── */}
       <DailyChallengeCard canvas={canvas} user={user} />
 
-      {/* ── STORIES / COMMUNITY ACTIVITY ROW ────────────────────────── */}
-      {(recentPosters.length > 0 || feedLoading) && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1.2 }}>Active in community</div>
-          <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 6 }} className="vh-stories">
-            {feedLoading ? [0,1,2,3,4].map(i => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: C.card }} />
-                <div style={{ width: 36, height: 9, borderRadius: 4, background: C.card }} />
-              </div>
-            )) : recentPosters.map((p, idx) => (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0, cursor: 'pointer' }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', padding: 2, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})` }}>
-                  <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: C.card, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {p.authorImg
-                      ? <img src={p.authorImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
-                      : <span style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{(p.authorName || '?')[0]}</span>
-                    }
-                  </div>
-                </div>
-                <span style={{ fontSize: 10, color: C.muted, maxWidth: 52, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{p.authorName?.split(' ')[0]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── VISUAL SHOWCASE STRIP (Reels-style) ─────────────────────── */}
-      {mediaPosts.length > 0 && (
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1.2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Video size={11} /> Visual Showcase
-          </div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-            {mediaPosts.slice(0, 8).map((p, idx) => (
-              <div key={idx} style={{ width: 140, height: 100, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: '#000', position: 'relative', cursor: 'pointer' }}>
-                {p.mediaType === 'video'
-                  ? <video src={p.mediaUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
-                  : <img src={p.mediaUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                }
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', padding: '20px 7px 6px' }}>
-                  <div style={{ fontSize: 10, color: '#fff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.authorName?.split(' ')[0]}</div>
-                </div>
-                {p.mediaType === 'video' && (
-                  <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.5)', borderRadius: 4, padding: '2px 5px', fontSize: 9, color: '#fff', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Video size={9} /> Reel
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Active community + visual showcase removed — feed speaks for itself */}
 
       {/* ── FEED HEADER ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -3325,7 +3270,7 @@ function ReflectTab({ canvas, user, setTab }) {
                 <>
                   <input value={glowText} onChange={e => setGlowText(e.target.value)} placeholder="Send encouragement, a quote, or a win…" onClick={e => e.stopPropagation()}
                     style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '8px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { const u = canvas?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary'; const img = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null; await insertPost({ authorName: u, authorImg: img, content: `✨ ${glowText.trim()}`, mediaType: null, userId: user?.id || null }); } catch (_) {} setGlowSent(true); }}>
+                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { const u = canvas?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer'; const img = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null; await insertPost({ authorName: u, authorImg: img, content: `✨ ${glowText.trim()}`, mediaType: null, userId: user?.id || null }); } catch (_) {} setGlowSent(true); }}>
                     Send
                   </Btn>
                 </>
@@ -3822,7 +3767,7 @@ function SettingsTab({ user, onSignOut }) {
   const email = user?.email || '';
 
   // Profile fields: persisted in localStorage + Supabase metadata
-  const [nameVal,     setNameVal]     = useState(meta.full_name || meta.name || localStorage.getItem('vh_profile_name') || email.split('@')[0] || 'Visionary');
+  const [nameVal,     setNameVal]     = useState(meta.full_name || meta.name || localStorage.getItem('vh_profile_name') || email.split('@')[0] || 'Explorer');
   const [bio,         setBio]         = useState(meta.bio       || localStorage.getItem('vh_profile_bio') || '');
   const [location,    setLocation]    = useState(meta.location  || localStorage.getItem('vh_profile_location') || '');
   const [website,     setWebsite]     = useState(meta.website   || localStorage.getItem('vh_profile_website') || '');

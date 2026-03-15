@@ -25,7 +25,7 @@ export async function insertPost({ authorName, authorImg, content, imageUrl, med
     const { data, error } = await supabase
       .from('posts')
       .insert([{
-        author_name: authorName || 'Visionary',
+        author_name: authorName || 'Explorer',
         author_img: authorImg || null,
         content: content || '',
         image_url: imageUrl || null,
@@ -182,7 +182,7 @@ function normalizePost(p) {
   return {
     id: p.id,
     authorId: p.author_id || null,
-    authorName: p.author_name || 'Visionary',
+    authorName: p.author_name || 'Explorer',
     authorImg: p.author_img || null,
     content: p.content || '',
     mediaUrl: p.image_url || null,
