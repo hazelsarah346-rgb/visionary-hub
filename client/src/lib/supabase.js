@@ -44,7 +44,8 @@ export async function insertPost({ authorName, authorImg, content, imageUrl, med
 
 export async function reactToPost(id, reaction) {
   if (!supabase) return;
-  // reaction: 'inspired' | 'encouraged' | 'learned'
+  // reaction: 'inspired' | 'encouraged' | 'learned' | 'reflect'
+  if (!['inspired', 'encouraged', 'learned', 'reflect'].includes(reaction)) return;
   const col = reaction; // columns match exactly
   const { data: current } = await supabase.from('posts').select(col).eq('id', id).single();
   const newVal = ((current || {})[col] || 0) + 1;
@@ -134,6 +135,7 @@ function normalizePost(p) {
     inspired: p.inspired || 0,
     encouraged: p.encouraged || 0,
     learned: p.learned || 0,
+    reflect: p.reflect || 0,
     time: p.created_at ? timeAgo(p.created_at) : 'Just now',
   };
 }

@@ -446,13 +446,18 @@ Return ONLY this JSON array (no text before or after, no markdown code blocks):
   {
     "title": "Exact Official Program Name",
     "type": "Scholarship",
-    "amount": "$5,000" or "Fully Funded" or "Varies",
+    "amount": "$5,000 or Fully Funded or Varies",
     "deadline": "Month Year or Rolling",
     "field": "STEM / Business / Any / etc.",
     "url": "https://actual-program-website.org/apply",
+    "homepage": "https://organization-main-website.org",
     "description": "One compelling sentence: who this is for, what you get, and why it's worth applying."
   }
 ]
+
+IMPORTANT on URLs:
+- "url" = the DIRECT application or program page
+- "homepage" = the organization's MAIN website (e.g. chevening.org, fulbright.org, commonwealthfund.org) — where students can bookmark and check back for new opportunities and updates even after this cycle closes
 
 Types must be one of: Scholarship, Grant, Fellowship, Internship, Competition
 Make these genuinely exciting, competitive, and REAL.`;

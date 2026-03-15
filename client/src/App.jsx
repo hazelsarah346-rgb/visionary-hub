@@ -1151,7 +1151,7 @@ function ProfileModal({ author, authorImg, posts, onClose }) {
                     <video src={post.mediaUrl} controls style={{ width: '100%', borderRadius: 8, maxHeight: 200, display: 'block', marginBottom: 8 }} />
                   )}
                   {post.content && <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.65 }}>{post.content}</p>}
-                  <div style={{ fontSize: 10, color: C.muted, marginTop: 6 }}>{post.time || 'Recently'} · {post.inspired || 0} inspired</div>
+                  <div style={{ fontSize: 10, color: C.muted, marginTop: 6 }}>{post.time || 'Recently'}{(post.inspired||0)+(post.encouraged||0)+(post.learned||0)+(post.reflect||0) > 0 ? ` · 🔥${post.inspired||0} 💪${post.encouraged||0} 📚${post.learned||0} 🌱${post.reflect||0}` : ''}</div>
                 </div>
               ))}
             </div>
@@ -1163,7 +1163,14 @@ function ProfileModal({ author, authorImg, posts, onClose }) {
 }
 
 // ─── POST CARD (Instagram-style) ───────────────────────────────────────────────
-function PostCard({ p, isVerifiedMentor, isOwn, inspired, setInspired, setFeed, onDelete, onProfileClick, onPeerGroups }) {
+const REACTIONS = [
+  { key: 'inspired',   emoji: '🔥', label: 'Inspired',  color: C.yellow  },
+  { key: 'encouraged', emoji: '💪', label: 'Encourage', color: '#F97316' },
+  { key: 'learned',    emoji: '📚', label: 'Learn',     color: C.blue    },
+  { key: 'reflect',    emoji: '🌱', label: 'Reflect',   color: C.green   },
+];
+
+function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
@@ -1230,23 +1237,32 @@ function PostCard({ p, isVerifiedMentor, isOwn, inspired, setInspired, setFeed, 
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 4, padding: '10px 12px 12px', alignItems: 'center' }}>
-        <button onClick={() => {
-            if (inspired[key]) return;
-            setInspired(s => ({ ...s, [key]: true }));
-            setFeed(prev => prev.map(x => (x.id === p.id ? { ...x, inspired: (x.inspired || 0) + 1 } : x)));
-            reactToPost(p.id, 'inspired');
-          }}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, background: inspired[key] ? `${C.yellow}18` : 'none', border: `1px solid ${inspired[key] ? C.yellow + '60' : C.border}`, borderRadius: 99, padding: '5px 12px', cursor: 'pointer', color: inspired[key] ? C.yellow : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}>
-          <Flame size={14} fill={inspired[key] ? C.yellow : 'none'} />
-          {(p.inspired || 0) > 0 ? p.inspired : ''} Inspired
-        </button>
+      {/* Reactions */}
+      <div style={{ display: 'flex', gap: 3, padding: '10px 12px 12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        {REACTIONS.map(r => {
+          const reacted = !!(reactions[`${key}_${r.key}`]);
+          const count = (p[r.key] || 0);
+          return (
+            <button key={r.key} onClick={() => {
+                if (reacted) return;
+                setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
+                setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
+                reactToPost(p.id, r.key);
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}18` : 'none', border: `1px solid ${reacted ? r.color + '60' : C.border}`, borderRadius: 99, padding: '5px 10px', cursor: reacted ? 'default' : 'pointer', color: reacted ? r.color : C.muted, fontSize: 11, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s', opacity: reacted ? 1 : 0.85 }}
+              onMouseEnter={e => { if (!reacted) { e.currentTarget.style.background = `${r.color}12`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '50'; }}}
+              onMouseLeave={e => { if (!reacted) { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}}>
+              <span style={{ fontSize: 13 }}>{r.emoji}</span>
+              {count > 0 && <span>{count}</span>}
+              <span>{r.label}</span>
+            </button>
+          );
+        })}
         <button onClick={() => onPeerGroups?.()}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${C.border}`, borderRadius: 99, padding: '5px 12px', cursor: 'pointer', color: C.muted, fontSize: 12, fontFamily: 'inherit', transition: 'all 0.15s' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: `1px solid ${C.border}`, borderRadius: 99, padding: '5px 10px', cursor: 'pointer', color: C.muted, fontSize: 11, fontFamily: 'inherit', transition: 'all 0.15s', marginLeft: 'auto' }}
           onMouseEnter={e => { e.currentTarget.style.background = `${C.purple}14`; e.currentTarget.style.color = C.purple; e.currentTarget.style.borderColor = C.purple + '50'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}>
-          <Users size={13} /> Groups
+          <Users size={12} /> Groups
         </button>
       </div>
     </div>
@@ -1258,7 +1274,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
-  const [inspired, setInspired] = useState({});
+  const [reactions, setReactions] = useState({});
   const [profileModal, setProfileModal] = useState(null); // { author, authorImg }
   const [showPeerGroups, setShowPeerGroups] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
@@ -1322,7 +1338,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       content: content.trim(),
       mediaUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
-      inspired: 0, encouraged: 0, learned: 0, time: 'Just now',
+      inspired: 0, encouraged: 0, learned: 0, reflect: 0, time: 'Just now',
     };
     setFeed(prev => prev.find(p => p.id === newPost.id) ? prev : [newPost, ...prev]);
 
@@ -1448,10 +1464,12 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
             <div style={{ fontSize: 10, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>AI Community Insight</div>
             <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>
               {(() => {
+                const totalReactions = feed.reduce((s, p) => s + (p.inspired||0) + (p.encouraged||0) + (p.learned||0) + (p.reflect||0), 0);
                 const totalInspired = feed.reduce((s, p) => s + (p.inspired || 0), 0);
                 const mediaCount = feed.filter(p => p.mediaUrl).length;
                 const names = [...new Set(feed.map(p => p.authorName?.split(' ')[0]).filter(Boolean))].slice(0, 3);
-                if (totalInspired > 10) return `${totalInspired} inspiration reactions in this community. The energy here is real.`;
+                if (totalReactions > 10) return `${totalReactions} reactions shared in this community — 🔥 inspired, 💪 encouraged, 📚 learned, 🌱 reflected. The energy here is real.`;
+                if (totalInspired > 5) return `${totalInspired} 🔥 inspiration reactions flowing in this feed. Keep building.`;
                 if (mediaCount > 2) return `${mediaCount} posts with photos and videos. This community shows, not just tells.`;
                 if (names.length > 1) return `${names.join(', ')} and others are building in public. Join them.`;
                 return 'Share what you are working on. Consistency in public builds real momentum.';
@@ -1548,7 +1566,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           const isOwn = user?.id && p.authorId === user.id;
           return (
           <PostCard key={p.id || i} p={p} isVerifiedMentor={isVerifiedMentor} isOwn={isOwn}
-            inspired={inspired} setInspired={setInspired} setFeed={setFeed}
+            reactions={reactions} setReactions={setReactions} setFeed={setFeed}
             onDelete={async () => { await deletePost(p.id, user?.id); setFeed(prev => prev.filter(x => x.id !== p.id)); }}
             onProfileClick={(author, img) => setProfileModal({ author, authorImg: img })}
             onPeerGroups={() => setShowPeerGroups(true)} />
@@ -2137,6 +2155,34 @@ function TutorTab({ canvas, files: filesProp, setFiles: setFilesProp,
     creative: ['Give me 5 unconventional ideas', 'Help me think outside the box', 'Challenge my assumptions', 'Brainstorm with me', 'What if I did the opposite?', 'How might I reframe this problem?'],
   };
 
+  // ── Opportunity search inside tutor ────────────────────────────────────────
+  const [oppPanel, setOppPanel] = useState(false);
+  const [oppQuery, setOppQuery] = useState('');
+  const [oppSearching, setOppSearching] = useState(false);
+  const [oppResults, setOppResults] = useState([]);
+  const [oppError, setOppError] = useState('');
+
+  const searchOpps = async (q) => {
+    const query = (q || oppQuery).trim();
+    if (!query) return;
+    setOppSearching(true); setOppError(''); setOppResults([]);
+    const field = canvas?.major || '';
+    const fullQ = field ? `${query} (field: ${field})` : query;
+    try {
+      const r = await fetch('/api/ai/opportunities', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: fullQ, canvas: canvas ? { field: canvas.major, goal: canvas.goal12Month } : null }),
+      });
+      const d = await r.json();
+      const match = (d.result || '').match(/\[[\s\S]*\]/);
+      if (match) {
+        try { setOppResults(JSON.parse(match[0]).map((o, i) => ({ ...o, id: 'to-' + i }))); }
+        catch { setOppError('Could not parse results. Try again.'); }
+      } else { setOppError('No results found. Try a more specific search.'); }
+    } catch { setOppError('Search failed. Check your connection.'); }
+    setOppSearching(false);
+  };
+
   const WELCOME = {
     study:    "Hi! I'm your AI Learning Tutor.\n\nUpload any material on the left: notes, PDFs, images: and ask me anything. I can explain concepts, quiz you, break down complex ideas, or go deep on any topic.\n\nWhat do you want to master today?",
     vision:   `I'm your Vision Coach: let's build strategic clarity.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}": let's sharpen it.` : "You haven't set a vision yet. Let's build one together."}\n\nWhat's the biggest thing you're figuring out right now?`,
@@ -2406,11 +2452,59 @@ function TutorTab({ canvas, files: filesProp, setFiles: setFilesProp,
             <div ref={chatEndRef} />
           </div>
 
-          <div style={{ padding: '7px 14px', borderTop: `1px solid ${C.border}28`, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          <div style={{ padding: '7px 14px', borderTop: `1px solid ${C.border}28`, display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
             {QUICK[mode].map(q => (
               <button key={q} onClick={() => send(q)} style={{ background: `${curMode.color}0C`, border: `1px solid ${curMode.color}25`, color: curMode.color, borderRadius: 99, padding: '4px 10px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, whiteSpace: 'nowrap' }}>{q}</button>
             ))}
+            {(mode === 'career' || mode === 'vision') && (
+              <button onClick={() => { setOppPanel(o => !o); setOppResults([]); setOppError(''); setOppQuery(''); }}
+                style={{ background: oppPanel ? `${C.green}18` : `${C.green}0C`, border: `1px solid ${oppPanel ? C.green : C.green + '30'}`, color: C.green, borderRadius: 99, padding: '4px 11px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Compass size={10} /> Find Opportunities
+              </button>
+            )}
           </div>
+
+          {/* Inline opportunity search panel */}
+          {oppPanel && (mode === 'career' || mode === 'vision') && (
+            <div style={{ margin: '0 12px 10px', background: `${C.green}08`, border: `1px solid ${C.green}25`, borderRadius: 12, padding: '14px 14px 10px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: C.green, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Compass size={10} /> Find Real Opportunities
+              </div>
+              <div style={{ display: 'flex', gap: 7 }}>
+                <input value={oppQuery} onChange={e => setOppQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchOpps()}
+                  placeholder={canvas?.major ? `e.g. scholarships for ${canvas.major}…` : 'e.g. fellowships for Caribbean students…'}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '7px 11px', fontSize: 12, outline: 'none', fontFamily: 'inherit' }} />
+                <Btn size="sm" onClick={() => searchOpps()} disabled={!oppQuery.trim() || oppSearching} style={{ background: C.green, flexShrink: 0 }}>
+                  {oppSearching ? <Spinner /> : <Search size={11} />}
+                </Btn>
+              </div>
+              {/* Quick searches */}
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {['Fully funded scholarships', 'Fellowships open internationally', 'Youth entrepreneurship grants', 'Remote internships'].map(q => (
+                  <button key={q} onClick={() => { setOppQuery(q); searchOpps(q); }}
+                    style={{ background: `${C.green}0A`, border: `1px solid ${C.green}25`, color: C.green, borderRadius: 99, padding: '3px 9px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>{q}</button>
+                ))}
+              </div>
+              {oppError && <div style={{ fontSize: 11, color: '#FCA5A5' }}>{oppError}</div>}
+              {oppSearching && <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', padding: '10px 0' }}>Searching real programs…</div>}
+              {oppResults.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
+                  {oppResults.map(o => (
+                    <div key={o.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: C.text, marginBottom: 3 }}>{o.title}</div>
+                      {o.description && <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.55, marginBottom: 6 }}>{o.description}</div>}
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 7, fontSize: 10 }}>
+                        {o.amount && <span style={{ color: C.green, fontWeight: 700 }}>💰 {o.amount}</span>}
+                        {o.deadline && <span style={{ color: C.yellow }}>📅 {o.deadline}</span>}
+                        {o.field && <span style={{ color: C.muted }}>🎯 {o.field}</span>}
+                      </div>
+                      <ApplyButton url={o.url} institution={o.title} homepage={o.homepage} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <textarea value={input} onChange={e => setInput(e.target.value)} placeholder={files.length ? `Ask about ${viewedFile?.name || 'your material'}…` : 'Ask anything…'} rows={2}
@@ -2969,6 +3063,38 @@ function ReflectTab({ canvas }) {
 }
 
 // ─── OPPORTUNITIES ────────────────────────────────────────────────────────────
+function getHomepage(url) {
+  try { const u = new URL(url); return u.origin; } catch { return null; }
+}
+
+function ApplyButton({ url, institution, homepage: homepageProp }) {
+  const homepage = homepageProp || getHomepage(url);
+  const homepageDisplay = homepage ? homepage.replace(/^https?:\/\//, '').replace(/\/$/, '') : null;
+  const [showFallback, setShowFallback] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <Btn size="sm" style={{ width: '100%', justifyContent: 'center' }}
+        onClick={() => { if (url) { window.open(url, '_blank'); setShowFallback(true); } }}>
+        <ArrowRight size={12} /> Apply Now
+      </Btn>
+      {/* Homepage — always shown as "Stay Updated" */}
+      {homepageDisplay && (
+        <button onClick={() => window.open(homepage, '_blank')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${C.blue}08`, border: `1px solid ${C.blue}25`, borderRadius: 8, padding: '6px 10px', color: C.blueLight, fontSize: 10, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 600, width: '100%' }}>
+          🌐 {homepageDisplay}
+          <span style={{ color: C.muted, fontWeight: 400 }}>· stay updated</span>
+        </button>
+      )}
+      {/* Fallback note after apply is clicked */}
+      {showFallback && (
+        <div style={{ fontSize: 10, color: C.muted, textAlign: 'center', lineHeight: 1.5, padding: '4px 0' }}>
+          ⚠️ Page not loading? Use the homepage above to find the opportunity directly.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OpportunitiesTab({ canvas }) {
   const [oppView, setOppView] = useState('search'); // 'search' | 'posted' | 'submit'
   const [filter, setFilter] = useState('All');
@@ -3211,9 +3337,7 @@ function OpportunitiesTab({ canvas }) {
                     {o.field && <div style={{ fontSize: 11, color: C.muted }}>🎯 {o.field}</div>}
                     {o.eligibility && <div style={{ fontSize: 11, color: C.muted }}>✓ {o.eligibility}</div>}
                   </div>
-                  <Btn size="sm" onClick={() => window.open(o.url, '_blank')} style={{ width: '100%', justifyContent: 'center' }}>
-                    Apply Now →
-                  </Btn>
+                  <ApplyButton url={o.url} institution={o.institution} homepage={o.homepage} />
                 </div>
               );
             })}
@@ -3302,9 +3426,7 @@ function OpportunitiesTab({ canvas }) {
                 {o.field && <span>🎯 {o.field}</span>}
                 {o.deadline && <span>📅 {o.deadline}</span>}
               </div>
-              <Btn size="sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => o.url && window.open(o.url, '_blank')}>
-                <ArrowRight size={12} /> Apply Now
-              </Btn>
+              <ApplyButton url={o.url} institution={o.title} homepage={o.homepage} />
             </Card>
           );
         })}
