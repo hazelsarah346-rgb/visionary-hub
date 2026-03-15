@@ -2052,14 +2052,32 @@ function VisionBoardSection({ canvas }) {
 // ─── LIFE ROADMAP ─────────────────────────────────────────────────────────────
 function RoadmapTab({ canvas }) {
   const [roadmap, setRoadmap] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } });
-  const [loading, setLoading] = useState(false);
-  const [active, setActive] = useState(0);
-  const [done, setDone] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } });
+  const [loading, setLoading]   = useState(false);
+  const [active, setActive]     = useState(0);
+  const [done, setDone]         = useState(() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } });
+  const [chatQ, setChatQ]       = useState('');
+  const [chatA, setChatA]       = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
+
+  // Collect real activity from localStorage to feed the AI
+  const collectActivity = () => {
+    const journalRaw = localStorage.getItem('vh_journal');
+    const journalEntries = (() => { try { return JSON.parse(journalRaw || '[]'); } catch { return []; } })();
+    const tutorNotes    = localStorage.getItem('vh_tutor_notes') || '';
+    const rmDone        = (() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } })();
+    const completedMilestones = Object.values(rmDone).filter(Boolean).length;
+    const firstVisit    = localStorage.getItem('vh_first_visit');
+    const daysActive    = firstVisit ? Math.max(1, Math.floor((Date.now() - Number(firstVisit)) / 86400000)) : 0;
+    if (!localStorage.getItem('vh_first_visit')) localStorage.setItem('vh_first_visit', String(Date.now()));
+    return { journalEntries, tutorNotes, completedMilestones, daysActive };
+  };
 
   const generate = async () => {
     setLoading(true);
     try {
-      const r = await fetch('/api/ai/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canvas }) });
+      const activity = collectActivity();
+      const r = await fetch('/api/ai/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canvas, activity }) });
       const d = await r.json();
       if (d?.phases) { setRoadmap(d); localStorage.setItem('vh_roadmap', JSON.stringify(d)); }
       else setRoadmap(ROADMAP_DEFAULT);
@@ -2067,35 +2085,90 @@ function RoadmapTab({ canvas }) {
     setLoading(false);
   };
 
+  const askRoadmap = async () => {
+    if (!chatQ.trim()) return;
+    setChatLoading(true); setChatA('');
+    try {
+      const activity = collectActivity();
+      const r = await fetch('/api/ai/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canvas, activity, roadmap, mode: 'chat', question: chatQ }) });
+      const d = await r.json();
+      setChatA(d.reply || 'No response. Please try again.');
+    } catch (_) { setChatA('Something went wrong. Check your connection and try again.'); }
+    setChatLoading(false);
+  };
+
   const toggleDone = (k) => { const nd = { ...done, [k]: !done[k] }; setDone(nd); localStorage.setItem('vh_rm_done', JSON.stringify(nd)); };
 
-  const rm = roadmap || ROADMAP_DEFAULT;
-  const ph = rm.phases[active];
+  const rm    = roadmap || ROADMAP_DEFAULT;
+  const ph    = rm.phases[active];
   const color = PHASE_COLORS[active];
   const phaseDone = ph.milestones.filter((_, j) => done[`${active}-${j}`]).length;
+  const totalDone = Object.values(done).filter(Boolean).length;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 4px' }}>Life Roadmap</h1>
-          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI-generated path from your vision to reality</p>
+          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>AI analyses your activity and vision to map your path forward</p>
         </div>
         <Btn onClick={generate} disabled={loading} variant={roadmap ? 'secondary' : 'primary'}>
-          {loading ? <><Spinner />Generating…</> : <><RefreshCw size={13} />{roadmap ? 'Regenerate' : 'Generate AI Roadmap'}</>}
+          {loading ? <><Spinner />Analysing…</> : <><RefreshCw size={13} />{roadmap ? 'Refresh' : 'Generate My Roadmap'}</>}
         </Btn>
       </div>
 
-      <div style={{ background: `linear-gradient(135deg, ${C.blue}18, ${C.purple}0C)`, border: `1px solid ${C.blue}28`, borderRadius: 14, padding: 20, marginBottom: 22 }}>
+      {/* ── AI ACTIVITY INSIGHT ── */}
+      {rm.activityInsight && (
+        <div style={{ background: `${C.purple}0C`, border: `1px solid ${C.purple}28`, borderRadius: 13, padding: '14px 18px', marginBottom: 18, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <Brain size={16} color={C.purple} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 }}>AI Activity Analysis</div>
+            <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.65 }}>{rm.activityInsight}</p>
+            {totalDone > 0 && <div style={{ marginTop: 8, fontSize: 12, color: C.green, fontWeight: 600 }}>✓ {totalDone} milestone{totalDone !== 1 ? 's' : ''} completed — keep going.</div>}
+          </div>
+        </div>
+      )}
+
+      {/* ── NORTH STAR + FIRST STEP ── */}
+      <div style={{ background: `linear-gradient(135deg, ${C.blue}18, ${C.purple}0C)`, border: `1px solid ${C.blue}28`, borderRadius: 14, padding: 20, marginBottom: 20 }}>
         <div style={{ fontSize: 9, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>✦ North Star</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.55, marginBottom: 12 }}>{rm.northStar}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: `${C.green}12`, border: `1px solid ${C.green}30`, borderRadius: 9, padding: '8px 14px' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.55, marginBottom: 14 }}>{rm.northStar}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: `${C.green}12`, border: `1px solid ${C.green}30`, borderRadius: 9, padding: '10px 14px' }}>
           <Zap size={13} color={C.green} />
-          <span style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>First Step: {rm.firstStep}</span>
+          <div>
+            <div style={{ fontSize: 10, color: C.green, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Do this today</div>
+            <span style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>{rm.firstStep}</span>
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 2 }}>
+      {/* ── AI SUGGESTIONS ── */}
+      {rm.suggestions?.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={11} /> Personalised Suggestions
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {rm.suggestions.map((s, i) => (
+              <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ width: 26, height: 26, borderRadius: 8, background: s.priority === 'high' ? `${C.blue}18` : `${C.purple}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 13 }}>{i === 0 ? '🎯' : i === 1 ? '⚡' : i === 2 ? '🔗' : i === 3 ? '📚' : '💡'}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>{s.title}</div>
+                  <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 6 }}>{s.detail}</div>
+                  <div style={{ fontSize: 11, color: C.blueLight, fontWeight: 600 }}>Why: {s.why}</div>
+                </div>
+                {s.priority === 'high' && <div style={{ background: `${C.blue}18`, border: `1px solid ${C.blue}30`, borderRadius: 6, padding: '2px 8px', fontSize: 9, color: C.blueLight, fontWeight: 700, flexShrink: 0 }}>HIGH</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── PHASE TABS ── */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18, overflowX: 'auto', paddingBottom: 2 }}>
         {rm.phases.map((p, i) => (
           <button key={i} onClick={() => setActive(i)}
             style={{ flexShrink: 0, padding: '8px 16px', borderRadius: 9, border: `1px solid ${i === active ? PHASE_COLORS[i] : C.border}`, background: i === active ? `${PHASE_COLORS[i]}18` : 'transparent', color: i === active ? PHASE_COLORS[i] : C.muted, fontWeight: i === active ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
@@ -2104,24 +2177,43 @@ function RoadmapTab({ canvas }) {
         ))}
       </div>
 
-      <div className="vh-grid-2" style={{ gap: 16 }}>
+      {/* ── PHASE DETAIL ── */}
+      <div className="vh-grid-2" style={{ gap: 16, marginBottom: 22 }}>
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 32, height: 32, background: `${color}18`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>{['🌱','⚡','🚀','✦'][active]}</div>
             <div><div style={{ fontWeight: 700, fontSize: 14 }}>{ph.label}</div><div style={{ fontSize: 11, color: C.muted }}>{ph.timeframe}</div></div>
           </div>
           <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>{ph.theme}</p>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 5 }}><span>Progress</span><span>{phaseDone}/{ph.milestones.length}</span></div>
             <div style={{ height: 4, background: C.border, borderRadius: 99 }}>
               <div style={{ height: '100%', background: color, borderRadius: 99, width: `${(phaseDone / ph.milestones.length) * 100}%`, transition: 'width 0.3s' }} />
             </div>
           </div>
-          <div style={{ fontSize: 12, color: C.muted }}><span style={{ fontWeight: 600, color: C.text }}>Focus: </span>{ph.focusArea}</div>
-          <div style={{ marginTop: 12, background: `${color}0A`, border: `1px solid ${color}28`, borderRadius: 9, padding: '9px 12px', fontSize: 11, color: color }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 10 }}><span style={{ fontWeight: 600, color: C.text }}>Focus: </span>{ph.focusArea}</div>
+          <div style={{ background: `${color}0A`, border: `1px solid ${color}28`, borderRadius: 9, padding: '9px 12px', fontSize: 11, color: color, marginBottom: ph.howTo?.length ? 12 : 0 }}>
             <span style={{ fontWeight: 700 }}>Done when: </span>{ph.successSign}
           </div>
+          {ph.howTo?.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => setShowHowTo(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.blueLight, fontSize: 12, fontWeight: 700, fontFamily: 'inherit', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Lightbulb size={12} /> {showHowTo ? 'Hide' : 'How to achieve this phase ↓'}
+              </button>
+              {showHowTo && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {ph.howTo.map((h, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                      <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{h}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Card>
+
         <Card style={{ padding: 20 }}>
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Milestones</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -2139,6 +2231,47 @@ function RoadmapTab({ canvas }) {
             })}
           </div>
         </Card>
+      </div>
+
+      {/* ── ASK THE AI ── */}
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Bot size={15} color={C.purple} /> Ask about your journey
+        </div>
+        <p style={{ fontSize: 12, color: C.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
+          Ask anything specific — "How do I get an internship in {canvas?.major || 'my field'}?", "What should I do this week?", "How do I build a portfolio?"
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: chatA ? 14 : 0 }}>
+          <input value={chatQ} onChange={e => setChatQ(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !chatLoading && askRoadmap()}
+            placeholder={`e.g. "How do I land my first opportunity in ${canvas?.major || 'my field'}?"`}
+            style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+          <Btn onClick={askRoadmap} disabled={!chatQ.trim() || chatLoading} variant="purple">
+            {chatLoading ? <Spinner /> : <><Send size={13} /> Ask</>}
+          </Btn>
+        </div>
+        {chatA && (
+          <div style={{ background: `${C.purple}08`, border: `1px solid ${C.purple}22`, borderRadius: 11, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>AI Coach</div>
+            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{chatA}</div>
+          </div>
+        )}
+        {/* Quick-ask chips */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+          {[
+            'What should I focus on this week?',
+            `How do I build a portfolio in ${canvas?.major || 'my field'}?`,
+            'How do I find a mentor?',
+            'What internships should I apply for?',
+          ].map(q => (
+            <button key={q} onClick={() => { setChatQ(q); }}
+              style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 99, padding: '5px 12px', fontSize: 11, color: C.muted, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.purple + '55'; e.currentTarget.style.color = C.text; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
+              {q}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
