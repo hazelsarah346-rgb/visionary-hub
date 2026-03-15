@@ -332,8 +332,8 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10, border: `1px solid ${C.purple}33`, background: `${C.purple}0A`, cursor: 'pointer', fontFamily: 'inherit' }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: `${C.purple}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color={C.purple} /></div>
           <div style={{ textAlign: 'left', flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>AI Coach</div>
-            <div style={{ fontSize: 10, color: '#7C3AED66' }}>Analyze my progress</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>Vision AI</div>
+            <div style={{ fontSize: 10, color: '#7C3AED66' }}>Your personal guide</div>
           </div>
           <ChevronRight size={11} color={`${C.purple}88`} />
         </button>
@@ -383,8 +383,8 @@ function AICoachPanel({ canvas, onClose }) {
 
   useEffect(() => {
     const intro = contextSummary
-      ? `I've analyzed your profile:\n\n${contextSummary}\n\nHere's what stands out: your vision and goals are clear. The biggest leverage point is usually turning your stated obstacle into a specific 30-day action.\n\nWhat would you like me to dig into? I can analyze your progress, suggest next steps, or challenge your assumptions.`
-      : `I'm your AI Coach: I analyze your progress and help you stay on track.\n\nStart by building your Visionary Canvas so I can give you personalized insights. Or just ask me anything about your goals, strategy, or next steps.`;
+      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm Vision AI — your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal — and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
+      : `Hey 👋 I'm Vision AI — built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything — I won't give you generic answers.`;
     setMessages([{ role: 'ai', content: intro }]);
   }, []);
 
@@ -396,17 +396,42 @@ function AICoachPanel({ canvas, onClose }) {
     setMessages(newMsgs); setInput(''); setLoading(true);
     try {
       const apiMsgs = newMsgs.slice(-10).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-      const system = `You are an elite AI life coach and strategic advisor. You have full context of this user's profile:\n${contextSummary || 'No canvas built yet.'}\n\nYou give specific, honest, strategic coaching. You analyze patterns, challenge assumptions, and give concrete next steps. Be direct and impactful: not generic. Max 150 words per response.`;
+      const system = `You are Vision AI — a sharp, practical advisor built exclusively for undergraduate students and career switchers who are figuring out their path.
+
+Your user's profile:
+${contextSummary || 'No Vision Canvas filled in yet — encourage them to do so for personalised advice.'}
+
+Your purpose:
+- Help them get clarity on what to do next in their career or studies
+- Give real, specific advice on internships, opportunities, portfolios, networking, and skill-building
+- Call out what's actually blocking them — don't just validate
+- Reference their field, vision, and obstacles directly — never give generic advice
+- If they're overwhelmed, help them narrow to ONE next action
+- If they ask about opportunities, name real platforms, programmes, and strategies for their field
+- Be direct, warm, and honest — like a smart older peer who has been through it
+
+Rules:
+- Max 160 words per response
+- Always end with either a question or a single clear action they can take today
+- Never use corporate buzzwords or generic motivational filler
+- If their Canvas is empty, ask them ONE question to understand their situation before advising`;
       const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, mode: 'vision', canvas, fileContent: '' }) });
       const d = await r.json();
-      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Let's dig deeper. What's the real question?" }]);
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Tell me more — what specifically is blocking you right now?" }]);
     } catch (_) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. Keep thinking though: what's your real question?" }]);
+      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. While you wait — write down the ONE thing you most need clarity on right now." }]);
     }
     setLoading(false);
   };
 
-  const QUICK = ['Analyze my progress', 'What should I focus on?', 'Challenge my thinking', 'What\'s my biggest blind spot?', 'Give me a 7-day challenge'];
+  const QUICK = [
+    '🔍 Find opportunities in my field',
+    '📄 Help me improve my resume/CV',
+    '📅 What events should I attend?',
+    '🚀 I feel stuck — where do I start?',
+    '🤝 How do I find a mentor?',
+    '💼 How do I land my first internship?',
+  ];
 
   return (
     <div className="vh-coach-panel" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: 380, background: C.surface, borderLeft: `1px solid ${C.border}`, zIndex: 900, display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(0,0,0,0.4)' }}>
@@ -414,8 +439,8 @@ function AICoachPanel({ canvas, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.purple}, ${C.blue})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Bot size={17} color="#fff" /></div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>AI Coach</div>
-            <div style={{ fontSize: 11, color: C.purple }}>● Analyzing your profile</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>Vision AI</div>
+            <div style={{ fontSize: 11, color: C.purple }}>● Your personal guide</div>
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted }}><X size={18} /></button>
@@ -2282,7 +2307,7 @@ function RoadmapTab({ canvas, setTab }) {
         </div>
         {chatA && (
           <div style={{ background: `${C.purple}08`, border: `1px solid ${C.purple}22`, borderRadius: 11, padding: '14px 16px' }}>
-            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>AI Coach</div>
+            <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Vision AI</div>
             <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{chatA}</div>
           </div>
         )}
