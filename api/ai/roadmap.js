@@ -1,4 +1,4 @@
-import { askClaude } from '../_lib/claude.js';
+import { askAI } from '../_lib/claude.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,7 +49,7 @@ Main Obstacle: ${canvas.obstacle || 'Not specified'}
 12-Month Goal: ${canvas.goal12Month || 'Not specified'}`
       : "A student who wants to build a meaningful career and make a real impact.";
 
-    const result = await askClaude({
+    const result = await askAI({
       system,
       userMessage: canvasText,
       model: 'claude-sonnet-4-6',

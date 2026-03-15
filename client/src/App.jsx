@@ -666,7 +666,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   };
 
   // Unique recent posters for stories bar
-  const recentPosters = [...new Map(feed.map(p => [p.authorName, p])).values()].slice(0, 10);
+  const recentPosters = [...new globalThis.Map(feed.map(p => [p.authorName, p])).values()].slice(0, 10);
   const mediaPosts = feed.filter(p => p.mediaUrl);
 
   return (
@@ -1425,13 +1425,27 @@ function TutorTab({ canvas }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [activeFile, setActiveFile] = useState(null);
+  // Restore saved files from localStorage on mount
+  const [files, setFiles] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('vh_tutor_files') || '[]'); } catch { return []; }
+  });
+  const [activeFile, setActiveFile] = useState(() => {
+    try { const f = JSON.parse(localStorage.getItem('vh_tutor_files') || '[]'); return f[0]?.id || null; } catch { return null; }
+  });
   const [uploading, setUploading] = useState(false);
   const [leftTab, setLeftTab] = useState('document');
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(() => localStorage.getItem('vh_tutor_notes') || '');
   const fileRef = useRef(null);
   const chatEndRef = useRef(null);
+
+  // Persist files to localStorage whenever they change (save content, not blob URLs)
+  useEffect(() => {
+    const saveable = files.map(f => ({ ...f, pdfUrl: null })); // blob URLs expire, strip them
+    localStorage.setItem('vh_tutor_files', JSON.stringify(saveable));
+  }, [files]);
+
+  // Persist notes
+  useEffect(() => { localStorage.setItem('vh_tutor_notes', notes); }, [notes]);
   // ── Growth Lab: Pomodoro timer ────────────────────────────────────────────
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(25 * 60);
@@ -2684,75 +2698,141 @@ function WellbeingModal({ onClose }) {
 
 // ─── SETTINGS / ACCOUNT TAB ───────────────────────────────────────────────────
 function SettingsTab({ user, onSignOut }) {
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary';
-  const avatarUrl   = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
-  const email       = user?.email || '';
-  const initials    = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const meta = user?.user_metadata || {};
+  const providerAvatar = meta.avatar_url || meta.picture || null;
+  const email = user?.email || '';
 
-  const [editName, setEditName]   = useState(false);
-  const [nameVal, setNameVal]     = useState(displayName);
-  const [saved, setSaved]         = useState(false);
-  const [notifs, setNotifs]       = useState(() => { try { return JSON.parse(localStorage.getItem('vh_notifs') || 'true'); } catch { return true; } });
+  // Profile fields — persisted in localStorage + Supabase metadata
+  const [nameVal,     setNameVal]     = useState(meta.full_name || meta.name || localStorage.getItem('vh_profile_name') || email.split('@')[0] || 'Visionary');
+  const [bio,         setBio]         = useState(meta.bio       || localStorage.getItem('vh_profile_bio') || '');
+  const [location,    setLocation]    = useState(meta.location  || localStorage.getItem('vh_profile_location') || '');
+  const [website,     setWebsite]     = useState(meta.website   || localStorage.getItem('vh_profile_website') || '');
+  const [field,       setField]       = useState(meta.field     || localStorage.getItem('vh_profile_field') || '');
+  const [avatarLocal, setAvatarLocal] = useState(localStorage.getItem('vh_profile_avatar') || null);
+  const [saving,      setSaving]      = useState(false);
+  const [saved,       setSaved]       = useState(false);
+  const [notifs,      setNotifs]      = useState(() => { try { return JSON.parse(localStorage.getItem('vh_notifs') || 'true'); } catch { return true; } });
+  const avatarInputRef = useRef(null);
+
+  const avatarUrl = avatarLocal || providerAvatar;
+  const initials  = nameVal.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    // Convert to base64 for localStorage storage
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result;
+      setAvatarLocal(dataUrl);
+      localStorage.setItem('vh_profile_avatar', dataUrl);
+      // Also try to upload to Supabase Storage
+      if (supabase) {
+        try {
+          const ext = file.name.split('.').pop();
+          const path = `avatars/${user.id}.${ext}`;
+          await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+          if (data?.publicUrl) {
+            await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } });
+          }
+        } catch (_) {} // localStorage copy always works
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const saveProfile = async () => {
-    if (supabase && nameVal.trim()) {
-      await supabase.auth.updateUser({ data: { full_name: nameVal.trim() } });
+    setSaving(true);
+    // Save to localStorage
+    localStorage.setItem('vh_profile_name',     nameVal.trim());
+    localStorage.setItem('vh_profile_bio',       bio.trim());
+    localStorage.setItem('vh_profile_location',  location.trim());
+    localStorage.setItem('vh_profile_website',   website.trim());
+    localStorage.setItem('vh_profile_field',     field.trim());
+    // Save to Supabase if connected
+    if (supabase) {
+      try {
+        await supabase.auth.updateUser({
+          data: { full_name: nameVal.trim(), bio: bio.trim(), location: location.trim(), website: website.trim(), field: field.trim() },
+        });
+      } catch (_) {}
     }
-    localStorage.setItem('vh_display_name', nameVal.trim());
-    setEditName(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(false); setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
+
+  const inputStyle = { width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '9px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+  const labelStyle = { fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 5, display: 'block' };
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 4px', color: C.text }}>Account & Settings</h1>
-        <p style={{ color: C.muted, margin: 0, fontSize: 14 }}>Manage your profile, preferences, and account.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 900, margin: '0 0 4px', color: C.text }}>Account & Profile</h1>
+        <p style={{ color: C.muted, margin: 0, fontSize: 14 }}>Build your public profile. Your name and bio are visible in the community feed.</p>
       </div>
 
-      {/* Profile card */}
+      {/* Profile Card */}
       <Card style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.blueLight, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 16 }}>Your Profile</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 20 }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt={displayName} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${C.blue}44`, flexShrink: 0 }} />
-            : <div style={{ width: 72, height: 72, borderRadius: '50%', background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff', flexShrink: 0 }}>{initials}</div>
-          }
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.blueLight, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 18 }}>Your Profile</div>
+
+        {/* Avatar + name row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 22 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt={nameVal} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${C.blue}55` }} />
+              : <div style={{ width: 80, height: 80, borderRadius: '50%', background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: '#fff' }}>{initials}</div>
+            }
+            <button onClick={() => avatarInputRef.current?.click()}
+              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: C.blue, border: `2px solid ${C.surface}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <Edit3 size={12} color="#fff" />
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+          </div>
           <div style={{ flex: 1 }}>
-            {editName ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                <input value={nameVal} onChange={e => setNameVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveProfile()}
-                  style={{ flex: 1, background: C.card, border: `1px solid ${C.blue}55`, borderRadius: 8, color: C.text, padding: '7px 11px', fontSize: 14, outline: 'none', fontFamily: 'inherit', fontWeight: 700 }} autoFocus />
-                <Btn size="sm" onClick={saveProfile}>Save</Btn>
-                <Btn size="sm" variant="secondary" onClick={() => setEditName(false)}>Cancel</Btn>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{nameVal}</span>
-                <button onClick={() => setEditName(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, display: 'flex' }}><Edit3 size={13} /></button>
-                {saved && <span style={{ fontSize: 11, color: C.green, fontWeight: 700 }}>✓ Saved</span>}
-              </div>
-            )}
-            <div style={{ fontSize: 13, color: C.muted }}>{email}</div>
-            <div style={{ fontSize: 11, color: '#334155', marginTop: 4 }}>
-              {user?.app_metadata?.provider === 'google' ? '🔗 Signed in with Google' : user?.app_metadata?.provider ? `🔗 ${user.app_metadata.provider}` : '📧 Email account'}
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>
+              {providerAvatar && !avatarLocal ? `Photo from ${user?.app_metadata?.provider || 'account'} — click ✏️ to upload your own` : 'Tap ✏️ to change your photo'}
+            </div>
+            <div style={{ fontSize: 12, color: '#334155' }}>
+              {user?.app_metadata?.provider === 'google' ? '🔗 Signed in with Google' : user?.app_metadata?.provider ? `🔗 ${user.app_metadata.provider}` : '📧 Email account'} · {email}
             </div>
           </div>
         </div>
 
-        <div style={{ background: `${C.blue}08`, border: `1px solid ${C.blue}18`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: C.blueLight, fontWeight: 700, marginBottom: 6 }}>Profile visibility</div>
-          <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
-            Your name and posts are visible to others in the community. Your email is private. Your Vision Canvas is only visible to you and your AI Coach.
+        {/* Form fields */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+          <div>
+            <label style={labelStyle}>Display Name *</label>
+            <input value={nameVal} onChange={e => setNameVal(e.target.value)} style={inputStyle} placeholder="Your full name" />
+          </div>
+          <div>
+            <label style={labelStyle}>Field / Career Path</label>
+            <input value={field} onChange={e => setField(e.target.value)} style={inputStyle} placeholder="e.g. Tech & Engineering" />
           </div>
         </div>
 
-        {avatarUrl && (
-          <div style={{ fontSize: 11, color: C.muted }}>
-            Profile photo pulled from your {user?.app_metadata?.provider || 'account'}. To change it, update your provider profile.
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Bio (visible to community)</label>
+          <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
+            placeholder="Tell the community who you are, what you're building, and what drives you..." />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+          <div>
+            <label style={labelStyle}>Location</label>
+            <input value={location} onChange={e => setLocation(e.target.value)} style={inputStyle} placeholder="e.g. Kingston, Jamaica" />
           </div>
-        )}
+          <div>
+            <label style={labelStyle}>Website / Portfolio</label>
+            <input value={website} onChange={e => setWebsite(e.target.value)} style={inputStyle} placeholder="https://yoursite.com" />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Btn onClick={saveProfile} disabled={saving}>
+            {saving ? <><Spinner /> Saving…</> : 'Save Profile'}
+          </Btn>
+          {saved && <span style={{ fontSize: 12, color: C.green, fontWeight: 700 }}>✓ Profile saved!</span>}
+        </div>
       </Card>
 
       {/* Preferences */}
@@ -2771,7 +2851,7 @@ function SettingsTab({ user, onSignOut }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Vision Canvas privacy</div>
-            <div style={{ fontSize: 11, color: C.muted }}>Canvas data is stored locally in your browser only</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Canvas data is stored securely in your browser</div>
           </div>
           <span style={{ fontSize: 11, color: C.green, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Shield size={11} /> Private</span>
         </div>
@@ -2784,9 +2864,9 @@ function SettingsTab({ user, onSignOut }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Clear local data</div>
-              <div style={{ fontSize: 11, color: C.muted }}>Removes your Vision Canvas and local preferences from this browser</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Removes Vision Canvas, uploaded notes, and preferences from this device</div>
             </div>
-            <Btn size="sm" variant="secondary" onClick={() => { if (window.confirm('Clear all local data? This cannot be undone.')) { localStorage.clear(); window.location.reload(); } }}>Clear</Btn>
+            <Btn size="sm" variant="secondary" onClick={() => { if (window.confirm('Clear all local data? Your posts stay in the community. This only clears your canvas and saved notes.')) { localStorage.clear(); window.location.reload(); } }}>Clear</Btn>
           </div>
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -2920,13 +3000,19 @@ export default function App() {
 
   useEffect(() => {
     if (!supabase) {
-      // No Supabase configured — skip auth, use legacy enter gate
       setSession(null);
       return;
     }
-    supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s ?? null));
-    return () => subscription.unsubscribe();
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (cancelled) return;
+      setSession(s => (s === undefined ? null : s));
+    }, 4000);
+    supabase.auth.getSession()
+      .then(({ data: { session: s } }) => { if (!cancelled) setSession(s ?? null); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if (!cancelled) setSession(s ?? null); });
+    return () => { cancelled = true; clearTimeout(timeout); subscription?.unsubscribe(); };
   }, []);
 
   const handleSignOut = async () => {

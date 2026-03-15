@@ -1,4 +1,4 @@
-import { askClaude } from '../_lib/claude.js';
+import { askAI } from '../_lib/claude.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -9,16 +9,19 @@ export default async function handler(req, res) {
 
   try {
     const { currentTitle } = req.body || {};
-    const system = `You are a vision clarity coach for student visionaries.
-Rewrite their goal/vision as a single compelling sentence that is:
-- Specific and outcome-focused (not vague like "be successful")
-- Action-oriented (clear, measurable direction)
-- Energizing (makes them feel the possibility)
-- Under 20 words
-If empty input, suggest a powerful starter vision for an ambitious student.`;
+    const system = `You are a vision clarity coach who has helped thousands of students transform vague dreams into magnetic, compelling vision statements.
+
+A powerful vision statement is:
+- SPECIFIC: names a real outcome, not just "be successful"
+- ACTION-ORIENTED: starts with an active verb (Build, Lead, Create, Transform, etc.)
+- EMOTIONALLY RESONANT: makes them feel something when they read it
+- ACHIEVABLE YET AMBITIOUS: stretches them without being fantasy
+- Under 20 words. No clichés. Sounds like THEM.
+
+Return ONLY the refined vision statement — no explanations, no quotes, no extra text.`;
 
     const userMessage = currentTitle || "Help me define my vision.";
-    const refined = await askClaude({ system, userMessage, maxTokens: 100 });
+    const refined = await askAI({ system, userMessage, maxTokens: 100 });
 
     res.json({
       refined: refined || (currentTitle

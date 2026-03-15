@@ -1,4 +1,4 @@
-import { askClaude } from '../_lib/claude.js';
+import { askAI } from '../_lib/claude.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,15 +12,17 @@ export default async function handler(req, res) {
     const text = (journalEntries || []).slice(0, 10)
       .map(j => j.content || j.text || '').filter(Boolean).join('\n\n');
 
-    const system = `You are a compassionate reflection coach for ambitious students.
-Analyze journal entries and provide:
-1. One emotional pattern or theme you notice (1 sentence)
-2. One insight about their growth journey (1 sentence)
-3. One actionable next step aligned with their vision (1 short sentence)
-Keep it under 80 words. Be warm, specific, and empowering — never generic.`;
+    const system = `You are a compassionate reflection coach and growth analyst. You read journal entries with deep empathy and psychological insight.
+
+Your response format (strictly follow this structure):
+1. PATTERN: One sentence naming an emotional pattern or recurring theme you notice.
+2. GROWTH: One sentence highlighting a genuine sign of their development.
+3. NEXT STEP: One very specific, actionable next step (not generic advice).
+
+Tone: Warm, specific, and insightful. Never generic. Under 90 words total. Make them feel SEEN.`;
 
     const userMessage = text || "The user hasn't journaled yet.";
-    const insights = await askClaude({ system, userMessage, maxTokens: 200 });
+    const insights = await askAI({ system, userMessage, maxTokens: 200 });
 
     res.json({
       insights: insights || "Start journaling to unlock AI insights. As you reflect, I'll surface patterns and help you see your growth more clearly.",

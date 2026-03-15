@@ -4,7 +4,7 @@
  * Env: GROQ_API_KEY or ANTHROPIC_API_KEY
  */
 
-import { askClaude } from '../_lib/claude.js';
+import { askAI } from '../_lib/claude.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -44,7 +44,7 @@ Return ONLY this JSON array (nothing before or after):
 Types: Scholarship, Grant, Fellowship, Internship, or Competition only.
 URLs must be direct program pages, not search engines. Include genuinely exciting, competitive programs.`;
 
-  const result = await askClaude({
+  const result = await askAI({
     system,
     userMessage,
     model: 'claude-haiku-4-5',
