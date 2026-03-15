@@ -1422,7 +1422,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   };
 
   const post = async () => {
-    if (!mediaFile) return; // media is required in Flow
+    if (!content.trim() && !mediaFile) return; // need text or media
     if (submitting) return;
     setSubmitting(true);
 
