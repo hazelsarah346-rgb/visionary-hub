@@ -112,8 +112,8 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Lightbulb size={18} color="#fff" />
-          </div>
-          <div>
+        </div>
+        <div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>Visionary</div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Hub</div>
           </div>
@@ -382,7 +382,7 @@ function OnboardingWizard({ user, onComplete }) {
             <span style={{ lineHeight: 1.3 }}>{f.label}</span>
           </button>
         ))}
-      </div>
+        </div>
       {/* Custom field input */}
       <div style={{ marginBottom: 18 }}>
         <input value={customField} onChange={e => { setCustomField(e.target.value); if (e.target.value) setField(''); }}
@@ -408,7 +408,7 @@ function OnboardingWizard({ user, onComplete }) {
           <button key={ex} onClick={() => setGoal(ex)}
             style={{ padding: '9px 13px', borderRadius: 9, border: `1px solid ${goal === ex ? C.blue : C.border}`, background: goal === ex ? `${C.blue}14` : 'transparent', color: goal === ex ? C.blueLight : C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, textAlign: 'left', lineHeight: 1.4 }}>
             "{ex}"
-          </button>
+        </button>
         ))}
       </div>
       <textarea value={goal} onChange={e => setGoal(e.target.value)} rows={2}
@@ -488,11 +488,11 @@ function AuthPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 36 }}>
           <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Lightbulb size={22} color="#fff" />
-          </div>
+        </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
-          </div>
+        </div>
         </div>
 
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px' }}>
