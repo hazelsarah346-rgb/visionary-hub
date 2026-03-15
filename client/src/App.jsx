@@ -33,6 +33,190 @@ const DAILY_PROMPTS = [
   'What did I learn this week that I didn\'t know before?',
 ];
 
+// ─── DAILY CHALLENGES POOL ────────────────────────────────────────────────────
+// 30 psychology-backed challenges — one per day of month
+const CHALLENGE_POOL = [
+  { type: 'Cognitive Reframe',    emoji: '🧠', color: '#8B5CF6', prompt: "Name one belief that's been holding you back. Now argue the OPPOSITE — write 3 reasons why that belief is wrong.", insight: 'cognitive behavioral therapy', xp: 30 },
+  { type: 'Growth Edge',          emoji: '💪', color: '#F59E0B', prompt: "What's the one thing you keep avoiding because it scares you? Write exactly what you would do TODAY if fear wasn't a factor.", insight: 'exposure therapy', xp: 35 },
+  { type: 'Blind Spot Finder',    emoji: '🔍', color: '#EF4444', prompt: "Ask yourself: What am I NOT seeing about my situation right now? What would someone you respect say you're missing?", insight: 'Johari window', xp: 40 },
+  { type: 'Vision Sprint',        emoji: '🎯', color: '#2563EB', prompt: "In the next 5 minutes, write the most vivid description you can of your life 3 years from now. Be dangerously specific.", insight: 'mental contrasting', xp: 30 },
+  { type: 'Thought Experiment',   emoji: '💡', color: '#06B6D4', prompt: "You wake up tomorrow with every resource, connection, and skill you need. What's the FIRST thing you do? What does that tell you about your priorities?", insight: 'possibility thinking', xp: 25 },
+  { type: 'Emotional IQ',         emoji: '❤️', color: '#EC4899', prompt: "Name the emotion you've felt most this week. Where do you feel it in your body? What is it trying to tell you?", insight: 'somatic intelligence', xp: 30 },
+  { type: 'Identity Shift',       emoji: '🦋', color: '#10B981', prompt: "Write 3 sentences starting with 'I am a person who...' that describe who you're BECOMING — not who you've been.", insight: 'identity-based habit change', xp: 35 },
+  { type: 'Gratitude Amplifier',  emoji: '✨', color: '#F59E0B', prompt: "Write about one person who believed in you before you believed in yourself. What would you tell them today?", insight: 'positive psychology', xp: 20 },
+  { type: 'First Principles',     emoji: '⚡', color: '#2563EB', prompt: "Take your biggest current goal. Strip it down to its absolute basics. What is the CORE thing you're actually trying to achieve, underneath all the layers?", insight: 'first-principles thinking', xp: 40 },
+  { type: 'Anti-Goals',           emoji: '🚫', color: '#EF4444', prompt: "What does failure look like for you in 5 years? Describe it in detail. Now — what ONE decision today would guarantee you never get there?", insight: 'inversion thinking', xp: 35 },
+  { type: 'Strengths Audit',      emoji: '💎', color: '#8B5CF6', prompt: "What are you in the top 10% of the people you know at? How could you turn that strength into your biggest opportunity right now?", insight: 'strengths-based psychology', xp: 30 },
+  { type: 'Limiting Story',       emoji: '📖', color: '#EC4899', prompt: "What's the story you keep telling yourself about why you CAN'T? Rewrite it: same facts, but a completely different — and empowering — interpretation.", insight: 'narrative therapy', xp: 40 },
+  { type: 'Energy Audit',         emoji: '🔋', color: '#10B981', prompt: "List 3 things that drain your energy and 3 things that fill it up. What would your life look like if you did MORE of the filling things this week?", insight: 'energy management theory', xp: 25 },
+  { type: 'Decision Matrix',      emoji: '⚖️', color: '#06B6D4', prompt: "You're facing a decision you keep postponing. Apply the 10/10/10 rule: How will you feel about this in 10 minutes, 10 months, 10 years?", insight: 'temporal discounting', xp: 35 },
+  { type: 'Comparison Detox',     emoji: '🌱', color: '#F59E0B', prompt: "Who have you been comparing yourself to? Write about ONE thing YOU have that they don't. What unique path are you on that no one else can take?", insight: 'social comparison theory', xp: 25 },
+  { type: 'Curiosity Spark',      emoji: '🔭', color: '#2563EB', prompt: "What's something in your field that genuinely fascinates you and you still don't fully understand? Write 3 questions you'd love to find answers to.", insight: 'intrinsic motivation', xp: 25 },
+  { type: 'Courage Inventory',    emoji: '🦁', color: '#EF4444', prompt: "Think of the last time you were truly brave. What did you do? What would it look like to be THAT version of yourself in your current situation?", insight: 'self-efficacy theory', xp: 35 },
+  { type: 'Systems Check',        emoji: '⚙️', color: '#8B5CF6', prompt: "You don't rise to your goals — you fall to your systems. Name one daily habit that, if done consistently, would change everything for you.", insight: 'systems thinking', xp: 30 },
+  { type: 'Perspective Shift',    emoji: '🌍', color: '#10B981', prompt: "Describe your current biggest challenge from the perspective of someone 20 years older and wiser looking back at this moment in your life.", insight: 'temporal self-appraisal', xp: 35 },
+  { type: 'Deep Why',             emoji: '🎇', color: '#EC4899', prompt: "Ask 'Why?' five times about your main goal. Start with the goal, then keep asking why until you hit something that genuinely moves you.", insight: '5 Whys — Ikigai', xp: 40 },
+  { type: 'Present Power',        emoji: '🧘', color: '#06B6D4', prompt: "What if this exact moment — with everything you have and don't have — is exactly where you need to be to reach your vision? What would you do differently right now?", insight: 'mindfulness + acceptance', xp: 25 },
+  { type: 'Network Audit',        emoji: '🤝', color: '#2563EB', prompt: "You are the average of the 5 people closest to you. Who are those 5 people? Who do you need to meet to become the person your vision requires?", insight: 'social network theory', xp: 30 },
+  { type: 'Failure Mining',       emoji: '💥', color: '#EF4444', prompt: "Describe a recent failure or setback honestly. Now extract 3 specific lessons that only THAT failure could have taught you. What's the gift inside it?", insight: 'post-traumatic growth', xp: 40 },
+  { type: 'Value Clarity',        emoji: '🏔️', color: '#F59E0B', prompt: "List your top 5 values. Now check: Are your daily actions actually aligned with them? Where's the gap — and what one change would close it?", insight: 'values clarification', xp: 35 },
+  { type: 'Imposter Audit',       emoji: '🎭', color: '#8B5CF6', prompt: "When do you feel like a fraud? Write it honestly. Now write all the EVIDENCE that you actually belong — accomplishments, feedback, skills you've earned.", insight: 'imposter syndrome research', xp: 30 },
+  { type: 'Body Wisdom',          emoji: '🫀', color: '#EC4899', prompt: "Your body keeps score. Right now, is your body tense or relaxed? Energised or depleted? What is it telling you about something you've been ignoring?", insight: 'somatic psychology', xp: 25 },
+  { type: 'Bold Bet',             emoji: '🎲', color: '#10B981', prompt: "What's the BOLDEST version of what you could attempt this month? Not realistic — outrageous. Now write one small step toward THAT version.", insight: 'moonshot thinking', xp: 35 },
+  { type: 'Mentorship Mirror',    emoji: '🪞', color: '#06B6D4', prompt: "Think of your greatest mentor (real or imagined). What advice would they give you about where you're stuck RIGHT NOW?", insight: 'social learning theory', xp: 30 },
+  { type: 'Flow Finder',          emoji: '🌊', color: '#2563EB', prompt: "When were you last completely absorbed in something — time disappeared? What were you doing? How could you engineer more of that into your life this week?", insight: 'flow state — Csikszentmihalyi', xp: 30 },
+  { type: 'Legacy Letter',        emoji: '📜', color: '#F59E0B', prompt: "Write a 3-sentence letter from your 80-year-old self to you — right now. What do they most want you to know about this phase of your life?", insight: 'terror management theory', xp: 40 },
+];
+
+// ─── DAILY CHALLENGE COMPONENT ────────────────────────────────────────────────
+function DailyChallengeCard({ canvas, user }) {
+  const today = new Date().toDateString();
+  const dayOfMonth = new Date().getDate() - 1;
+  const challenge = CHALLENGE_POOL[dayOfMonth % CHALLENGE_POOL.length];
+
+  const storageKey = `vh_challenge_${today}`;
+  const [state, setState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch { return null; }
+    // state: null | { response, feedback, completed }
+  });
+  const [expanded, setExpanded] = useState(false);
+  const [response, setResponse] = useState(state?.response || '');
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(state?.feedback || '');
+
+  // Streak + XP
+  const streak = parseInt(localStorage.getItem('vh_streak') || '0');
+  const xp     = parseInt(localStorage.getItem('vh_xp') || '0');
+
+  const submit = async () => {
+    if (!response.trim() || loading) return;
+    setLoading(true);
+    try {
+      const system = `You are a brilliant psychologist and growth coach who gives the most insightful, personalised feedback on self-reflection exercises.
+
+The user just completed a "${challenge.type}" challenge inspired by ${challenge.insight}.
+Their response shows what they're thinking — your job is to:
+1. Validate what's insightful about what they wrote (be specific, not generic)
+2. Add ONE psychological insight or reframe they may not have considered
+3. Give them ONE concrete action to take within the next 24 hours
+${canvas ? `Context: ${canvas.name || 'Student'}, field: ${canvas.major}, vision: ${canvas.bigVision}` : ''}
+
+Be warm, sharp, and specific. Under 80 words. End with something energising.`;
+
+      const r = await fetch('/api/ai/tutor', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: `Challenge: ${challenge.prompt}\n\nMy response: ${response}` }],
+          mode: 'vision', canvas,
+        }),
+      });
+      const d = await r.json();
+      const fb = d.reply || "That's a powerful reflection. The fact that you engaged deeply with this challenge shows real self-awareness — that's the foundation of everything.";
+      setFeedback(fb);
+
+      // Mark complete, update streak + XP
+      const newState = { response, feedback: fb, completed: true };
+      localStorage.setItem(storageKey, JSON.stringify(newState));
+      setState(newState);
+
+      // Update streak
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const lastDone = localStorage.getItem('vh_last_challenge');
+      const newStreak = lastDone === yesterday.toDateString() ? streak + 1 : 1;
+      localStorage.setItem('vh_streak', String(newStreak));
+      localStorage.setItem('vh_last_challenge', today);
+      localStorage.setItem('vh_xp', String(xp + challenge.xp));
+    } catch (_) {
+      setFeedback("Great reflection. Keep showing up like this — consistency is the whole game.");
+      const newState = { response, feedback: "Great reflection. Keep showing up like this — consistency is the whole game.", completed: true };
+      localStorage.setItem(storageKey, JSON.stringify(newState));
+      setState(newState);
+    }
+    setLoading(false);
+  };
+
+  const isComplete = state?.completed;
+  const currentStreak = parseInt(localStorage.getItem('vh_streak') || '0');
+  const currentXP     = parseInt(localStorage.getItem('vh_xp') || '0');
+
+  return (
+    <div style={{ marginBottom: 20, borderRadius: 18, overflow: 'hidden', border: `1px solid ${challenge.color}33`, background: `linear-gradient(135deg, ${challenge.color}0A, ${C.surface})` }}>
+      {/* Header */}
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, cursor: isComplete ? 'default' : 'pointer' }}
+        onClick={() => !isComplete && setExpanded(e => !e)}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: `${challenge.color}20`, border: `1px solid ${challenge.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+          {challenge.emoji}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: challenge.color, textTransform: 'uppercase', letterSpacing: 1, background: `${challenge.color}18`, padding: '2px 8px', borderRadius: 99 }}>{challenge.type}</span>
+            <span style={{ fontSize: 10, color: C.muted }}>+{challenge.xp} XP</span>
+            {isComplete && <span style={{ fontSize: 10, color: C.green, fontWeight: 700 }}>✓ Done</span>}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: expanded || isComplete ? 'normal' : 'nowrap' }}>
+            Daily Brain Challenge
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+          {currentStreak > 0 && (
+            <span style={{ fontSize: 11, fontWeight: 800, color: C.yellow }}>🔥 {currentStreak}</span>
+          )}
+          <span style={{ fontSize: 10, color: C.muted }}>{currentXP} XP</span>
+        </div>
+      </div>
+
+      {/* Completed view */}
+      {isComplete && (
+        <div style={{ padding: '0 18px 18px' }}>
+          <div style={{ background: `${C.green}10`, border: `1px solid ${C.green}30`, borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.green, marginBottom: 6 }}>YOUR REFLECTION</div>
+            <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{state.response}</p>
+          </div>
+          <div style={{ background: `${challenge.color}10`, border: `1px solid ${challenge.color}25`, borderRadius: 12, padding: '12px 14px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: challenge.color, marginBottom: 6 }}>🤖 AI INSIGHT</div>
+            <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{state.feedback}</p>
+          </div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 10, textAlign: 'center' }}>New challenge tomorrow. Come back! 🌟</div>
+        </div>
+      )}
+
+      {/* Expanded — active challenge */}
+      {!isComplete && expanded && (
+        <div style={{ padding: '0 18px 18px' }}>
+          <div style={{ background: `${challenge.color}0D`, border: `1px solid ${challenge.color}22`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: challenge.color, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 }}>Today's Challenge</div>
+            <p style={{ margin: '0 0 8px', fontSize: 14, color: C.text, lineHeight: 1.7, fontWeight: 500 }}>{challenge.prompt}</p>
+            <div style={{ fontSize: 10, color: C.muted }}>Based on: <em>{challenge.insight}</em></div>
+          </div>
+          <textarea value={response} onChange={e => setResponse(e.target.value)}
+            placeholder="Write your honest reflection here — no judgment, no filter. This is just for you and your growth…"
+            rows={4} style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '12px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.6, boxSizing: 'border-box', marginBottom: 12 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, color: C.muted }}>{response.length < 30 ? 'Keep going — go deeper…' : response.length < 100 ? 'Good start — push further' : '✓ Ready to get your insight'}</span>
+            <Btn onClick={submit} disabled={response.length < 20 || loading} size="sm" style={{ background: `linear-gradient(135deg, ${challenge.color}, ${challenge.color}cc)` }}>
+              {loading ? <><Spinner /> Thinking…</> : <>✨ Get AI Insight</>}
+            </Btn>
+          </div>
+          {feedback && (
+            <div style={{ marginTop: 14, background: `${challenge.color}10`, border: `1px solid ${challenge.color}25`, borderRadius: 12, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: challenge.color, marginBottom: 6 }}>🤖 YOUR INSIGHT</div>
+              <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{feedback}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Collapsed teaser */}
+      {!isComplete && !expanded && (
+        <div style={{ padding: '0 18px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ margin: 0, fontSize: 12, color: C.muted, lineHeight: 1.5, flex: 1, paddingRight: 12 }}>{challenge.prompt.slice(0, 80)}…</p>
+          <Btn size="sm" onClick={() => setExpanded(true)} style={{ flexShrink: 0 }}>Accept 🎯</Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Demo data removed — all data is live from Supabase
 
 const ROADMAP_DEFAULT = {
@@ -778,6 +962,9 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         </div>
         <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
       </div>
+
+      {/* ── DAILY BRAIN CHALLENGE ────────────────────────────────────── */}
+      <DailyChallengeCard canvas={canvas} user={user} />
 
       {/* ── STORIES / COMMUNITY ACTIVITY ROW ────────────────────────── */}
       {(recentPosters.length > 0 || feedLoading) && (
