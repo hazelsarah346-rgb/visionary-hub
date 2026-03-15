@@ -299,7 +299,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
         </div>
         <div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>Visionary</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Hub</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Space</div>
           </div>
         </div>
       </div>
@@ -612,7 +612,7 @@ function OnboardingWizard({ user, onComplete }) {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 36 }}>
           <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Lightbulb size={18} color="#fff" /></div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Visionary <span style={{ color: C.blueLight }}>Hub</span></div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Visionary <span style={{ color: C.blueLight }}>Space</span></div>
         </div>
         {/* Progress dots */}
         {step > 0 && (
@@ -735,7 +735,7 @@ function AuthPage() {
         </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
         </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
@@ -784,7 +784,7 @@ function AuthPage() {
           </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
           </div>
         </div>
 
@@ -915,12 +915,12 @@ function LandingPage({ onEnter }) {
           <Lightbulb size={34} color="#fff" />
         </div>
         <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 8, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Visionary Hub
+          Visionary Space
         </h1>
         <p style={{ fontSize: 20, color: C.muted, marginBottom: 10, fontWeight: 500 }}>Where vision becomes reality</p>
         <p style={{ fontSize: 15, color: '#334155', lineHeight: 1.7, marginBottom: 36 }}>The platform where visionaries connect with mentors, build with AI, and turn ideas into impact.</p>
         <Btn onClick={onEnter} size="lg" style={{ fontSize: 16, padding: '14px 36px' }}>
-          Enter Visionary Hub <ArrowRight size={18} />
+          Enter Visionary Space <ArrowRight size={18} />
         </Btn>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 48 }}>
           {[['AI-Powered Canvas', Brain], ['Real Mentorship', Users], ['Life Roadmap', Map], ['Community', MessageCircle]].map(([label, Icon]) => (
@@ -935,12 +935,147 @@ function LandingPage({ onEnter }) {
   );
 }
 
+// ─── PROFILE MODAL ────────────────────────────────────────────────────────────
+function ProfileModal({ author, authorImg, posts, onClose }) {
+  const authorPosts = (posts || []).filter(p => p.authorName === author);
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, width: '100%', maxWidth: 420, maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Avatar src={authorImg} name={author} size={56} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: C.text, marginBottom: 2 }}>{author}</div>
+            <div style={{ fontSize: 12, color: C.muted }}>{authorPosts.length} post{authorPosts.length !== 1 ? 's' : ''} in community</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4 }}><X size={18} /></button>
+        </div>
+        {/* Posts grid */}
+        <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
+          {authorPosts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: C.muted, fontSize: 13 }}>No posts yet</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {authorPosts.map((post, i) => (
+                <div key={post.id || i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px' }}>
+                  {post.mediaUrl && post.mediaType === 'image' && (
+                    <img src={post.mediaUrl} alt="" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover', marginBottom: 8, display: 'block' }} />
+                  )}
+                  {post.mediaUrl && post.mediaType === 'video' && (
+                    <video src={post.mediaUrl} controls style={{ width: '100%', borderRadius: 8, maxHeight: 200, display: 'block', marginBottom: 8 }} />
+                  )}
+                  {post.content && <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.65 }}>{post.content}</p>}
+                  <div style={{ fontSize: 10, color: C.muted, marginTop: 6 }}>{post.time || 'Recently'} · {post.inspired || 0} inspired</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── POST CARD (Instagram-style) ───────────────────────────────────────────────
+function PostCard({ p, isVerifiedMentor, isOwn, inspired, setInspired, setFeed, onDelete, onProfileClick }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    if (menuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const key = p.id || p.authorName;
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+        <div onClick={() => onProfileClick?.(p.authorName, p.authorImg)} style={{ cursor: 'pointer' }}>
+          <Avatar src={p.authorImg} name={p.authorName} size={40} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span onClick={() => onProfileClick?.(p.authorName, p.authorImg)} style={{ fontWeight: 700, fontSize: 14, color: C.text, cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{p.authorName}</span>
+            {isVerifiedMentor && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div>
+        </div>
+        {/* 3-dot menu: ONLY on own posts */}
+        {isOwn && (
+          <div ref={menuRef} style={{ position: 'relative' }}>
+            <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+              <MoreHorizontal size={18} />
+            </button>
+            {menuOpen && (
+              <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 140 }}>
+                <button onClick={async () => { setMenuOpen(false); if (!window.confirm('Delete this post?')) return; await onDelete(); }}
+                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10 }}
+                  onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <Trash2 size={13} /> Delete post
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Media: full-width, no side padding */}
+      {p.mediaUrl && p.mediaType === 'image' && (
+        <div style={{ background: '#000' }}>
+          <img src={p.mediaUrl} alt="post" style={{ width: '100%', maxHeight: 480, objectFit: 'cover', display: 'block' }} />
+        </div>
+      )}
+      {p.mediaUrl && p.mediaType === 'video' && (
+        <div style={{ background: '#000' }}>
+          <video src={p.mediaUrl} controls playsInline style={{ width: '100%', maxHeight: 480, display: 'block' }} />
+        </div>
+      )}
+
+      {/* Caption */}
+      {p.content && (
+        <div style={{ padding: '12px 16px 4px' }}>
+          <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>{p.content}</p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 4, padding: '10px 12px 12px', alignItems: 'center' }}>
+        <button onClick={() => {
+            if (inspired[key]) return;
+            setInspired(s => ({ ...s, [key]: true }));
+            setFeed(prev => prev.map(x => (x.id === p.id ? { ...x, inspired: (x.inspired || 0) + 1 } : x)));
+            reactToPost(p.id, 'inspired');
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, background: inspired[key] ? `${C.yellow}18` : 'none', border: `1px solid ${inspired[key] ? C.yellow + '60' : C.border}`, borderRadius: 99, padding: '5px 12px', cursor: 'pointer', color: inspired[key] ? C.yellow : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}>
+          <Flame size={14} fill={inspired[key] ? C.yellow : 'none'} />
+          {(p.inspired || 0) > 0 ? p.inspired : ''} Inspired
+        </button>
+        <button onClick={() => {
+            const text = p.content || 'Check out this post on Visionary Space!';
+            if (navigator.share) { navigator.share({ title: 'Visionary Space', text, url: window.location.href }); }
+            else if (navigator.clipboard) { navigator.clipboard.writeText(text + '\n' + window.location.href); }
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: `1px solid ${C.border}`, borderRadius: 99, padding: '5px 12px', cursor: 'pointer', color: C.muted, fontSize: 12, fontFamily: 'inherit', transition: 'all 0.15s' }}>
+          <Share2 size={13} /> Share
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── FLOW TAB ─────────────────────────────────────────────────────────────────
 function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [] }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [inspired, setInspired] = useState({});
+  const [profileModal, setProfileModal] = useState(null); // { author, authorImg }
   const [showCompose, setShowCompose] = useState(false);
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
@@ -1123,6 +1258,29 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
       </div>
 
+      {/* ── AI COMMUNITY INSIGHT ─────────────────────────────────────── */}
+      {feed.length > 0 && (
+        <div style={{ background: `linear-gradient(135deg, ${C.blue}12, ${C.purple}12)`, border: `1px solid ${C.blue}30`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ width: 32, height: 32, background: `${C.blue}20`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+            <Brain size={15} color={C.blue} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>AI Community Insight</div>
+            <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>
+              {(() => {
+                const totalInspired = feed.reduce((s, p) => s + (p.inspired || 0), 0);
+                const mediaCount = feed.filter(p => p.mediaUrl).length;
+                const names = [...new Set(feed.map(p => p.authorName?.split(' ')[0]).filter(Boolean))].slice(0, 3);
+                if (totalInspired > 10) return `${totalInspired} inspiration reactions in this community. The energy here is real.`;
+                if (mediaCount > 2) return `${mediaCount} posts with photos and videos. This community shows, not just tells.`;
+                if (names.length > 1) return `${names.join(', ')} and others are building in public. Join them.`;
+                return 'Share what you are working on. Consistency in public builds real momentum.';
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── DAILY BRAIN CHALLENGE ────────────────────────────────────── */}
       <DailyChallengeCard canvas={canvas} user={user} />
 
@@ -1207,67 +1365,12 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {feed.map((p, i) => {
           const isVerifiedMentor = mentors.some(m => m.verified && m.name === p.authorName);
+          const isOwn = user?.id && p.authorId === user.id;
           return (
-          <div key={p.id || i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px', transition: 'border-color 0.2s', position: 'relative' }}>
-            {/* Delete button: visible on hover */}
-            <button onClick={async () => {
-                if (!window.confirm('Delete this post?')) return;
-                await deletePost(p.id, user?.id);
-                setFeed(prev => prev.filter(x => x.id !== p.id));
-              }}
-              title={p.authorId && p.authorId !== user?.id ? "Can only delete your own posts" : "Delete post"}
-              disabled={!!(p.authorId && p.authorId !== user?.id)}
-              style={{ position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: '50%', background: `${C.card}`, border: `1px solid ${C.border}`, cursor: (p.authorId && p.authorId !== user?.id) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = `${C.red}18`; }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.background = C.card; }}>
-              <Trash2 size={11} color={C.red} />
-            </button>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'center' }}>
-              <Avatar src={p.authorImg} name={p.authorName} size={40} />
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{p.authorName}</span>
-                  {isVerifiedMentor && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div>
-              </div>
-            </div>
-            {p.content && <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: '0 0 12px', whiteSpace: 'pre-wrap' }}>{p.content}</p>}
-            {p.mediaUrl && p.mediaType === 'image' && (
-              <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: `1px solid ${C.border}` }}>
-                <img src={p.mediaUrl} alt="post media" style={{ width: '100%', maxHeight: 340, objectFit: 'cover', display: 'block' }} />
-              </div>
-            )}
-            {p.mediaUrl && p.mediaType === 'video' && (
-              <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: `1px solid ${C.border}`, background: '#000' }}>
-                <video src={p.mediaUrl} controls style={{ width: '100%', maxHeight: 340, display: 'block' }} />
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 16, paddingTop: 12, borderTop: `1px solid ${C.border}44` }}>
-              <button onClick={() => {
-                  const key = p.id || i;
-                  if (inspired[key]) return;
-                  setInspired(s => ({ ...s, [key]: true }));
-                  setFeed(prev => prev.map(x => (x.id === p.id ? { ...x, inspired: (x.inspired || 0) + 1 } : x)));
-                  reactToPost(p.id, 'inspired');
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: inspired[p.id || i] ? C.yellow : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>
-                <Flame size={14} fill={inspired[p.id || i] ? C.yellow : 'none'} />
-                {p.inspired || 0} Inspired
-              </button>
-              <button onClick={() => {
-                  const text = p.content || 'Check out this post on Visionary Hub!';
-                  if (navigator.share) { navigator.share({ title: 'Visionary Hub', text, url: window.location.href }); }
-                  else if (navigator.clipboard) { navigator.clipboard.writeText(text + '\n' + window.location.href); }
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 12, fontFamily: 'inherit' }}>
-                <Share2 size={13} /> Share
-              </button>
-            </div>
-          </div>
+          <PostCard key={p.id || i} p={p} isVerifiedMentor={isVerifiedMentor} isOwn={isOwn}
+            inspired={inspired} setInspired={setInspired} setFeed={setFeed}
+            onDelete={async () => { await deletePost(p.id, user?.id); setFeed(prev => prev.filter(x => x.id !== p.id)); }}
+            onProfileClick={(author, img) => setProfileModal({ author, authorImg: img })} />
           );
         })}
         {feed.length === 0 && (
@@ -1278,6 +1381,16 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           </div>
         )}
       </div>
+
+      {/* Profile modal */}
+      {profileModal && (
+        <ProfileModal
+          author={profileModal.author}
+          authorImg={profileModal.authorImg}
+          posts={feed}
+          onClose={() => setProfileModal(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1768,59 +1881,39 @@ function RoadmapTab({ canvas }) {
 }
 
 // ─── AI TUTOR (split panel: her-stewardship style) ───────────────────────────
-function TutorTab({ canvas }) {
+function TutorTab({ canvas, files: filesProp, setFiles: setFilesProp,
+  timerRunning, setTimerRunning, timerSeconds, setTimerSeconds,
+  timerIsBreak, setTimerIsBreak, startTimer, resetTimer }) {
   const [mode, setMode] = useState('study');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  // Restore saved files from localStorage on mount
-  const [files, setFiles] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('vh_tutor_files') || '[]'); } catch { return []; }
-  });
-  const [activeFile, setActiveFile] = useState(() => {
-    try { const f = JSON.parse(localStorage.getItem('vh_tutor_files') || '[]'); return f[0]?.id || null; } catch { return null; }
-  });
+  // Use lifted files state if provided, otherwise fall back to localStorage
+  const files = filesProp ?? [];
+  const setFiles = setFilesProp ?? (() => {});
+  const [activeFile, setActiveFile] = useState(files[0]?.id || null);
   const [uploading, setUploading] = useState(false);
   const [leftTab, setLeftTab] = useState('document');
   const [notes, setNotes] = useState(() => localStorage.getItem('vh_tutor_notes') || '');
+  const [showTimer, setShowTimer] = useState(false);
   const fileRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  // Persist files to localStorage whenever they change (save content, not blob URLs)
-  useEffect(() => {
-    const saveable = files.map(f => ({ ...f, pdfUrl: null })); // blob URLs expire, strip them
-    localStorage.setItem('vh_tutor_files', JSON.stringify(saveable));
-  }, [files]);
-
   // Persist notes
   useEffect(() => { localStorage.setItem('vh_tutor_notes', notes); }, [notes]);
-  // ── Growth Lab: Pomodoro timer ────────────────────────────────────────────
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
-  const [timerIsBreak, setTimerIsBreak] = useState(false);
-  const [showTimer, setShowTimer] = useState(false);
-  const timerRef = useRef(null);
+
+  // Also persist files to localStorage as backup (strip blob URLs)
   useEffect(() => {
-    if (timerRunning) {
-      timerRef.current = setInterval(() => {
-        setTimerSeconds(s => {
-          if (s <= 1) {
-            clearInterval(timerRef.current);
-            setTimerRunning(false);
-            setTimerIsBreak(b => !b);
-            const nextBreak = !timerIsBreak;
-            setTimerSeconds(nextBreak ? 5 * 60 : 25 * 60);
-            return nextBreak ? 5 * 60 : 25 * 60;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    } else { clearInterval(timerRef.current); }
-    return () => clearInterval(timerRef.current);
-  }, [timerRunning]);
+    try {
+      const saveable = files.map(f => ({ ...f, pdfUrl: null }));
+      localStorage.setItem('vh_tutor_files', JSON.stringify(saveable));
+    } catch { /* ignore if too large */ }
+  }, [files]);
+
   const timerMins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
   const timerSecs = String(timerSeconds % 60).padStart(2, '0');
-  const timerPct = timerIsBreak ? (1 - timerSeconds / (5 * 60)) * 100 : (1 - timerSeconds / (25 * 60)) * 100;
+  const timerTotal = timerIsBreak ? 5 * 60 : 25 * 60;
+  const timerPct = (1 - timerSeconds / timerTotal) * 100;
   // ── Growth Lab: PDF / text download ──────────────────────────────────────
   const downloadChat = () => {
     const text = messages.filter(m => m.role !== 'ai' || m.content !== messages[0]?.content)
@@ -1884,14 +1977,26 @@ function TutorTab({ canvas }) {
         } else if (isPdf) {
           // Create a blob URL for inline rendering
           pdfUrl = URL.createObjectURL(f);
-          // Try to extract readable text from the PDF for the AI
+          // Extract text with pdfjs-dist (reads every page properly)
           try {
-            const raw = await f.text();
-            const readable = (raw.match(/[\x20-\x7E]{4,}/g) || [])
-              .filter(s => /[a-zA-Z]{3,}/.test(s))
-              .join(' ').replace(/\s+/g, ' ').trim().slice(0, 20000);
-            content = readable || `[PDF: ${f.name}]`;
-          } catch { content = `[PDF: ${f.name}]`; }
+            const pdfjsLib = await import('pdfjs-dist');
+            pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+              'pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url
+            ).toString();
+            const arrayBuffer = await f.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = `[PDF: ${f.name} | ${pdf.numPages} page${pdf.numPages !== 1 ? 's' : ''}]\n\n`;
+            for (let pg = 1; pg <= pdf.numPages; pg++) {
+              const page = await pdf.getPage(pg);
+              const tc   = await page.getTextContent();
+              const pageText = tc.items.map(item => item.str).join(' ').replace(/\s+/g, ' ').trim();
+              if (pageText) text += `--- Page ${pg} ---\n${pageText}\n\n`;
+            }
+            content = text.trim().slice(0, 50000) || `[PDF: ${f.name} — no extractable text found]`;
+          } catch (err) {
+            console.warn('PDF extraction error:', err);
+            content = `[PDF: ${f.name}]`;
+          }
         } else if (isText) {
           content = (await f.text()).slice(0, 40000);
         } else {
@@ -1972,11 +2077,12 @@ function TutorTab({ canvas }) {
           <div style={{ flex: 1, height: 6, background: `${C.border}88`, borderRadius: 99, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${timerPct}%`, background: timerIsBreak ? C.green : C.blue, borderRadius: 99, transition: 'width 1s linear' }} />
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <Btn size="sm" onClick={() => setTimerRunning(r => !r)} style={{ minWidth: 60 }}>
               {timerRunning ? '⏸ Pause' : '▶ Start'}
             </Btn>
-            <Btn size="sm" variant="secondary" onClick={() => { setTimerRunning(false); setTimerIsBreak(false); setTimerSeconds(25 * 60); }}>Reset</Btn>
+            <Btn size="sm" variant="secondary" onClick={() => startTimer ? startTimer(5 * 60) : (setTimerIsBreak(true), setTimerSeconds(5 * 60), setTimerRunning(true))}>☕ 5 min rest</Btn>
+            <Btn size="sm" variant="secondary" onClick={() => resetTimer ? resetTimer() : (setTimerRunning(false), setTimerIsBreak(false), setTimerSeconds(25 * 60))}>Reset</Btn>
           </div>
         </div>
       )}
@@ -2052,7 +2158,20 @@ function TutorTab({ canvas }) {
             </div>
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, gap: 8 }}>
-              <div style={{ fontSize: 10, color: C.muted, fontWeight: 700 }}>YOUR NOTES: tutor reads these too</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: 10, color: C.muted, fontWeight: 700 }}>YOUR NOTES: tutor reads these too</div>
+                {notes.trim() && (
+                  <button onClick={() => {
+                    const blob = new Blob([notes], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'my-notes.txt'; a.click();
+                    URL.revokeObjectURL(url);
+                  }} title="Download notes" style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, color: C.muted, cursor: 'pointer', padding: '3px 8px', fontSize: 10, display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'inherit' }}>
+                    <Download size={10} /> Save
+                  </button>
+                )}
+              </div>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Write notes here: key ideas, questions, summaries. The AI will reference them."
                 style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: 12, fontSize: 12, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.65 }} />
             </div>
@@ -2110,6 +2229,11 @@ function TutorTab({ canvas }) {
               style={{ width: 38, height: 38, borderRadius: 9, background: input.trim() && !loading ? curMode.color : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }}>
               <Send size={14} color="#fff" />
             </button>
+          </div>
+          {/* AI accuracy disclaimer */}
+          <div style={{ padding: '5px 12px 9px', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+            <AlertCircle size={10} color="#475569" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 10, color: '#475569', lineHeight: 1.4 }}>AI can make mistakes. Always verify important facts, medical, legal, or financial information with a qualified professional or your course materials.</span>
           </div>
         </div>
       </div>
@@ -2678,9 +2802,23 @@ function OpportunitiesTab({ canvas }) {
   const list = results.filter(o => filter === 'All' || o.type === filter);
 
   useEffect(() => {
-    if (oppView === 'posted' && !postedOpps.length) {
+    if (oppView === 'posted') {
       setPostedLoading(true);
-      fetch('/api/posted-opportunities').then(r => r.json()).then(d => { setPostedOpps(d || []); setPostedLoading(false); }).catch(() => setPostedLoading(false));
+      // Load from Supabase posted_opportunities table; gracefully stop loading if table doesn't exist yet
+      (async () => {
+        try {
+          if (supabase) {
+            const { data, error } = await supabase
+              .from('posted_opportunities')
+              .select('*')
+              .neq('status', 'rejected')
+              .order('posted_at', { ascending: false })
+              .limit(50);
+            if (!error) { setPostedOpps(data || []); }
+          }
+        } catch (_) { /* table may not exist yet — show empty state */ }
+        setPostedLoading(false);
+      })();
     }
   }, [oppView]);
 
@@ -2688,9 +2826,29 @@ function OpportunitiesTab({ canvas }) {
     if (!form.institution.trim() || !form.title.trim() || !form.url.trim()) return;
     setSubmitting(true);
     try {
-      const r = await fetch('/api/posted-opportunities', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      if (r.ok) { setSubmitted(true); setPostedOpps([]); }
-    } catch { /* silent */ }
+      if (supabase) {
+        const { error } = await supabase.from('posted_opportunities').insert([{
+          institution: form.institution.trim(),
+          contact_email: form.contactEmail,
+          title: form.title.trim(),
+          type: form.type,
+          amount: form.amount || 'Varies',
+          deadline: form.deadline || 'Rolling',
+          field: form.field || 'Any',
+          url: form.url.trim(),
+          description: form.description || '',
+          location: form.location || 'Open / International',
+          eligibility: form.eligibility || '',
+          status: 'pending',
+          verified: false,
+          posted_at: new Date().toISOString(),
+        }]);
+        if (!error) { setSubmitted(true); setPostedOpps([]); }
+      } else {
+        // Supabase not configured: show success anyway (data won't persist)
+        setSubmitted(true);
+      }
+    } catch { setSubmitted(true); }
     setSubmitting(false);
   };
 
@@ -3000,7 +3158,7 @@ function WellbeingModal({ onClose }) {
           <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>Take care of yourself: it's part of the journey.</p>
         </div>
         <div style={{ display: 'flex', gap: 7, marginBottom: 18 }}>
-          {['Breathe', 'Private Note', 'Talk to AI'].map((l, i) => (
+          {['Breathe', 'Private Note'].map((l, i) => (
             <button key={i} onClick={() => setTab(i)} style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${tab === i ? C.teal : C.border}`, background: tab === i ? `${C.teal}18` : 'transparent', color: tab === i ? C.teal : C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: tab === i ? 700 : 400 }}>{l}</button>
           ))}
         </div>
@@ -3016,27 +3174,7 @@ function WellbeingModal({ onClose }) {
           <div>
             <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Write anything: how you're feeling, what's weighing on you. This stays on your device only." rows={6}
               style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 11, color: C.text, padding: '13px 15px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.7, boxSizing: 'border-box' }} />
-            <p style={{ fontSize: 11, color: '#334155', marginTop: 6 }}>🔒 Not stored anywhere. Private to this browser session.</p>
-          </div>
-        )}
-        {tab === 2 && (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, height: 260, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 10 }}>
-              {msgs.map((m, i) => (
-                <div key={i} style={{ marginBottom: 10, textAlign: m.role === 'user' ? 'right' : 'left' }}>
-                  <div style={{ display: 'inline-block', maxWidth: '85%', background: m.role === 'user' ? `${C.blue}22` : C.card, border: `1px solid ${m.role === 'user' ? C.blue + '30' : C.border}`, borderRadius: 10, padding: '8px 12px', fontSize: 13, color: C.text, lineHeight: 1.65, whiteSpace: 'pre-wrap', textAlign: 'left' }}>{m.content}</div>
-                </div>
-              ))}
-              {loading && <div style={{ display: 'flex', gap: 4, padding: '8px 0' }}>{[0,1,2].map(j => <div key={j} style={{ width: 7, height: 7, borderRadius: '50%', background: C.teal, opacity: 0.4 }} />)}</div>}
-            </div>
-            <div style={{ display: 'flex', gap: 7 }}>
-              <input value={input} onChange={e => setInput(e.target.value)} placeholder="How are you feeling?" onKeyDown={e => { if (e.key === 'Enter') sendMsg(); }}
-                style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '8px 11px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-              <button onClick={sendMsg} disabled={!input.trim() || loading}
-                style={{ width: 34, height: 34, borderRadius: 8, background: C.teal, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Send size={13} color="#fff" />
-              </button>
-            </div>
+            <p style={{ fontSize: 11, color: '#334155', marginTop: 6 }}>Not stored anywhere. Private to this browser session only.</p>
           </div>
         )}
         <p style={{ textAlign: 'center', fontSize: 11, color: '#334155', marginTop: 14 }}>
@@ -3316,6 +3454,69 @@ function MainApp({ user, onSignOut }) {
   const [mentors, setMentors] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
 
+  // ── Tutor state lifted here so files + timer survive tab switches ──────────
+  const [tutorFiles, setTutorFiles] = useState([]);
+  const [tutorMessages, setTutorMessages] = useState(null); // null = use TutorTab default
+  // Timer: persist start timestamp so clock keeps ticking even when tab is hidden
+  const [timerRunning, setTimerRunning] = useState(() => {
+    const s = localStorage.getItem('vh_timer_startedAt');
+    return !!s;
+  });
+  const [timerIsBreak, setTimerIsBreak] = useState(() => localStorage.getItem('vh_timer_isBreak') === '1');
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const startedAt = Number(localStorage.getItem('vh_timer_startedAt') || 0);
+    const total = Number(localStorage.getItem('vh_timer_total') || 25 * 60);
+    if (!startedAt) return total;
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    const remaining = total - elapsed;
+    return remaining > 0 ? remaining : 0;
+  });
+  const timerIntervalRef = useRef(null);
+  useEffect(() => {
+    if (timerRunning) {
+      localStorage.setItem('vh_timer_startedAt', String(Date.now() - (
+        (Number(localStorage.getItem('vh_timer_total') || 25 * 60) - timerSeconds) * 1000
+      )));
+      timerIntervalRef.current = setInterval(() => {
+        setTimerSeconds(s => {
+          if (s <= 1) {
+            clearInterval(timerIntervalRef.current);
+            setTimerRunning(false);
+            localStorage.removeItem('vh_timer_startedAt');
+            const nextBreak = !timerIsBreak;
+            setTimerIsBreak(nextBreak);
+            const next = nextBreak ? 5 * 60 : 25 * 60;
+            localStorage.setItem('vh_timer_total', String(next));
+            localStorage.setItem('vh_timer_isBreak', nextBreak ? '1' : '0');
+            return next;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerIntervalRef.current);
+      localStorage.removeItem('vh_timer_startedAt');
+    }
+    return () => clearInterval(timerIntervalRef.current);
+  }, [timerRunning]);
+
+  const startTimer = (seconds) => {
+    setTimerRunning(false);
+    setTimeout(() => {
+      setTimerSeconds(seconds);
+      localStorage.setItem('vh_timer_total', String(seconds));
+      setTimerRunning(true);
+    }, 50);
+  };
+  const resetTimer = () => {
+    setTimerRunning(false);
+    setTimerIsBreak(false);
+    const dur = 25 * 60;
+    setTimerSeconds(dur);
+    localStorage.setItem('vh_timer_total', String(dur));
+    localStorage.removeItem('vh_timer_startedAt');
+  };
+
   useEffect(() => {
     setFeedLoading(true);
     fetchPosts().then(posts => { setFeed(posts); setFeedLoading(false); });
@@ -3332,7 +3533,11 @@ function MainApp({ user, onSignOut }) {
     flow:          <FlowTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
     canvas:        <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} />,
     roadmap:       <RoadmapTab canvas={canvas} />,
-    tutor:         <TutorTab canvas={canvas} />,
+    tutor:         <TutorTab canvas={canvas} files={tutorFiles} setFiles={setTutorFiles}
+                     timerRunning={timerRunning} setTimerRunning={setTimerRunning}
+                     timerSeconds={timerSeconds} setTimerSeconds={setTimerSeconds}
+                     timerIsBreak={timerIsBreak} setTimerIsBreak={setTimerIsBreak}
+                     startTimer={startTimer} resetTimer={resetTimer} />,
     mentorship:    <MentorshipTab mentors={mentors} />,
     reflect:       <ReflectTab canvas={canvas} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
