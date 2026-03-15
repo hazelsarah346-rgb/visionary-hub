@@ -1325,13 +1325,13 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         )}
       </div>
 
-      {/* Media: full-width, no side padding */}
-      {p.mediaUrl && p.mediaType === 'image' && (
+      {/* Media: full-width — skip blob: URLs (they expire and show as black broken images) */}
+      {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'image' && (
         <div style={{ background: '#000' }}>
-          <img src={p.mediaUrl} alt="post" style={{ width: '100%', maxHeight: 480, objectFit: 'cover', display: 'block' }} />
+          <img src={p.mediaUrl} alt="post" style={{ width: '100%', maxHeight: 480, objectFit: 'cover', display: 'block' }} onError={e => { e.target.parentElement.style.display = 'none'; }} />
         </div>
       )}
-      {p.mediaUrl && p.mediaType === 'video' && (
+      {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'video' && (
         <ReelPlayer src={p.mediaUrl} />
       )}
 
@@ -1426,14 +1426,17 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
     if (submitting) return;
     setSubmitting(true);
 
-    // 1. Upload media to Supabase Storage if we have a file
+    // 1. Upload media to Supabase Storage
     let hostedUrl = null;
     if (mediaFile) {
       setUploadProgress('Uploading media…');
       hostedUrl = await uploadMedia(mediaFile);
-      if (!hostedUrl && mediaPreview) {
-        // Storage bucket not set up yet: use local blob URL as temporary fallback
-        hostedUrl = mediaPreview.url;
+      if (!hostedUrl) {
+        // Upload failed — don't save a blob URL (it expires immediately)
+        setUploadProgress('');
+        alert('Media upload failed. Please make sure the "media" storage bucket exists in Supabase (Dashboard → Storage → New bucket → name: "media" → Public ✓). Try again after creating it.');
+        setSubmitting(false);
+        return;
       }
     }
     setUploadProgress('');
