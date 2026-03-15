@@ -275,10 +275,11 @@ function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = f
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const NAV = [
-  { id: 'flow',          icon: Home,       label: 'Flow',            sub: 'Peers at your stage' },
-  { id: 'canvas',        icon: Lightbulb,  label: 'Vision Canvas',   sub: 'Your vision & roadmap' },
-  { id: 'opportunities', icon: Compass,    label: 'Opportunities',   sub: 'Programs that match your goal' },
-  { id: 'mentorship',    icon: Users,      label: 'Mentorship',      sub: 'Guided support for your stage' },
+  { id: 'flow',          icon: Home,            label: 'Flow',            sub: 'Peers at your stage' },
+  { id: 'canvas',        icon: Lightbulb,       label: 'Vision Canvas',   sub: 'Your vision & roadmap' },
+  { id: 'opportunities', icon: Compass,         label: 'Opportunities',   sub: 'Programs that match your goal' },
+  { id: 'mentorship',    icon: Users,           label: 'Mentorship',      sub: 'Guided support for your stage' },
+  { id: 'connect',       icon: MessageCircle,   label: 'Connect',         sub: 'Chat with your peers' },
 ];
 // Reflect & Roadmap are accessed from Vision Canvas shortcut cards
 
@@ -297,12 +298,12 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
       {/* Logo */}
       <div style={{ padding: '18px 16px 12px', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Star size={18} color={C.yellow} fill={C.yellow} />
+          <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Lightbulb size={18} color="#fff" />
         </div>
         <div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>North</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, lineHeight: 1.1 }}>Star</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Star</div>
           </div>
         </div>
       </div>
@@ -647,8 +648,8 @@ function OnboardingWizard({ user, onComplete }) {
       <div style={{ width: '100%', maxWidth: 520 }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 36 }}>
-          <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Star size={18} color={C.yellow} fill={C.yellow} /></div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>North <span style={{ color: C.yellow }}>Star</span></div>
+          <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Lightbulb size={18} color="#fff" /></div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>North <span style={{ color: C.blueLight }}>Star</span></div>
         </div>
         {/* Progress dots */}
         {step > 0 && (
@@ -770,12 +771,12 @@ function AuthPage() {
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
-          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Star size={22} color={C.yellow} fill={C.yellow} />
+          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Lightbulb size={22} color="#fff" />
         </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>North</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
         </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
@@ -820,12 +821,12 @@ function AuthPage() {
         {/* Logo + tagline */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Star size={22} color={C.yellow} fill={C.yellow} />
+            <div style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lightbulb size={22} color="#fff" />
             </div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>North</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: C.yellow, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Star</div>
             </div>
           </div>
           <p style={{ fontSize: 12, color: C.muted, textAlign: 'center', margin: 0, maxWidth: 320 }}>Turning "figuring it out" into clear, structured, and supported</p>
@@ -956,10 +957,10 @@ function LandingPage({ onEnter }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter', system-ui, sans-serif", color: C.text }}>
       <div style={{ textAlign: 'center', maxWidth: 580 }}>
-        <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, #1E3A5F, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.yellow}44` }}>
-          <Star size={34} color={C.yellow} fill={C.yellow} />
+        <div style={{ width: 72, height: 72, background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: `0 0 60px ${C.blue}44` }}>
+          <Lightbulb size={34} color="#fff" />
         </div>
-        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 12, background: `linear-gradient(135deg, ${C.text}, ${C.yellow})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <h1 style={{ fontSize: 42, fontWeight: 900, letterSpacing: -1, marginBottom: 12, background: `linear-gradient(135deg, ${C.text}, ${C.blueLight})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           North Star
         </h1>
         <p style={{ fontSize: 18, color: C.muted, marginBottom: 36, fontWeight: 500, lineHeight: 1.6 }}>
@@ -3981,6 +3982,181 @@ function SettingsTab({ user, onSignOut }) {
   );
 }
 
+// ─── CONNECT TAB (peer group chats as a full page) ────────────────────────────
+function ConnectTab({ canvas, user, feed }) {
+  const [joined, setJoined] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('vh_peer_groups') || '[]'); } catch { return []; }
+  });
+  const [activeGroup, setActiveGroup] = useState(null);
+  const [groupMsgs, setGroupMsgs] = useState({});
+  const [chatInput, setChatInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
+  const avatarUrl = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+
+  const toggle = (id) => {
+    const next = joined.includes(id) ? joined.filter(x => x !== id) : [...joined, id];
+    setJoined(next);
+    localStorage.setItem('vh_peer_groups', JSON.stringify(next));
+  };
+
+  const openGroup = async (g) => {
+    setActiveGroup(g);
+    setChatInput('');
+    if (supabase) {
+      const { data } = await supabase
+        .from('group_messages')
+        .select('*')
+        .eq('group_id', g.id)
+        .order('created_at', { ascending: true })
+        .limit(80);
+      setGroupMsgs(prev => ({ ...prev, [g.id]: data || [] }));
+    }
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
+  const sendMsg = async () => {
+    if (!chatInput.trim() || sending || !activeGroup) return;
+    setSending(true);
+    const msg = {
+      group_id: activeGroup.id,
+      author_name: displayName,
+      author_img: avatarUrl || null,
+      author_id: user?.id || null,
+      content: chatInput.trim(),
+      created_at: new Date().toISOString(),
+    };
+    setGroupMsgs(prev => ({ ...prev, [activeGroup.id]: [...(prev[activeGroup.id] || []), { ...msg, id: `tmp-${Date.now()}` }] }));
+    setChatInput('');
+    if (supabase) await supabase.from('group_messages').insert([msg]);
+    setSending(false);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+  };
+
+  useEffect(() => {
+    if (!supabase || !activeGroup) return;
+    const channel = supabase.channel(`ct-${activeGroup.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${activeGroup.id}` }, payload => {
+        setGroupMsgs(prev => {
+          const existing = prev[activeGroup.id] || [];
+          if (existing.find(m => m.id === payload.new.id)) return prev;
+          return { ...prev, [activeGroup.id]: [...existing, payload.new] };
+        });
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [activeGroup]);
+
+  const msgs = activeGroup ? (groupMsgs[activeGroup.id] || []) : [];
+
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto', height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        {activeGroup && (
+          <button onClick={() => setActiveGroup(null)} style={{ width: 36, height: 36, borderRadius: '50%', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.blueLight}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+            <ChevronLeft size={18} color={C.text} />
+          </button>
+        )}
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
+            {activeGroup ? `${activeGroup.emoji} ${activeGroup.name}` : 'Connect'}
+          </h1>
+          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
+            {activeGroup ? activeGroup.desc : 'Join a group and chat with peers on the same journey'}
+          </p>
+        </div>
+      </div>
+
+      {!activeGroup ? (
+        /* ── Group list ── */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+          {PEER_GROUPS.map(g => {
+            const isJoined = joined.includes(g.id);
+            return (
+              <div key={g.id} style={{ background: C.surface, border: `1px solid ${isJoined ? g.color + '60' : C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 14, background: g.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.emoji}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.name}</div>
+                    <div style={{ fontSize: 12, color: C.muted }}>{g.desc}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <button onClick={() => toggle(g.id)}
+                      style={{ padding: '6px 14px', borderRadius: 99, border: `1px solid ${isJoined ? g.color : C.border}`, background: isJoined ? g.color + '18' : 'transparent', color: isJoined ? g.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {isJoined ? '✓ Joined' : 'Join'}
+                    </button>
+                    {isJoined && (
+                      <button onClick={() => openGroup(g)}
+                        style={{ padding: '6px 14px', borderRadius: 99, border: 'none', background: g.color, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Chat →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {!supabase && (
+            <div style={{ textAlign: 'center', padding: '20px', fontSize: 12, color: C.muted, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>
+              Connect Supabase to enable live group chat. You can still join groups locally.
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── Chat view ── */
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 18, overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {msgs.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>{activeGroup.emoji}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 6 }}>Start the conversation</div>
+                <div style={{ fontSize: 13, color: C.muted }}>Introduce yourself to {activeGroup.name}!</div>
+              </div>
+            )}
+            {msgs.map((m, i) => {
+              const isMe = m.author_id === user?.id || m.author_name === displayName;
+              return (
+                <div key={m.id || i} style={{ display: 'flex', gap: 9, flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end' }}>
+                  <Avatar src={m.author_img} name={m.author_name} size={32} />
+                  <div style={{ maxWidth: '72%' }}>
+                    {!isMe && <div style={{ fontSize: 10, color: C.muted, marginBottom: 3, marginLeft: 4 }}>{m.author_name}</div>}
+                    <div style={{ background: isMe ? activeGroup.color + '28' : C.card, border: `1px solid ${isMe ? activeGroup.color + '50' : C.border}`, borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '9px 13px', fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {m.content}
+                    </div>
+                    <div style={{ fontSize: 10, color: C.muted, marginTop: 3, textAlign: isMe ? 'right' : 'left', paddingInline: 4 }}>
+                      {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef} />
+          </div>
+          {/* Input */}
+          <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, alignItems: 'flex-end', background: C.surface }}>
+            <Avatar src={avatarUrl} name={displayName} size={32} />
+            <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
+              placeholder={`Message ${activeGroup.name}…`} rows={1}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
+              style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.5 }} />
+            <button onClick={sendMsg} disabled={!chatInput.trim() || sending}
+              style={{ width: 40, height: 40, borderRadius: 12, background: chatInput.trim() && !sending ? activeGroup.color : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
+              <Send size={16} color="#fff" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 function MainApp({ user, onSignOut }) {
   const [tab, setTab] = useState('flow');
@@ -4156,14 +4332,16 @@ function MainApp({ user, onSignOut }) {
     mentorship:    <MentorshipTab mentors={mentors} />,
     reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
+    connect:       <ConnectTab canvas={canvas} user={user} feed={feed} />,
     settings:      <SettingsTab user={user} onSignOut={onSignOut} />,
   };
 
   const MOBILE_NAV = [
-    { id: 'flow',         icon: Home,      label: 'Flow' },
-    { id: 'canvas',       icon: Lightbulb, label: 'Canvas' },
-    { id: 'opportunities',icon: Compass,   label: 'Explore' },
-    { id: 'mentorship',   icon: Users,     label: 'Mentors' },
+    { id: 'flow',         icon: Home,           label: 'Flow' },
+    { id: 'canvas',       icon: Lightbulb,      label: 'Canvas' },
+    { id: 'opportunities',icon: Compass,        label: 'Explore' },
+    { id: 'connect',      icon: MessageCircle,  label: 'Connect' },
+    { id: 'mentorship',   icon: Users,          label: 'Mentors' },
   ];
 
   return (
