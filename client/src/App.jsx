@@ -1860,6 +1860,32 @@ function CanvasTab({ canvas, setCanvas, setTab }) {
         </div>
       )}
 
+      {/* Quick-access: Roadmap + Reflect */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+        <button onClick={() => setTab?.('roadmap')}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: `${C.blue}0A`, border: `1px solid ${C.blue}25`, borderRadius: 13, cursor: 'pointer', fontFamily: 'inherit', color: C.text, textAlign: 'left', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.blue + '66'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.blue + '25'}>
+          <Map size={18} color={C.blueLight} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>My Roadmap</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Your structured path forward</div>
+          </div>
+          <ChevronRight size={14} color={C.muted} style={{ marginLeft: 'auto' }} />
+        </button>
+        <button onClick={() => setTab?.('reflect')}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 13, cursor: 'pointer', fontFamily: 'inherit', color: C.text, textAlign: 'left', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.purple + '66'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.purple + '25'}>
+          <PenLine size={18} color={C.purple} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Reflect & Journal</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Track your growth</div>
+          </div>
+          <ChevronRight size={14} color={C.muted} style={{ marginLeft: 'auto' }} />
+        </button>
+      </div>
+
       {/* Vision Board: image upload + AI insight */}
       <VisionBoardSection canvas={canvas} />
     </div>
