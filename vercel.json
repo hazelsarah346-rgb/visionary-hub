@@ -1,0 +1,31 @@
+{
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/feed", "destination": "/api/feed" },
+    { "source": "/api/feed/:id/react", "destination": "/api/feed/[id]/react" },
+    { "source": "/api/mentors", "destination": "/api/mentors" },
+    { "source": "/api/canvases", "destination": "/api/canvases" },
+    { "source": "/api/canvases/current", "destination": "/api/canvases/current" },
+    { "source": "/api/journal", "destination": "/api/journal" },
+    { "source": "/api/settings", "destination": "/api/settings" },
+    { "source": "/api/settings/safe-mode", "destination": "/api/settings/safe-mode" },
+    { "source": "/api/projects", "destination": "/api/projects" },
+    { "source": "/api/projects/:id", "destination": "/api/projects/[id]" },
+    { "source": "/api/goals", "destination": "/api/goals" },
+    { "source": "/api/goals/:id", "destination": "/api/goals/[id]" },
+    { "source": "/api/ai/chat", "destination": "/api/ai/chat" },
+    { "source": "/api/ai/insights", "destination": "/api/ai/insights" },
+    { "source": "/api/ai/refine-vision", "destination": "/api/ai/refine-vision" },
+    { "source": "/api/ai/roadmap", "destination": "/api/ai/roadmap" },
+    { "source": "/api/ai/tutor", "destination": "/api/ai/tutor" },
+    { "source": "/api/ai/opportunities", "destination": "/api/ai/opportunities" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

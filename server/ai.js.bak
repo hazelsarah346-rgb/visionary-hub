@@ -1,0 +1,95 @@
+/**
+ * AI integration - uses OpenAI API. Set OPENAI_API_KEY in .env
+ * Falls back to demo responses when key is missing (for demo/competition without API).
+ */
+
+const PERSONAS = {
+  productivity: `You are a practical Productivity Mentor. "Consistency beats intensity."
+Respond in 2-4 actionable sentences. Focus on small wins, habits, and sustainable progress. Be encouraging but direct.`,
+  founder: `You are an inspiring Founder mentor. "Vision without action is merely a dream."
+Respond in 2-4 motivating sentences. Connect their vision to concrete next steps. Encourage boldness and clarity.`,
+  peer: `You are a supportive peer in a community of builders and dreamers. Speak as a fellow traveler, not an authority.
+Respond in 2-4 warm sentences. Share perspective, encourage, and focus on mentorship and mutual growth.`,
+  default: `You are a supportive mentor in Visionary Hub. Be warm, concise (2-4 sentences), and encouraging. Focus on mentorship, peers, and growth.`,
+};
+
+const DEMO_RESPONSES = {
+  productivity: "Small steps add up. Focus on one thing today. Consistency beats intensity—build the habit first, then scale.",
+  founder: "Every big vision starts with one action. What's the smallest thing you can do today to move it forward? Do that.",
+  peer: "You're not alone. Keep sharing and building—your peers and mentors are here with you. One step at a time.",
+  default: "You're on the right path. Keep building, keep reflecting. I believe in you.",
+};
+
+function getDemoResponse(mentor) {
+  const persona = (mentor?.persona || mentor?.title || '').toLowerCase();
+  if (persona.includes('productivity')) return DEMO_RESPONSES.productivity;
+  if (persona.includes('founder')) return DEMO_RESPONSES.founder;
+  if (persona.includes('peer') || persona.includes('mentor')) return DEMO_RESPONSES.peer;
+  return DEMO_RESPONSES.default;
+}
+
+async function callOpenAI(systemPrompt, userMessage, model = 'gpt-4o-mini') {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        max_tokens: 200,
+      }),
+    });
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content?.trim() || null;
+  } catch (e) {
+    console.error('OpenAI error:', e.message);
+    return null;
+  }
+}
+
+async function chatWithMentor(mentor, messages) {
+  const persona = mentor?.persona || 'default';
+  const systemPrompt = PERSONAS[persona] || PERSONAS.default;
+  const lastUser = [...messages].reverse().find(m => m.role === 'user');
+  const userMessage = lastUser?.content || 'I need some guidance.';
+
+  const reply = await callOpenAI(systemPrompt, userMessage);
+  if (reply) return reply;
+  return getDemoResponse(mentor);
+}
+
+async function getReflectionInsights(journalEntries) {
+  const text = (journalEntries || []).slice(0, 10).map(j => j.content || j.text).filter(Boolean).join('\n\n');
+  const systemPrompt = `You are a compassionate reflection coach. Analyze the journal entries and provide:
+1. One pattern or theme you notice (1 sentence)
+2. One gentle insight or observation (1 sentence)
+3. One suggested next step (1 short actionable sentence)
+Keep it encouraging and under 100 words total.`;
+  const userMessage = text || "The user hasn't journaled yet. Offer a warm prompt to get started.";
+
+  const reply = await callOpenAI(systemPrompt, userMessage);
+  if (reply) return reply;
+  return "Start journaling to unlock AI insights. We'll notice patterns, surface themes, and suggest next steps as you reflect.";
+}
+
+async function refineVision(currentTitle) {
+  const systemPrompt = `You are a visionary coach. The user has a goal/vision: "${currentTitle || 'Untitled vision'}".
+Provide a refined, more compelling 1-sentence version that keeps their intent but adds clarity and energy.
+If the input is empty or vague, suggest a starter vision. Keep it under 20 words.`;
+  const userMessage = currentTitle || 'Help me define my vision.';
+
+  const reply = await callOpenAI(systemPrompt, userMessage);
+  if (reply) return reply;
+  return currentTitle ? `${currentTitle} — Take one small step today.` : 'Define one thing you want to build or become.';
+}
+
+module.exports = { chatWithMentor, getReflectionInsights, refineVision };

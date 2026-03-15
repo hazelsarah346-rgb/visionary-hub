@@ -1,0 +1,1315 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Lightbulb, Home, BookOpen, Map, Brain, Users, Compass, Shield,
+  Sparkles, Send, Plus, CheckSquare, Square, Target, X, ChevronRight,
+  ArrowRight, Upload, FileText, Trash2, MessageCircle, Star, Zap,
+  TrendingUp, Award, Clock, RefreshCw, Loader2, Heart, AlignLeft,
+  BarChart2, Briefcase, GraduationCap, Globe, Search, Edit3, Check,
+  Download, Menu,
+} from 'lucide-react';
+import { api } from './api';
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const C = {
+  bg: '#0A1628', surface: '#0D1F3C', card: '#0F2444', border: '#1E3A5F',
+  blue: '#2563EB', blueMid: '#3B82F6', blueLight: '#60A5FA',
+  text: '#F0F6FF', muted: '#94A3B8',
+  green: '#10B981', yellow: '#F59E0B', purple: '#8B5CF6', red: '#EF4444',
+};
+const PHASE_COLORS = ['#2563EB', '#8B5CF6', '#F59E0B', '#10B981'];
+
+// ─── DEMO DATA ────────────────────────────────────────────────────────────────
+const DEMO_MENTORS = [
+  { id: 'm1', name: 'Dr. Sarah Okonkwo', title: 'Productivity Coach', img: 'https://i.pravatar.cc/150?img=16', quote: 'Consistency builds the bridge between goals and reality.', persona: 'productivity', field: 'Productivity' },
+  { id: 'm2', name: 'Marcus Lin', title: 'Startup Founder', img: 'https://i.pravatar.cc/150?img=12', quote: 'Every empire starts with one bold decision.', persona: 'founder', field: 'Entrepreneurship' },
+  { id: 'm3', name: 'Tanya Brooks', title: 'Career Strategist', img: 'https://i.pravatar.cc/150?img=19', quote: 'Your network is your net worth — build it intentionally.', persona: 'career', field: 'Career' },
+  { id: 'm4', name: 'David Nguyen', title: 'Tech Leader', img: 'https://i.pravatar.cc/150?img=11', quote: 'Build skills like you build a portfolio — with intention.', persona: 'founder', field: 'Technology' },
+  { id: 'm5', name: 'Nia Williams', title: 'Peer Mentor', img: 'https://i.pravatar.cc/150?img=45', quote: 'Your peers are your greatest resource — invest in each other.', persona: 'peer', field: 'Community' },
+  { id: 'm6', name: 'Prof. James Cole', title: 'Academic Advisor', img: 'https://i.pravatar.cc/150?img=52', quote: 'Excellence is not an act but a habit you build daily.', persona: 'productivity', field: 'Academic' },
+];
+const DEMO_POSTS = [
+  { id: 'p1', authorName: 'Maya Chen', authorImg: 'https://i.pravatar.cc/150?img=1', content: 'Just finished my pitch deck for the accelerator program 🚀 18 months of building finally made real. The vision is clear — now execution is everything.', likes: 142, comments: 38, time: '2h ago', tags: ['startup', 'milestone'] },
+  { id: 'p2', authorName: 'Jordan Williams', authorImg: 'https://i.pravatar.cc/150?img=3', content: 'Research paper accepted after 2 years of work 📚 Lesson learned: the work compounds. Every hour of consistency built something I couldn\'t see until now.', likes: 89, comments: 24, time: '5h ago', tags: ['research', 'persistence'] },
+  { id: 'p3', authorName: 'Priya Patel', authorImg: 'https://i.pravatar.cc/150?img=5', content: '💡 Accountability circles now OPEN. Student builders working on a startup, thesis, or creative project — DM me. 6 spots left.', likes: 203, comments: 67, time: 'Yesterday', tags: ['community', 'accountability'] },
+];
+const OPPORTUNITIES = [
+  { id: 'o1', title: 'Google.org Impact Challenge', type: 'Grant', amount: '$100K', deadline: 'Apr 30', field: 'Social Impact' },
+  { id: 'o2', title: 'Thiel Fellowship', type: 'Fellowship', amount: '$100K', deadline: 'May 15', field: 'Entrepreneurship' },
+  { id: 'o3', title: 'Gates Millennium Scholars', type: 'Scholarship', amount: 'Full Ride', deadline: 'Jan 15', field: 'All Fields' },
+  { id: 'o4', title: 'KPCB Fellows Program', type: 'Internship', amount: 'Paid', deadline: 'Rolling', field: 'Technology' },
+  { id: 'o5', title: 'Harvard Social Enterprise', type: 'Competition', amount: '$50K', deadline: 'Mar 31', field: 'Social Enterprise' },
+  { id: 'o6', title: 'Echoing Green Fellowship', type: 'Fellowship', amount: '$90K', deadline: 'Jun 1', field: 'Social Entrepreneurship' },
+];
+const ROADMAP_DEFAULT = {
+  phases: [
+    { phase: 1, label: 'Foundation', timeframe: 'Months 1–3', theme: 'Build the base — clarity, skills, identity', milestones: ['Define your personal brand in writing', 'Complete one core skill certification', 'Set up your professional online presence', 'Identify 3 role models and study their paths'], focusArea: 'Clarity and skill-building', successSign: 'You can explain your vision in 60 seconds' },
+    { phase: 2, label: 'Momentum', timeframe: 'Months 4–9', theme: 'Take action — build proof and connections', milestones: ['Complete one real portfolio project', 'Apply to 2–3 real opportunities', 'Have 3 genuine conversations in your field', 'Make measurable progress on your 12-month goal'], focusArea: 'Action and portfolio building', successSign: 'You have real work to show, not just ideas' },
+    { phase: 3, label: 'Impact', timeframe: 'Months 10–18', theme: 'Create outcomes that matter', milestones: ['Lead or own a significant project', 'Secure a mentorship relationship', 'Share your work publicly', 'Reflect and double down on what works'], focusArea: 'Ownership and real-world results', successSign: 'Others reach out because of what you\'ve built' },
+    { phase: 4, label: 'Scale', timeframe: 'Year 2+', theme: 'Grow your impact and build legacy', milestones: ['Mentor someone one step behind you', 'Expand your work to affect more people', 'Define your 3-year horizon clearly', 'Build 5+ deep professional relationships'], focusArea: 'Leadership and legacy', successSign: 'You\'re creating opportunities for others' },
+  ],
+  northStar: 'Build something meaningful that outlasts you',
+  firstStep: 'Write your vision in one sentence — right now, today',
+};
+
+// ─── COMPONENTS ───────────────────────────────────────────────────────────────
+const Spinner = () => <Loader2 className="animate-spin" style={{ color: C.blueLight }} size={16} />;
+
+function Tag({ text, color = C.blue }) {
+  return <span style={{ background: color + '22', color, border: `1px solid ${color}44`, fontSize: 11, padding: '2px 8px', borderRadius: 99, fontWeight: 600, whiteSpace: 'nowrap' }}>{text}</span>;
+}
+
+function Avatar({ src, name, size = 36 }) {
+  const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return src
+    ? <img src={src} alt={name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} onError={e => e.target.style.display = 'none'} />
+    : <div style={{ width: size, height: size, borderRadius: '50%', background: C.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.35, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials}</div>;
+}
+
+function Card({ children, style = {}, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onClick={onClick} onMouseEnter={() => onClick && setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ background: hov ? C.card : C.surface, border: `1px solid ${hov ? C.blueMid + '66' : C.border}`, borderRadius: 16, padding: 24, transition: 'all 0.2s', cursor: onClick ? 'pointer' : 'default', ...style }}>
+      {children}
+    </div>
+  );
+}
+
+function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = false, style = {} }) {
+  const [hov, setHov] = useState(false);
+  const pad = { sm: '6px 14px', md: '9px 18px', lg: '14px 28px' }[size];
+  const fs = { sm: 12, md: 14, lg: 16 }[size];
+  const vs = {
+    primary: { background: hov ? C.blueMid : C.blue, color: '#fff', border: 'none' },
+    secondary: { background: hov ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)', color: C.text, border: `1px solid ${C.border}` },
+    ghost: { background: 'transparent', color: C.muted, border: 'none' },
+    green: { background: hov ? '#059669' : C.green, color: '#fff', border: 'none' },
+  };
+  return (
+    <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: pad, borderRadius: 10, fontSize: fs, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1, transition: 'all 0.15s', fontFamily: 'inherit', ...vs[variant], ...style }}>
+      {children}
+    </button>
+  );
+}
+
+function Input({ value, onChange, placeholder, onKeyDown, multiline = false, rows = 3, style = {}, autoFocus = false }) {
+  const base = { background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '10px 14px', width: '100%', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', ...style };
+  return multiline
+    ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{ ...base, resize: 'vertical' }} onKeyDown={onKeyDown} autoFocus={autoFocus} />
+    : <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={base} onKeyDown={onKeyDown} autoFocus={autoFocus} />;
+}
+
+// Reusable chat window used in Tutor + Mentors + Safe Mode
+function ChatWindow({ messages, input, setInput, onSend, loading, placeholder = 'Type a message...', suggestions = [] }) {
+  const bottomRef = useRef(null);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            <div style={{ maxWidth: '80%', background: m.role === 'user' ? C.blue : 'rgba(255,255,255,0.06)', border: m.role === 'user' ? 'none' : `1px solid ${C.border}`, borderRadius: m.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: '10px 14px', fontSize: 14, color: C.text, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+              {m.content || m.text}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div style={{ display: 'flex' }}>
+            <div style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.border}`, borderRadius: '18px 18px 18px 4px', padding: '12px 16px', display: 'flex', gap: 5, alignItems: 'center' }}>
+              {[0, 0.2, 0.4].map((d, i) => <span key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: C.muted, animation: `pulse 1.2s ${d}s infinite` }} />)}
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+      {suggestions.length > 0 && messages.length <= 1 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12 }}>
+          {suggestions.map((s, i) => (
+            <button key={i} onClick={() => setInput(s)} style={{ background: `${C.blue}15`, border: `1px solid ${C.blue}44`, color: C.blueLight, borderRadius: 99, padding: '5px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>{s}</button>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        <div style={{ flex: 1 }}>
+          <Input value={input} onChange={setInput} placeholder={placeholder} multiline rows={2}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+            style={{ resize: 'none' }} />
+        </div>
+        <Btn onClick={onSend} disabled={!input.trim() || loading} style={{ height: 50, padding: '0 16px', flexShrink: 0 }}>
+          <Send size={15} />
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onEnter }) {
+  const pillars = [
+    { icon: Lightbulb, label: 'Ideas', desc: 'Capture and share your vision', color: C.blue, pos: [2, 5] },
+    { icon: Briefcase, label: 'Collaboration', desc: 'Organize projects, work together', color: C.yellow, pos: [62, 5] },
+    { icon: Users, label: 'Mentorship', desc: 'Seek guidance from real mentors', color: C.purple, pos: [2, 65] },
+    { icon: Brain, label: 'AI Tools', desc: 'Boost productivity with smart AI', color: C.green, pos: [62, 65] },
+  ];
+  return (
+    <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Nav */}
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, background: C.bg, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, background: C.blue, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Lightbulb size={18} color="#fff" /></div>
+          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.3px' }}>Visionary Hub</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+          <span style={{ color: C.muted, fontSize: 14, cursor: 'pointer' }}>Explore Ideas</span>
+          <span style={{ color: C.muted, fontSize: 14, cursor: 'pointer' }}>How It Works</span>
+          <Btn onClick={onEnter} size="sm">Sign Up</Btn>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 48px 64px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `${C.blue}1A`, border: `1px solid ${C.blue}44`, borderRadius: 99, padding: '6px 14px', marginBottom: 28, fontSize: 12, color: C.blueLight, fontWeight: 600 }}>
+            <Sparkles size={12} /> For students & visionaries
+          </div>
+          <h1 style={{ fontSize: 50, fontWeight: 900, lineHeight: 1.1, marginBottom: 20, letterSpacing: '-1.5px' }}>
+            <span style={{ color: C.muted, fontWeight: 400, fontSize: 36, display: 'block', marginBottom: 4 }}>...from social media</span>
+            to social <span style={{ color: C.blueLight }}>productivity</span>
+          </h1>
+          <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.75, marginBottom: 40, maxWidth: 440 }}>
+            Share your projects, receive expert mentorship, and get funded — all on a platform designed for impactful change.
+          </p>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <Btn onClick={onEnter} size="lg">Join Now <ArrowRight size={17} /></Btn>
+            <span style={{ color: C.muted, fontSize: 13 }}>Free for students</span>
+          </div>
+        </div>
+
+        {/* 4-pillar diagram */}
+        <div style={{ position: 'relative', height: 340 }}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 116, height: 116, background: `radial-gradient(circle, ${C.blue}2A, ${C.blue}0A)`, border: `2px solid ${C.blue}77`, borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+            <Lightbulb size={26} color={C.blueLight} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: C.blueLight, marginTop: 5, letterSpacing: 0.5 }}>VISIONARY HUB</span>
+          </div>
+          {pillars.map((p, i) => (
+            <div key={i} style={{ position: 'absolute', top: `${p.pos[1]}%`, left: `${p.pos[0]}%`, width: 150, background: C.surface, border: `1px solid ${p.color}44`, borderRadius: 14, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <p.icon size={16} color={p.color} />
+                <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{p.label}</span>
+              </div>
+              <p style={{ fontSize: 11, color: C.muted, margin: 0, lineHeight: 1.4 }}>{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Feature bar */}
+      <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 48px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          {[
+            { icon: TrendingUp, title: 'Progress Feed', desc: 'Track your journey and celebrate milestones' },
+            { icon: Users, title: 'Find a Mentor', desc: 'Connect with seasoned professionals in your field' },
+            { icon: Star, title: 'Secure Funding', desc: 'Transform your vision with financial support' },
+          ].map((f, i) => (
+            <div key={i} style={{ display: 'flex', gap: 14 }}>
+              <div style={{ width: 42, height: 42, background: `${C.blue}1A`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <f.icon size={18} color={C.blueLight} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{f.title}</div>
+                <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats + CTA */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 48px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 64 }}>
+          {[['10K+','Student Visionaries'],['500+','Expert Mentors'],['90%','Report Clarity'],['50+','Opportunities']].map(([v,l],i) => (
+            <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '24px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 30, fontWeight: 900, color: C.blueLight, marginBottom: 6 }}>{v}</div>
+              <div style={{ fontSize: 13, color: C.muted }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', borderTop: `1px solid ${C.border}`, paddingTop: 64 }}>
+          <h2 style={{ fontSize: 34, fontWeight: 800, marginBottom: 14 }}>Ready to build your vision?</h2>
+          <p style={{ color: C.muted, fontSize: 16, marginBottom: 32 }}>Join thousands of students turning dreams into reality.</p>
+          <Btn onClick={onEnter} size="lg">Enter Visionary Hub <ArrowRight size={17} /></Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+const NAV = [
+  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'canvas', icon: Lightbulb, label: 'Visionary Canvas' },
+  { id: 'roadmap', icon: Map, label: 'Life Roadmap' },
+  { id: 'tutor', icon: Brain, label: 'AI Tutor' },
+  { id: 'mentors', icon: Users, label: 'Mentors' },
+  { id: 'community', icon: MessageCircle, label: 'Community' },
+  { id: 'opportunities', icon: Compass, label: 'Opportunities' },
+];
+function Sidebar({ tab, setTab, safeMode, setSafeMode, canvas }) {
+  return (
+    <div style={{ width: 236, background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, flexShrink: 0 }}>
+      <div style={{ padding: '18px 18px 14px', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, background: C.blue, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Lightbulb size={17} color="#fff" /></div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.text, lineHeight: 1.1 }}>Visionary</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.blueLight, lineHeight: 1.1 }}>Hub</div>
+          </div>
+        </div>
+        {canvas && (
+          <div style={{ marginTop: 10, background: `${C.blue}18`, border: `1px solid ${C.blue}33`, borderRadius: 7, padding: '5px 10px', fontSize: 11, color: C.blueLight, fontWeight: 600 }}>
+            ✦ {canvas.name}
+          </div>
+        )}
+      </div>
+      <nav style={{ flex: 1, padding: '6px 0', overflowY: 'auto' }}>
+        {NAV.map(item => {
+          const active = tab === item.id;
+          return (
+            <button key={item.id} onClick={() => setTab(item.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '9px 18px', border: 'none', cursor: 'pointer', background: active ? `${C.blue}1E` : 'transparent', borderRight: `3px solid ${active ? C.blue : 'transparent'}`, color: active ? C.blueLight : C.muted, fontSize: 13, fontWeight: active ? 600 : 400, fontFamily: 'inherit', transition: 'all 0.15s', textAlign: 'left' }}>
+              <item.icon size={15} />{item.label}
+            </button>
+          );
+        })}
+      </nav>
+      <div style={{ padding: 14, borderTop: `1px solid ${C.border}` }}>
+        <button onClick={() => setSafeMode(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: safeMode ? `${C.green}1A` : 'rgba(255,255,255,0.03)', border: `1px solid ${safeMode ? C.green + '55' : C.border}`, borderRadius: 9, padding: '9px 13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: safeMode ? C.green : C.muted, fontWeight: 600 }}><Shield size={13} />Safe Mode</div>
+          <div style={{ width: 32, height: 18, background: safeMode ? C.green : C.border, borderRadius: 99, position: 'relative', transition: 'background 0.2s' }}>
+            <div style={{ width: 12, height: 12, background: '#fff', borderRadius: '50%', position: 'absolute', top: 3, left: safeMode ? 17 : 3, transition: 'left 0.2s' }} />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME TAB ─────────────────────────────────────────────────────────────────
+function HomeTab({ canvas, setTab, goals, projects }) {
+  const done = goals.filter(g => g.done).length;
+  return (
+    <div>
+      <div style={{ background: `linear-gradient(135deg, ${C.blue}1E, ${C.purple}0D)`, border: `1px solid ${C.blue}2A`, borderRadius: 16, padding: '26px 30px', marginBottom: 26 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px', color: C.text }}>
+          Welcome back, {canvas?.name || 'Visionary'} 👋
+        </h1>
+        <p style={{ color: C.muted, margin: 0, fontSize: 14, lineHeight: 1.65 }}>
+          {canvas?.bigVision ? <><span style={{ color: C.blueLight, fontWeight: 600 }}>Your vision:</span> "{canvas.bigVision}"</>
+            : 'Start by building your Visionary Canvas — it\'s the foundation of everything here.'}
+        </p>
+        {!canvas && <div style={{ marginTop: 14 }}><Btn size="sm" onClick={() => setTab('canvas')}><Lightbulb size={13} />Build Your Canvas</Btn></div>}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 13, marginBottom: 26 }}>
+        {[
+          { icon: Target, label: 'Goals Done', value: `${done}/${goals.length}`, c: C.blue },
+          { icon: TrendingUp, label: 'Progress', value: goals.length ? `${Math.round(done/goals.length*100)}%` : '—', c: C.green },
+          { icon: Briefcase, label: 'Active Projects', value: projects.filter(p => p.status === 'in_progress').length || '—', c: C.yellow },
+          { icon: Brain, label: 'AI Tools', value: '3 ready', c: C.purple },
+        ].map((s,i) => (
+          <Card key={i} style={{ padding: 18 }}>
+            <div style={{ width: 34, height: 34, background: `${s.c}1E`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><s.icon size={15} color={s.c} /></div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: C.text }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{s.label}</div>
+          </Card>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
+        {[
+          { icon: Lightbulb, title: 'Visionary Canvas', desc: 'Define your vision, strengths, and 12-month goal', tab: 'canvas', color: C.blue },
+          { icon: Map, title: 'Life Roadmap', desc: 'Get a personalized AI roadmap from vision to reality', tab: 'roadmap', color: C.purple },
+          { icon: Brain, title: 'AI Tutor', desc: 'Upload notes, ask anything, study smarter with Claude + Groq', tab: 'tutor', color: C.green },
+          { icon: Compass, title: 'Opportunities', desc: 'Scholarships, grants, and internships for visionaries', tab: 'opportunities', color: C.yellow },
+        ].map((a,i) => (
+          <Card key={i} onClick={() => setTab(a.tab)} style={{ padding: 20 }}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div style={{ width: 40, height: 40, background: `${a.color}1E`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><a.icon size={19} color={a.color} /></div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: C.text, marginBottom: 3 }}>{a.title}</div>
+                <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>{a.desc}</div>
+              </div>
+              <ArrowRight size={14} color={C.muted} style={{ flexShrink: 0, marginTop: 2 }} />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── VISIONARY CANVAS ─────────────────────────────────────────────────────────
+const CANVAS_STEPS = [
+  {
+    key: 'name', label: 'Who Are You?', icon: '👤', multi: false,
+    placeholder: 'Your full name or how you want to be known',
+    coach: 'This canvas belongs to you. How do you want the world to know you as a visionary?',
+    example: 'e.g. "Amara Osei" or "The Future Founder"',
+  },
+  {
+    key: 'major', label: 'Your Domain', icon: '🎯', multi: false,
+    placeholder: 'Field, major, industry, or the space you operate in',
+    coach: 'Great visionaries know their arena. What problem space or field are you entering?',
+    example: 'e.g. "EdTech & Curriculum Design" or "Biomedical Engineering"',
+  },
+  {
+    key: 'bigVision', label: 'The Big Vision', icon: '🌟', multi: true,
+    placeholder: 'In one bold sentence — what future are you trying to create?',
+    coach: 'Don\'t play small here. Think 5–10 years out. What does the world look like because you showed up?',
+    example: 'e.g. "I will build the platform that connects African students to global opportunities."',
+  },
+  {
+    key: 'purpose', label: 'Your Why', icon: '🔥', multi: true,
+    placeholder: 'Why does this vision matter — beyond money or success?',
+    coach: 'Purpose is what keeps you going when things get hard. What\'s the deeper "why" behind your vision?',
+    example: 'e.g. "Because I grew up watching smart people stay invisible. I refuse to be one of them."',
+  },
+  {
+    key: 'strengths', label: 'Your Superpowers', icon: '⚡', multi: true,
+    placeholder: 'List 3–5 things you do better than most — be honest and specific',
+    coach: 'Your vision must be built on what\'s already in you. What gifts do you bring that others don\'t?',
+    example: 'e.g. "Systems thinking, storytelling, building trust quickly, design, relentlessness"',
+  },
+  {
+    key: 'obstacle', label: 'The Real Obstacle', icon: '🧱', multi: true,
+    placeholder: 'What is actually in your way right now? Be brutally honest.',
+    coach: 'Naming your obstacle is the first step to defeating it. What is the real thing stopping you — not the excuses?',
+    example: 'e.g. "Fear of visibility — I have the skills but avoid putting my work out there."',
+  },
+  {
+    key: 'goal12Month', label: '12-Month North Star', icon: '🚀', multi: true,
+    placeholder: 'One specific, measurable, meaningful goal for the next 12 months',
+    coach: 'Not a wish — a commitment. What will you point back to in 12 months as the proof you moved?',
+    example: 'e.g. "Launch my MVP and get 50 paying users by December 2026."',
+  },
+];
+
+function CanvasTab({ canvas, setCanvas }) {
+  const [step, setStep] = useState(0);
+  const [draft, setDraft] = useState(canvas || {});
+  const [view, setView] = useState(canvas?.bigVision ? 'view' : 'build');
+  const [refining, setRefining] = useState(false);
+  const [goals, setGoals] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_vb') || '[]'); } catch { return []; } });
+  const [newGoal, setNewGoal] = useState('');
+  const [goalCategory, setGoalCategory] = useState('Goal');
+
+  const GOAL_CATS = ['Goal', 'Habit', 'Milestone', 'Skill', 'Experience'];
+  const CAT_COLORS = { Goal: C.blue, Habit: C.green, Milestone: C.purple, Skill: C.yellow, Experience: C.red };
+
+  const saveGoals = g => { setGoals(g); localStorage.setItem('vh_vb', JSON.stringify(g)); };
+  const addGoal = () => {
+    if (!newGoal.trim()) return;
+    saveGoals([...goals, { id: Date.now(), text: newGoal.trim(), done: false, cat: goalCategory }]);
+    setNewGoal('');
+  };
+
+  const next = () => {
+    if (step < CANVAS_STEPS.length - 1) setStep(s => s + 1);
+    else {
+      const c = { ...draft, completedAt: new Date().toISOString() };
+      setCanvas(c); localStorage.setItem('vh_canvas', JSON.stringify(c)); setView('view');
+    }
+  };
+
+  const refine = async () => {
+    if (!draft.bigVision) return;
+    setRefining(true);
+    try {
+      const r = await fetch('/api/ai/refine-vision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentTitle: draft.bigVision }) });
+      const d = await r.json();
+      if (d.refined) setDraft(p => ({ ...p, bigVision: d.refined }));
+    } catch (_) {}
+    setRefining(false);
+  };
+
+  if (view === 'build') {
+    const s = CANVAS_STEPS[step];
+    const pct = Math.round(((step + 1) / CANVAS_STEPS.length) * 100);
+    return (
+      <div style={{ maxWidth: 780, margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 3px', color: C.text }}>Visionary Canvas</h1>
+              <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>Your strategic foundation — everything in this platform flows from here</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: C.blueLight }}>{pct}%</div>
+              <div style={{ fontSize: 11, color: C.muted }}>complete</div>
+            </div>
+          </div>
+          {/* Step dots */}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 10 }}>
+            {CANVAS_STEPS.map((_, i) => (
+              <div key={i} onClick={() => i < step && setStep(i)} style={{ width: i === step ? 28 : 8, height: 8, borderRadius: 99, background: i < step ? C.green : i === step ? C.blue : C.border, transition: 'all 0.3s', cursor: i < step ? 'pointer' : 'default' }} />
+            ))}
+          </div>
+          <div style={{ height: 2, background: C.border, borderRadius: 99 }}>
+            <div style={{ height: '100%', background: `linear-gradient(90deg, ${C.blue}, ${C.purple})`, borderRadius: 99, width: `${pct}%`, transition: 'width 0.4s ease' }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+          {/* Main input */}
+          <div>
+            <Card style={{ padding: 32, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                <div style={{ width: 52, height: 52, background: `${C.blue}1A`, border: `1px solid ${C.blue}33`, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{s.icon}</div>
+                <div>
+                  <div style={{ fontSize: 11, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3 }}>Step {step + 1} of {CANVAS_STEPS.length}</div>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: C.text }}>{s.label}</h2>
+                </div>
+              </div>
+              <Input
+                value={draft[s.key] || ''}
+                onChange={v => setDraft(d => ({ ...d, [s.key]: v }))}
+                placeholder={s.placeholder}
+                multiline={s.multi} rows={s.multi ? 4 : 1}
+                onKeyDown={e => { if (e.key === 'Enter' && !s.multi) { e.preventDefault(); if (draft[s.key]?.trim()) next(); } }}
+                autoFocus
+                style={{ fontSize: 15, lineHeight: 1.6 }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {s.key === 'bigVision' && draft.bigVision?.trim() && (
+                    <Btn variant="secondary" size="sm" onClick={refine} disabled={refining}>
+                      {refining ? <Spinner /> : <Sparkles size={13} />} AI Polish
+                    </Btn>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 9 }}>
+                  <Btn variant="secondary" onClick={() => step > 0 && setStep(s => s - 1)} disabled={step === 0}>← Back</Btn>
+                  <Btn onClick={next} disabled={!draft[s.key]?.trim()}>
+                    {step === CANVAS_STEPS.length - 1 ? '✦ Complete Canvas' : 'Continue →'}
+                  </Btn>
+                </div>
+              </div>
+            </Card>
+            {/* Previously answered */}
+            {step > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {CANVAS_STEPS.slice(0, step).filter(prev => draft[prev.key]).map(prev => (
+                  <div key={prev.key} onClick={() => setStep(CANVAS_STEPS.indexOf(prev))} style={{ background: `${C.surface}`, border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 16px', cursor: 'pointer', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 16 }}>{prev.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, color: C.green, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>✓ {prev.label}</div>
+                      <div style={{ fontSize: 13, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{draft[prev.key]}</div>
+                    </div>
+                    <Edit3 size={11} color={C.muted} style={{ flexShrink: 0, marginTop: 3 }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Coach panel */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: `linear-gradient(135deg, ${C.purple}12, ${C.blue}0A)`, border: `1px solid ${C.purple}2E`, borderRadius: 14, padding: 22 }}>
+              <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>✦ Vision Coach</div>
+              <p style={{ color: C.text, fontSize: 13, lineHeight: 1.7, margin: '0 0 14px' }}>{s.coach}</p>
+              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 9, padding: '10px 13px', borderLeft: `3px solid ${C.purple}` }}>
+                <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>Example</div>
+                <div style={{ fontSize: 12, color: C.muted, fontStyle: 'italic', lineHeight: 1.6 }}>{s.example}</div>
+              </div>
+            </div>
+            {draft.bigVision && step > 2 && (
+              <div style={{ background: `${C.blue}0A`, border: `1px solid ${C.blue}22`, borderRadius: 12, padding: 16 }}>
+                <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 }}>🌟 Your Vision</div>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, fontStyle: 'italic' }}>"{draft.bigVision}"</div>
+              </div>
+            )}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Canvas Progress</div>
+              {CANVAS_STEPS.map((cs, i) => (
+                <div key={cs.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 0', borderBottom: i < CANVAS_STEPS.length - 1 ? `1px solid ${C.border}33` : 'none' }}>
+                  <div style={{ width: 16, height: 16, borderRadius: '50%', background: draft[cs.key] ? C.green : i === step ? C.blue : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 8 }}>
+                    {draft[cs.key] ? '✓' : ''}
+                  </div>
+                  <span style={{ fontSize: 12, color: i === step ? C.text : draft[cs.key] ? C.muted : C.border, fontWeight: i === step ? 600 : 400 }}>{cs.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── COMPLETED CANVAS VIEW ──────────────────────────────────────────────────
+  const completedFields = CANVAS_STEPS.filter(s => canvas?.[s.key]);
+  return (
+    <div>
+      {/* Hero header */}
+      <div style={{ background: `linear-gradient(135deg, ${C.blue}18, ${C.purple}12, ${C.card})`, border: `1px solid ${C.blue}2A`, borderRadius: 18, padding: '28px 32px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>✦ Visionary Canvas</div>
+            <h1 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 6px', color: C.text, lineHeight: 1.2 }}>{canvas?.name || 'Your'}'s Vision</h1>
+            {canvas?.major && <div style={{ fontSize: 14, color: C.muted, marginBottom: 14 }}>{canvas.major}</div>}
+            {canvas?.bigVision && (
+              <div style={{ background: 'rgba(0,0,0,0.25)', border: `1px solid ${C.blue}33`, borderRadius: 11, padding: '14px 18px', maxWidth: 560 }}>
+                <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Big Vision</div>
+                <div style={{ fontSize: 16, color: C.text, fontWeight: 600, lineHeight: 1.55, fontStyle: 'italic' }}>"{canvas.bigVision}"</div>
+              </div>
+            )}
+          </div>
+          <Btn variant="secondary" size="sm" onClick={() => { setDraft(canvas || {}); setStep(0); setView('build'); }}><Edit3 size={13} /> Edit Canvas</Btn>
+        </div>
+      </div>
+
+      {/* Canvas grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 26 }}>
+        {[
+          { key: 'purpose', icon: '🔥', label: 'Your Why', color: C.red },
+          { key: 'strengths', icon: '⚡', label: 'Superpowers', color: C.yellow },
+          { key: 'obstacle', icon: '🧱', label: 'Real Obstacle', color: C.purple },
+          { key: 'goal12Month', icon: '🚀', label: '12-Month North Star', color: C.blue, wide: true },
+        ].map(f => canvas?.[f.key] ? (
+          <div key={f.key} style={{ background: `${f.color}0A`, border: `1px solid ${f.color}22`, borderRadius: 14, padding: '18px 20px', gridColumn: f.wide ? '1 / -1' : 'auto' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 20 }}>{f.icon}</div>
+              <div style={{ fontSize: 10, color: f.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{f.label}</div>
+            </div>
+            <div style={{ fontSize: 14, color: C.text, lineHeight: 1.7 }}>{canvas[f.key]}</div>
+          </div>
+        ) : null)}
+      </div>
+
+      {/* Vision Board */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 3px', color: C.text }}>Vision Board</h2>
+            <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>Goals, habits, milestones, and experiences you're building toward</p>
+          </div>
+        </div>
+        {/* Add goal row */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {GOAL_CATS.map(cat => (
+              <button key={cat} onClick={() => setGoalCategory(cat)} style={{ padding: '5px 11px', borderRadius: 99, border: `1px solid ${goalCategory === cat ? CAT_COLORS[cat] : C.border}`, background: goalCategory === cat ? `${CAT_COLORS[cat]}1A` : 'transparent', color: goalCategory === cat ? CAT_COLORS[cat] : C.muted, cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', fontWeight: goalCategory === cat ? 700 : 400 }}>{cat}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 200 }}>
+            <Input value={newGoal} onChange={setNewGoal} placeholder={`Add ${goalCategory.toLowerCase()}...`} style={{ flex: 1 }} onKeyDown={e => { if (e.key === 'Enter') addGoal(); }} />
+            <Btn size="sm" onClick={addGoal} disabled={!newGoal.trim()}><Plus size={13} /> Add</Btn>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+          {goals.map((g) => {
+            const c = CAT_COLORS[g.cat] || C.blue;
+            return (
+              <div key={g.id} style={{ background: `${c}0C`, border: `1px solid ${c}${g.done ? '44' : '22'}`, borderRadius: 14, padding: '16px 18px', position: 'relative', transition: 'all 0.2s' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <span style={{ fontSize: 10, color: c, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, background: `${c}1A`, padding: '2px 8px', borderRadius: 99 }}>{g.cat || 'Goal'}</span>
+                  <button onClick={() => saveGoals(goals.filter(x => x.id !== g.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 0, lineHeight: 1 }}><X size={12} /></button>
+                </div>
+                <div style={{ fontSize: 14, color: g.done ? C.muted : C.text, textDecoration: g.done ? 'line-through' : 'none', lineHeight: 1.55, marginBottom: 12 }}>{g.text}</div>
+                <button onClick={() => saveGoals(goals.map(x => x.id === g.id ? { ...x, done: !x.done } : x))} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: `1px solid ${g.done ? c : C.border}`, borderRadius: 7, cursor: 'pointer', padding: '4px 10px', color: g.done ? c : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>
+                  {g.done ? <Check size={11} /> : <Square size={11} />} {g.done ? 'Done' : 'Mark done'}
+                </button>
+              </div>
+            );
+          })}
+          {goals.length === 0 && (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', border: `2px dashed ${C.border}`, borderRadius: 14 }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>🎯</div>
+              <div style={{ color: C.muted, fontSize: 13, marginBottom: 6 }}>Your vision board is empty</div>
+              <div style={{ color: C.border, fontSize: 12 }}>Add a goal, habit, or milestone above to get started</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LIFE ROADMAP ─────────────────────────────────────────────────────────────
+function RoadmapTab({ canvas }) {
+  const [roadmap, setRoadmap] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } });
+  const [loading, setLoading] = useState(false);
+  const [active, setActive] = useState(0);
+  const [done, setDone] = useState({});
+
+  const generate = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch('/api/ai/roadmap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ canvas }) });
+      const d = await r.json();
+      if (d?.phases) { setRoadmap(d); localStorage.setItem('vh_roadmap', JSON.stringify(d)); }
+      else setRoadmap(ROADMAP_DEFAULT);
+    } catch (_) { setRoadmap(ROADMAP_DEFAULT); }
+    setLoading(false);
+  };
+
+  const rm = roadmap || ROADMAP_DEFAULT;
+  const ph = rm.phases[active];
+  const color = PHASE_COLORS[active];
+  const phaseDone = ph.milestones.filter((_, j) => done[`${active}-${j}`]).length;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 5px' }}>Life Roadmap</h1>
+          <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>Your AI-generated path from vision to reality</p>
+        </div>
+        <Btn onClick={generate} disabled={loading} variant={roadmap ? 'secondary' : 'primary'}>
+          {loading ? <><Spinner /> Generating…</> : <><RefreshCw size={13} /> {roadmap ? 'Regenerate' : 'Generate AI Roadmap'}</>}
+        </Btn>
+      </div>
+
+      <div style={{ background: `linear-gradient(135deg, ${C.blue}1A, ${C.purple}0D)`, border: `1px solid ${C.blue}2E`, borderRadius: 14, padding: 22, marginBottom: 24 }}>
+        <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 }}>✦ North Star</div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: C.text, lineHeight: 1.55, marginBottom: 14 }}>{rm.northStar}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: `${C.green}15`, border: `1px solid ${C.green}33`, borderRadius: 9, padding: '9px 14px' }}>
+          <Zap size={14} color={C.green} />
+          <span style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>First Step: {rm.firstStep}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 9, marginBottom: 22, overflowX: 'auto', paddingBottom: 3 }}>
+        {rm.phases.map((p, i) => (
+          <button key={i} onClick={() => setActive(i)} style={{ flexShrink: 0, padding: '9px 18px', borderRadius: 9, border: `1px solid ${i === active ? PHASE_COLORS[i] : C.border}`, background: i === active ? `${PHASE_COLORS[i]}1E` : 'transparent', color: i === active ? PHASE_COLORS[i] : C.muted, fontWeight: i === active ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
+            {['🌱','⚡','🚀','✦'][i]} {p.label} <span style={{ opacity: 0.6, fontSize: 11 }}>{p.timeframe}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+        <Card style={{ padding: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 34, height: 34, background: `${color}1E`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{['🌱','⚡','🚀','✦'][active]}</div>
+            <div><div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{ph.label}</div><div style={{ fontSize: 11, color: C.muted }}>{ph.timeframe}</div></div>
+          </div>
+          <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>{ph.theme}</p>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 5 }}><span>Progress</span><span>{phaseDone}/{ph.milestones.length}</span></div>
+            <div style={{ height: 3, background: C.border, borderRadius: 99 }}>
+              <div style={{ height: '100%', background: color, borderRadius: 99, width: `${(phaseDone/ph.milestones.length)*100}%`, transition: 'width 0.3s' }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: C.muted }}><span style={{ fontWeight: 600, color: C.text }}>Focus: </span>{ph.focusArea}</div>
+        </Card>
+        <Card style={{ padding: 22 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: C.text }}>Milestones</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {ph.milestones.map((m, j) => {
+              const k = `${active}-${j}`;
+              return (
+                <button key={j} onClick={() => setDone(d => ({ ...d, [k]: !d[k] }))} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: 'inherit' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${done[k] ? color : C.border}`, background: done[k] ? color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, transition: 'all 0.15s' }}>
+                    {done[k] && <Check size={10} color="#fff" />}
+                  </div>
+                  <span style={{ fontSize: 13, color: done[k] ? C.muted : C.text, textDecoration: done[k] ? 'line-through' : 'none', lineHeight: 1.5 }}>{m}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 18, background: `${color}0E`, border: `1px solid ${color}2E`, borderRadius: 9, padding: '10px 13px', fontSize: 12, color: color }}>
+            <span style={{ fontWeight: 700 }}>Done when: </span>{ph.successSign}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ─── AI TUTOR — Split panel layout (like her-stewardship) ────────────────────
+function TutorTab({ canvas }) {
+  const [mode, setMode] = useState('study');
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [files, setFiles] = useState([]); // [{name, content, id}]
+  const [activeFile, setActiveFile] = useState(null); // id of file being viewed
+  const [uploading, setUploading] = useState(false);
+  const [leftTab, setLeftTab] = useState('document'); // 'document' | 'notes'
+  const [notes, setNotes] = useState('');
+  const fileRef = useRef(null);
+  const chatEndRef = useRef(null);
+
+  const MODES = [
+    { id: 'study',  icon: BookOpen,  label: 'Study Tutor',    color: C.blue   },
+    { id: 'vision', icon: Lightbulb, label: 'Vision Coach',   color: C.purple },
+    { id: 'career', icon: Briefcase, label: 'Career Advisor', color: C.yellow },
+  ];
+
+  const QUICK_ACTIONS = {
+    study:  ['Explain the main idea simply', 'What are the key takeaways?', 'Give me 3 review questions', 'Explain like I\'m new to this', 'Quiz me on this', 'Summarize in bullet points'],
+    vision: ['Refine my vision statement', 'What are my blind spots?', 'Build a 90-day action plan', 'What should I focus on first?', 'Challenge my assumptions'],
+    career: ['What skills should I build now?', 'Review my career plan', 'How do I network authentically?', 'What should my portfolio show?', 'Honest career advice for students'],
+  };
+
+  const WELCOME = {
+    study:  "Hi! I'm your AI Study Tutor — powered by Claude + Groq.\n\nUpload your notes or study material on the left, then ask me anything. I can explain concepts, quiz you, summarize key ideas, or help you go deeper on any topic.\n\nWhat are you studying today?",
+    vision: `I'm your Vision Coach — here to help you build clarity and take action.\n\n${canvas?.bigVision ? `I can see your vision: "${canvas.bigVision}" — let's sharpen it.` : "You haven't set a vision yet. Let's build one together."}\n\nWhat's the biggest thing you're trying to figure out right now?`,
+    career: `I'm your Career Advisor — giving specific, honest guidance, not platitudes.\n\n${canvas?.major ? `Domain: ${canvas.major}.` : ''} ${canvas?.bigVision ? `Your goal: "${canvas.bigVision}"` : ''}\n\nWhat's your most pressing career question?`,
+  };
+
+  const switchMode = (m) => {
+    setMode(m);
+    setMessages([{ role: 'ai', content: WELCOME[m] }]);
+    setInput('');
+  };
+
+  useEffect(() => {
+    if (!messages.length) setMessages([{ role: 'ai', content: WELCOME[mode] }]);
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  const handleUpload = async (e) => {
+    const fs = Array.from(e.target.files || []);
+    if (!fs.length) return;
+    setUploading(true);
+    for (const f of fs) {
+      try {
+        const ext = f.name.split('.').pop().toLowerCase();
+        let content = '';
+        if (['txt', 'md'].includes(ext)) {
+          content = await f.text();
+          content = content.slice(0, 25000);
+        } else {
+          content = `[${f.name} — ${ext.toUpperCase()} file uploaded. For best AI reading, use .txt or .md. I can still help if you describe the content.]`;
+        }
+        const newFile = { id: Date.now() + Math.random(), name: f.name, content, ext };
+        setFiles(prev => {
+          const updated = [...prev, newFile];
+          setActiveFile(newFile.id);
+          return updated;
+        });
+        setLeftTab('document');
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          content: `📄 I've loaded "${f.name}"${content.length > 100 ? ` (${Math.round(content.length / 1000)}k chars read)` : ''}.\n\nI now have full context of this material. Use the quick buttons below or ask me anything about it.`
+        }]);
+      } catch (_) {}
+    }
+    setUploading(false);
+    e.target.value = '';
+  };
+
+  const removeFile = (id) => {
+    setFiles(prev => {
+      const updated = prev.filter(f => f.id !== id);
+      if (activeFile === id) setActiveFile(updated[0]?.id || null);
+      return updated;
+    });
+  };
+
+  const send = async (text) => {
+    const msg = (text || input).trim();
+    if (!msg || loading) return;
+    const newMsgs = [...messages, { role: 'user', content: msg }];
+    setMessages(newMsgs); setInput(''); setLoading(true);
+    try {
+      const apiMsgs = newMsgs.filter(m => m.content).slice(-14).map(m => ({
+        role: m.role === 'ai' ? 'assistant' : 'user', content: m.content,
+      }));
+      // Combine all file content
+      const allFileContent = files.map(f => `=== ${f.name} ===\n${f.content}`).join('\n\n').slice(0, 30000);
+      const notesContext = notes.trim() ? `\n\n=== Student Notes ===\n${notes}` : '';
+      const r = await fetch('/api/ai/tutor', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMsgs, mode, canvas, fileContent: allFileContent + notesContext }),
+      });
+      const d = await r.json();
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "I'm here — what would you like to explore?" }]);
+    } catch (_) {
+      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue — please try again." }]);
+    }
+    setLoading(false);
+  };
+
+  const curMode = MODES.find(m => m.id === mode);
+  const viewedFile = files.find(f => f.id === activeFile);
+  const hasFiles = files.length > 0;
+  const isAiReady = true;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', maxHeight: 860 }}>
+
+      {/* ── Top bar ────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: C.text }}>AI Tutor</h1>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.green, fontWeight: 600, background: `${C.green}15`, border: `1px solid ${C.green}33`, borderRadius: 99, padding: '3px 10px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.green, display: 'inline-block' }} />
+              AI Analysis Ready
+            </span>
+            {hasFiles && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: C.blue, fontWeight: 600, background: `${C.blue}15`, border: `1px solid ${C.blue}33`, borderRadius: 99, padding: '3px 10px' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.blue, display: 'inline-block' }} />
+                Tutor Active
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Mode tabs */}
+        <div style={{ display: 'flex', gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4 }}>
+          {MODES.map(m => (
+            <button key={m.id} onClick={() => switchMode(m.id)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 13px', borderRadius: 7, border: 'none', background: mode === m.id ? `${m.color}22` : 'transparent', color: mode === m.id ? m.color : C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: mode === m.id ? 700 : 400, transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              <m.icon size={13} />{m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Split panel ───────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '2fr 3fr', gap: 14, minHeight: 0 }}>
+
+        {/* LEFT — Document viewer */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+          {/* Left tabs */}
+          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, padding: '0 14px' }}>
+            {['document', 'notes'].map(t => (
+              <button key={t} onClick={() => setLeftTab(t)}
+                style={{ padding: '10px 14px', background: 'none', border: 'none', borderBottom: `2px solid ${leftTab === t ? C.blue : 'transparent'}`, color: leftTab === t ? C.text : C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: leftTab === t ? 700 : 400, display: 'flex', alignItems: 'center', gap: 6, marginBottom: -1 }}>
+                {t === 'document' ? <><FileText size={12} />Document</> : <><Edit3 size={12} />Notes</>}
+              </button>
+            ))}
+          </div>
+
+          {leftTab === 'document' ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {/* File list */}
+              {files.length > 0 && (
+                <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {files.map(f => (
+                    <div key={f.id} onClick={() => setActiveFile(f.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 7, background: activeFile === f.id ? `${C.blue}1E` : 'rgba(255,255,255,0.03)', border: `1px solid ${activeFile === f.id ? C.blue : C.border}`, cursor: 'pointer', maxWidth: 160 }}>
+                      <FileText size={11} color={activeFile === f.id ? C.blue : C.muted} style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: activeFile === f.id ? C.text : C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
+                      <button onClick={e => { e.stopPropagation(); removeFile(f.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 0, lineHeight: 1, flexShrink: 0 }}><X size={10} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Doc content / upload zone */}
+              {viewedFile ? (
+                <div style={{ flex: 1, overflowY: 'auto', padding: 18, fontSize: 12, color: C.muted, lineHeight: 1.75, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                  {viewedFile.content}
+                </div>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28, textAlign: 'center' }}>
+                  <div style={{ width: 60, height: 60, background: `${C.blue}12`, border: `2px dashed ${C.border}`, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                    <Upload size={22} color={C.muted} />
+                  </div>
+                  <div style={{ fontSize: 14, color: C.text, fontWeight: 600, marginBottom: 6 }}>Upload Your Material</div>
+                  <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6, marginBottom: 18 }}>Upload notes, study guides, or any text file. I'll read it and help you learn from it.</div>
+                  <input type="file" ref={fileRef} style={{ display: 'none' }} accept=".txt,.md,.pdf" multiple onChange={handleUpload} />
+                  <Btn onClick={() => fileRef.current?.click()} disabled={uploading} size="sm">
+                    {uploading ? <Spinner /> : <Upload size={13} />} {uploading ? 'Reading…' : 'Upload Notes'}
+                  </Btn>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 10 }}>.txt · .md · .pdf supported</div>
+                </div>
+              )}
+              {/* Add more button when files exist */}
+              {hasFiles && (
+                <div style={{ padding: '10px 14px', borderTop: `1px solid ${C.border}` }}>
+                  <input type="file" ref={fileRef} style={{ display: 'none' }} accept=".txt,.md,.pdf" multiple onChange={handleUpload} />
+                  <Btn variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading} style={{ width: '100%', justifyContent: 'center' }}>
+                    {uploading ? <Spinner /> : <Plus size={12} />} Add more files
+                  </Btn>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 14, gap: 10 }}>
+              <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>YOUR NOTES — the tutor reads these too</div>
+              <textarea
+                value={notes} onChange={e => setNotes(e.target.value)}
+                placeholder="Write your own notes here — key ideas, questions, things to remember. The AI tutor will reference them in responses."
+                style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: 14, fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.65 }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — Tutor chat */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Chat header */}
+          <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, background: `${curMode.color}1E`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <curMode.icon size={15} color={curMode.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{curMode.label}</div>
+                <div style={{ fontSize: 11, color: C.muted }}>Claude + Groq · Context-aware</div>
+              </div>
+            </div>
+            {/* TUTOR ALSO SEES */}
+            {(hasFiles || canvas?.bigVision || notes.trim()) && (
+              <div style={{ fontSize: 11, color: C.muted, textAlign: 'right', lineHeight: 1.6 }}>
+                <div style={{ fontWeight: 700, color: C.text, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 10 }}>Tutor also sees</div>
+                {files.map(f => <div key={f.id} style={{ color: C.blueLight }}>• {f.name.length > 22 ? f.name.slice(0, 22) + '…' : f.name}</div>)}
+                {canvas?.bigVision && <div style={{ color: C.purple }}>• Your Visionary Canvas</div>}
+                {notes.trim() && <div style={{ color: C.green }}>• Your notes</div>}
+              </div>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '18px 18px 8px' }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ marginBottom: 16, display: 'flex', gap: 10, flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
+                {m.role === 'ai' && (
+                  <div style={{ width: 28, height: 28, background: `${curMode.color}1E`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                    <Brain size={13} color={curMode.color} />
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: '80%', background: m.role === 'user' ? `${C.blue}22` : `${C.card}`,
+                  border: `1px solid ${m.role === 'user' ? C.blue + '33' : C.border}`,
+                  borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                  padding: '10px 14px', fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-wrap',
+                }}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 28, height: 28, background: `${curMode.color}1E`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Brain size={13} color={curMode.color} />
+                </div>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '14px 14px 14px 4px', padding: '12px 16px', display: 'flex', gap: 5, alignItems: 'center' }}>
+                  {[0,1,2].map(j => <div key={j} style={{ width: 7, height: 7, borderRadius: '50%', background: curMode.color, opacity: 0.5, animation: `pulse 1.2s ${j * 0.2}s infinite` }} />)}
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick action chips */}
+          <div style={{ padding: '8px 18px', display: 'flex', gap: 6, flexWrap: 'wrap', borderTop: `1px solid ${C.border}33` }}>
+            {QUICK_ACTIONS[mode].map(q => (
+              <button key={q} onClick={() => send(q)}
+                style={{ background: `${curMode.color}0E`, border: `1px solid ${curMode.color}28`, color: curMode.color, borderRadius: 99, padding: '5px 12px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 9, alignItems: 'flex-end' }}>
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder={hasFiles ? `Ask about ${viewedFile?.name || 'your material'}…` : 'Or type your question…'}
+              rows={2}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+              style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '9px 13px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.5 }}
+            />
+            <button onClick={() => send()}
+              disabled={!input.trim() || loading}
+              style={{ width: 40, height: 40, borderRadius: 10, background: input.trim() && !loading ? curMode.color : C.border, border: 'none', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }}>
+              <Send size={15} color="#fff" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MENTORS ──────────────────────────────────────────────────────────────────
+function MentorsTab({ mentors }) {
+  const [chatMentor, setChatMentor] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+
+  const fields = ['All', ...new Set(mentors.map(m => m.field))];
+  const list = mentors.filter(m => (filter === 'All' || m.field === filter) && `${m.name} ${m.title}`.toLowerCase().includes(search.toLowerCase()));
+
+  const openChat = m => { setChatMentor(m); setMessages([{ role: 'ai', content: `Hi! I'm ${m.name}, ${m.title}.\n\n"${m.quote}"\n\nWhat's on your mind?` }]); setInput(''); };
+
+  const send = async () => {
+    const text = input.trim(); if (!text || loading) return;
+    const newMsgs = [...messages, { role: 'user', content: text }];
+    setMessages(newMsgs); setInput(''); setLoading(true);
+    try {
+      const r = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mentor: chatMentor, messages: newMsgs.slice(-8).map(m => ({ role: m.role === 'ai' ? 'assistant' : m.role, content: m.content })) }) });
+      const d = await r.json();
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply }]);
+    } catch (_) { setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. Please try again." }]); }
+    setLoading(false);
+  };
+
+  if (chatMentor) return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 90px)', maxHeight: 700 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+        <Btn variant="secondary" size="sm" onClick={() => setChatMentor(null)}>← Back</Btn>
+        <Avatar src={chatMentor.img} name={chatMentor.name} size={40} />
+        <div><div style={{ fontWeight: 700, color: C.text }}>{chatMentor.name}</div><div style={{ fontSize: 12, color: C.muted }}>{chatMentor.title}</div></div>
+      </div>
+      <div style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 18, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+        <ChatWindow messages={messages} input={input} setInput={setInput} onSend={send} loading={loading}
+          placeholder={`Ask ${chatMentor.name.split(' ')[0]} anything...`}
+          suggestions={['What should I focus on now?', 'How do I build confidence?', 'What mistakes to avoid?', 'How did you get started?']} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ marginBottom: 22 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 5px', color: C.text }}>Mentors</h1>
+        <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>Connect with experts who've been where you want to go</p>
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
+          <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: C.muted }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mentors..." style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '8px 12px 8px 33px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+          {fields.map(f => <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 13px', borderRadius: 8, border: `1px solid ${filter === f ? C.blue : C.border}`, background: filter === f ? `${C.blue}1E` : 'transparent', color: filter === f ? C.blueLight : C.muted, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: filter === f ? 600 : 400 }}>{f}</button>)}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+        {list.map(m => (
+          <Card key={m.id} onClick={() => openChat(m)} style={{ padding: 22 }}>
+            <div style={{ display: 'flex', gap: 13, marginBottom: 14 }}>
+              <Avatar src={m.img} name={m.name} size={48} />
+              <div><div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{m.name}</div><div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>{m.title}</div><div style={{ marginTop: 5 }}><Tag text={m.field} color={C.blue} /></div></div>
+            </div>
+            <p style={{ fontSize: 12, color: C.muted, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 14 }}>"{m.quote}"</p>
+            <Btn style={{ width: '100%', justifyContent: 'center' }} size="sm"><MessageCircle size={13} /> Chat with {m.name.split(' ')[0]}</Btn>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── COMMUNITY ────────────────────────────────────────────────────────────────
+function CommunityTab({ feed, setFeed }) {
+  const [content, setContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [liked, setLiked] = useState({});
+
+  const post = async () => {
+    if (!content.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const r = await fetch('/api/feed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, authorName: 'You', authorImg: null }) });
+      const d = await r.json(); setFeed(p => [d, ...p]);
+    } catch (_) { setFeed(p => [{ id: Date.now(), authorName: 'You', content, likes: 0, comments: 0, time: 'Just now', tags: [] }, ...p]); }
+    setContent(''); setSubmitting(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 660, margin: '0 auto' }}>
+      <div style={{ marginBottom: 22 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 5px', color: C.text }}>Community</h1>
+        <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>Share milestones, connect with peers, celebrate progress</p>
+      </div>
+      <Card style={{ marginBottom: 20, padding: 18 }}>
+        <Input value={content} onChange={setContent} placeholder="Share a win, insight, or milestone with the community..." multiline rows={3} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+          <Btn onClick={post} disabled={!content.trim() || submitting} size="sm">{submitting ? <Spinner /> : <><Send size={13} /> Share</>}</Btn>
+        </div>
+      </Card>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+        {feed.map((p, i) => (
+          <Card key={p.id || i} style={{ padding: 18 }}>
+            <div style={{ display: 'flex', gap: 11, marginBottom: 12 }}>
+              <Avatar src={p.authorImg} name={p.authorName} size={36} />
+              <div><div style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{p.authorName}</div><div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div></div>
+            </div>
+            <p style={{ fontSize: 14, color: C.text, lineHeight: 1.7, margin: '0 0 12px' }}>{p.content}</p>
+            {p.tags?.length > 0 && <div style={{ display: 'flex', gap: 5, marginBottom: 12, flexWrap: 'wrap' }}>{p.tags.map(t => <Tag key={t} text={`#${t}`} color={C.muted} />)}</div>}
+            <div style={{ display: 'flex', gap: 14, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+              <button onClick={() => setLiked(l => ({ ...l, [p.id]: !l[p.id] }))} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: liked[p.id] ? C.blue : C.muted, fontSize: 13, fontFamily: 'inherit' }}>
+                <Heart size={13} fill={liked[p.id] ? C.blue : 'none'} />{(p.likes || 0) + (liked[p.id] ? 1 : 0)}
+              </button>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 13, fontFamily: 'inherit' }}>
+                <MessageCircle size={13} />{p.comments || 0}
+              </button>
+            </div>
+          </Card>
+        ))}
+        {feed.length === 0 && <div style={{ textAlign: 'center', padding: '48px 0', color: C.muted, fontSize: 13 }}>Be the first to share something with the community.</div>}
+      </div>
+    </div>
+  );
+}
+
+// ─── OPPORTUNITIES ────────────────────────────────────────────────────────────
+function OpportunitiesTab() {
+  const [filter, setFilter] = useState('All');
+  const [saved, setSaved] = useState({});
+  const types = ['All', 'Grant', 'Fellowship', 'Scholarship', 'Internship', 'Competition'];
+  const list = OPPORTUNITIES.filter(o => filter === 'All' || o.type === filter);
+  const tColors = { Grant: C.green, Fellowship: C.purple, Scholarship: C.blue, Internship: C.yellow, Competition: C.red };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 22 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 5px', color: C.text }}>Opportunities</h1>
+        <p style={{ color: C.muted, margin: 0, fontSize: 13 }}>Scholarships, fellowships, internships, and grants for visionaries</p>
+      </div>
+      <div style={{ display: 'flex', gap: 7, marginBottom: 22, flexWrap: 'wrap' }}>
+        {types.map(t => <button key={t} onClick={() => setFilter(t)} style={{ padding: '7px 13px', borderRadius: 8, border: `1px solid ${filter === t ? C.blue : C.border}`, background: filter === t ? `${C.blue}1E` : 'transparent', color: filter === t ? C.blueLight : C.muted, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: filter === t ? 600 : 400 }}>{t}</button>)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
+        {list.map(o => {
+          const color = tColors[o.type] || C.blue;
+          return (
+            <Card key={o.id} style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <Tag text={o.type} color={color} />
+                <button onClick={() => setSaved(s => ({ ...s, [o.id]: !s[o.id] }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: saved[o.id] ? C.yellow : C.muted, padding: 0 }}>
+                  <Star size={15} fill={saved[o.id] ? C.yellow : 'none'} />
+                </button>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: C.text, marginBottom: 8 }}>{o.title}</div>
+              <div style={{ display: 'flex', gap: 14, fontSize: 12, color: C.muted, marginBottom: 14 }}>
+                <span style={{ color, fontWeight: 700 }}>{o.amount}</span>
+                <span>🎯 {o.field}</span>
+                <span>📅 Deadline: {o.deadline}</span>
+              </div>
+              <Btn style={{ width: '100%', justifyContent: 'center' }} size="sm"><ArrowRight size={12} /> Apply Now</Btn>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── SAFE MODE ────────────────────────────────────────────────────────────────
+function SafeMode({ onClose }) {
+  const [tab, setTab] = useState(0);
+  const [journal, setJournal] = useState('');
+  const [msgs, setMsgs] = useState([{ role: 'ai', content: "You're safe here. No pressure, no deadlines — this space is just for you.\n\nHow are you feeling right now?" }]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [breathPhase, setBreathPhase] = useState(0);
+
+  useEffect(() => { const t = setInterval(() => setBreathPhase(p => (p + 1) % 3), 4000); return () => clearInterval(t); }, []);
+
+  const sendChat = async () => {
+    const text = input.trim(); if (!text || loading) return;
+    const newMsgs = [...msgs, { role: 'user', content: text }];
+    setMsgs(newMsgs); setInput(''); setLoading(true);
+    try {
+      const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: newMsgs.slice(-8).map(m => ({ role: m.role === 'ai' ? 'assistant' : m.role, content: m.content })), mode: 'vision' }) });
+      const d = await r.json();
+      setMsgs(prev => [...prev, { role: 'ai', content: d.reply }]);
+    } catch (_) { setMsgs(prev => [...prev, { role: 'ai', content: "I'm here with you. Take a breath — you don't have to figure everything out right now." }]); }
+    setLoading(false);
+  };
+
+  const bColors = [C.blue, C.purple, C.green];
+  const bLabels = ['Breathe in...', 'Hold...', 'Breathe out...'];
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,18,42,0.97)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: C.muted, cursor: 'pointer' }}><X size={20} /></button>
+      <div style={{ width: '100%', maxWidth: 520 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🕊️</div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: '0 0 5px' }}>Safe Mode</h2>
+          <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>You are safe. Take your time.</p>
+        </div>
+
+        {/* Breathing */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+          <div style={{ width: 90, height: 90, borderRadius: '50%', border: `3px solid ${bColors[breathPhase]}88`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 3s ease' }}>
+            <div style={{ width: breathPhase === 1 ? 72 : breathPhase === 0 ? 60 : 36, height: breathPhase === 1 ? 72 : breathPhase === 0 ? 60 : 36, borderRadius: '50%', background: bColors[breathPhase] + '33', transition: 'all 4s ease' }} />
+          </div>
+          <p style={{ color: bColors[breathPhase], fontWeight: 600, marginTop: 14, fontSize: 15, transition: 'color 1s' }}>{bLabels[breathPhase]}</p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 7, marginBottom: 18 }}>
+          {['Breathe', 'Journal', 'Talk to AI'].map((l, i) => <button key={i} onClick={() => setTab(i)} style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${tab === i ? C.green : C.border}`, background: tab === i ? `${C.green}1A` : 'transparent', color: tab === i ? C.green : C.muted, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: tab === i ? 700 : 400 }}>{l}</button>)}
+        </div>
+
+        {tab === 1 && (
+          <div>
+            <Input value={journal} onChange={setJournal} placeholder="Write anything. This is private — only you can see this..." multiline rows={5} />
+            <p style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>Stays on your device. Not saved anywhere else.</p>
+          </div>
+        )}
+        {tab === 2 && (
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, height: 280, display: 'flex', flexDirection: 'column' }}>
+            <ChatWindow messages={msgs} input={input} setInput={setInput} onSend={sendChat} loading={loading} placeholder="How are you feeling?" />
+          </div>
+        )}
+        <p style={{ textAlign: 'center', fontSize: 11, color: C.muted, marginTop: 16 }}>
+          In crisis? <span style={{ color: C.blueLight }}>988 (US)</span> · <span style={{ color: C.blueLight }}>Text HOME to 741741</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function MainApp() {
+  const [tab, setTab] = useState('home');
+  const [safeMode, setSafeMode] = useState(false);
+  const [canvas, setCanvas] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_canvas') || 'null'); } catch { return null; } });
+  const [feed, setFeed] = useState(DEMO_POSTS);
+  const [mentors, setMentors] = useState(DEMO_MENTORS);
+  const [goals, setGoals] = useState([]);
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    api.getGoals?.()?.then(setGoals).catch(() => {});
+    api.getProjects?.()?.then(setProjects).catch(() => {});
+    api.getFeed?.()?.then(d => { if (Array.isArray(d) && d.length) setFeed(d); }).catch(() => {});
+    api.getMentors?.()?.then(d => { if (Array.isArray(d) && d.length) setMentors(d); }).catch(() => {});
+  }, []);
+
+  const handleSetCanvas = c => { setCanvas(c); localStorage.setItem('vh_canvas', JSON.stringify(c)); };
+
+  const views = {
+    home: <HomeTab canvas={canvas} setTab={setTab} goals={goals} projects={projects} />,
+    canvas: <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} />,
+    roadmap: <RoadmapTab canvas={canvas} />,
+    tutor: <TutorTab canvas={canvas} />,
+    mentors: <MentorsTab mentors={mentors} />,
+    community: <CommunityTab feed={feed} setFeed={setFeed} />,
+    opportunities: <OpportunitiesTab />,
+  };
+
+  return (
+    <div style={{ display: 'flex', background: C.bg, minHeight: '100vh', color: C.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <Sidebar tab={tab} setTab={setTab} safeMode={safeMode} setSafeMode={setSafeMode} canvas={canvas} />
+      <main style={{ flex: 1, padding: '28px 36px', overflowY: 'auto', maxHeight: '100vh' }}>
+        {views[tab]}
+      </main>
+      {safeMode && <SafeMode onClose={() => setSafeMode(false)} />}
+    </div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [entered, setEntered] = useState(() => !!localStorage.getItem('vh_entered'));
+  const enter = () => { localStorage.setItem('vh_entered', '1'); setEntered(true); };
+  return entered ? <MainApp /> : <LandingPage onEnter={enter} />;
+}

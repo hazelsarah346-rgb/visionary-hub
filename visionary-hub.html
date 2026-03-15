@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Visionary Hub — Build Your Future</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#060C1A;
+  --surface:#0D1525;
+  --surface2:#131E33;
+  --border:rgba(59,130,246,0.12);
+  --border2:rgba(255,255,255,0.07);
+  --blue:#3B82F6;
+  --blue-dark:#2563EB;
+  --blue-light:#60A5FA;
+  --purple:#8B5CF6;
+  --cyan:#06B6D4;
+  --green:#10B981;
+  --amber:#F59E0B;
+  --red:#EF4444;
+  --pink:#EC4899;
+  --text:#F1F5F9;
+  --text2:#94A3B8;
+  --text3:#475569;
+  --sidebar:260px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.25);border-radius:10px}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  background:var(--surface);
+  border-right:1px solid var(--border2);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:200;overflow-y:auto;
+}
+.main{margin-left:var(--sidebar);flex:1;min-height:100vh;background:var(--bg)}
+.page{padding:36px 40px;max-width:1100px;animation:fadeUp .3s ease}
+
+/* ── SIDEBAR INTERNALS ── */
+.sb-logo{
+  padding:24px 20px 20px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border2);
+  margin-bottom:8px;
+}
+.sb-logo-icon{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+}
+.sb-logo-name{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.sb-logo-tag{font-size:9.5px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-top:1px}
+.sb-section{padding:12px 12px 4px}
+.sb-section-label{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:0 8px;margin-bottom:6px}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:9px;
+  font-size:13.5px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all .15s;border:none;background:none;
+  width:100%;text-align:left;position:relative;
+}
+.sb-item:hover{background:rgba(59,130,246,0.08);color:var(--text)}
+.sb-item.active{background:rgba(59,130,246,0.12);color:var(--blue-light);font-weight:600}
+.sb-item.active::before{
+  content:'';position:absolute;left:-1px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;background:var(--blue);border-radius:0 3px 3px 0;
+}
+.sb-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-bottom{margin-top:auto;padding:16px 12px;border-top:1px solid var(--border2)}
+.sb-safe-btn{
+  width:100%;padding:10px;border-radius:10px;border:1px solid rgba(16,185,129,0.2);
+  background:rgba(16,185,129,0.06);color:var(--green);
+  font-size:13px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;font-family:inherit;
+}
+.sb-safe-btn:hover{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.35)}
+.sb-user{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 10px;border-radius:10px;
+  cursor:pointer;margin-bottom:10px;
+  transition:background .15s;
+}
+.sb-user:hover{background:rgba(255,255,255,0.04)}
+.sb-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+}
+.sb-user-info{flex:1;min-width:0}
+.sb-user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:11px;color:var(--text3)}
+
+/* ── PAGE HEADER ── */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+.ph-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.ph-sub{font-size:13.5px;color:var(--text2);margin-top:4px;line-height:1.5}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:9px;border:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;
+  transition:all .15s;font-family:inherit;white-space:nowrap;
+}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-dark);box-shadow:0 4px 20px rgba(59,130,246,.3)}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border2)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-outline{background:transparent;color:var(--blue-light);border:1px solid rgba(59,130,246,.3)}
+.btn-outline:hover{background:rgba(59,130,246,.08)}
+.btn-sm{padding:7px 14px;font-size:12.5px;border-radius:8px}
+.btn-lg{padding:12px 26px;font-size:15px;border-radius:11px}
+.btn-icon{padding:8px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:14px;padding:22px;
+}
+.card-sm{padding:16px;border-radius:12px}
+.card:hover.hoverable{border-color:rgba(59,130,246,.25);box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.card-blue-glow{border-color:rgba(59,130,246,.2);background:linear-gradient(145deg,var(--surface),rgba(59,130,246,.04))}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* ── STAT CARD ── */
+.stat{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:14px;padding:20px;
+  transition:all .2s;
+}
+.stat:hover{border-color:rgba(59,130,246,.25);transform:translateY(-2px)}
+.stat-num{font-size:28px;font-weight:900;letter-spacing:-1px;margin:8px 0 4px}
+.stat-label{font-size:12px;color:var(--text2);font-weight:500}
+.stat-change{font-size:11.5px;font-weight:600;margin-top:6px;display:flex;align-items:center;gap:4px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--blue-light);border:1px solid rgba(59,130,246,.2)}
+.badge-purple{background:rgba(139,92,246,.15);color:#A78BFA;border:1px solid rgba(139,92,246,.2)}
+.badge-green{background:rgba(16,185,129,.15);color:#34D399;border:1px solid rgba(16,185,129,.2)}
+.badge-amber{background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.2)}
+.badge-red{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.2)}
+.badge-cyan{background:rgba(6,182,212,.15);color:#67E8F9;border:1px solid rgba(6,182,212,.2)}
+
+/* ── INPUTS ── */
+.input{
+  width:100%;padding:11px 14px;border-radius:9px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-size:14px;outline:none;
+  transition:border .15s;font-family:inherit;
+}
+.input:focus{border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.04)}
+.input::placeholder{color:var(--text3)}
+textarea.input{resize:vertical;min-height:90px;line-height:1.6}
+.input-wrap{margin-bottom:14px}
+.input-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.2px}
+
+/* ── HERO BANNER ── */
+.hero{
+  background:linear-gradient(135deg,rgba(59,130,246,.1) 0%,rgba(139,92,246,.07) 50%,rgba(6,182,212,.05) 100%);
+  border:1px solid rgba(59,130,246,.18);
+  border-radius:18px;padding:36px;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;top:-60px;right:-40px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,.08),transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue-light);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.hero-title{font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1.2;margin-bottom:12px}
+.hero-title span{background:linear-gradient(135deg,var(--blue-light),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:14.5px;color:var(--text2);max-width:500px;line-height:1.7;margin-bottom:24px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* ── PROGRESS ── */
+.progress{height:5px;background:rgba(255,255,255,.07);border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .5s ease}
+
+/* ── CANVAS STEPPER ── */
+.stepper{display:flex;gap:6px;margin-bottom:6px}
+.step-seg{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.08);transition:all .3s}
+.step-seg.done{background:var(--green)}
+.step-seg.active{background:var(--blue)}
+
+/* ── CHIPS ── */
+.chip-grid{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+.chip{
+  padding:8px 16px;border-radius:20px;cursor:pointer;
+  font-size:13px;font-weight:500;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text2);transition:all .15s;
+}
+.chip:hover{border-color:rgba(59,130,246,.4);color:var(--text)}
+.chip.sel{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.45);color:var(--blue-light);font-weight:600}
+
+/* ── CHAT ── */
+.chat-box{display:flex;flex-direction:column;height:520px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;overflow:hidden}
+.chat-header{padding:16px 20px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;gap:10px;max-width:82%}
+.msg.user{flex-direction:row-reverse;align-self:flex-end}
+.msg-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.msg-av.ai{background:linear-gradient(135deg,var(--blue),var(--purple))}
+.msg-av.user{background:linear-gradient(135deg,var(--amber),var(--pink))}
+.bubble{padding:12px 16px;border-radius:14px;font-size:13.5px;line-height:1.65;white-space:pre-line}
+.msg.ai .bubble{background:var(--surface2);border:1px solid var(--border2);border-bottom-left-radius:4px}
+.msg.user .bubble{background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.25);border-bottom-right-radius:4px}
+.typing-anim{display:flex;gap:4px;align-items:center;padding:2px 0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--blue-light);animation:bounce 1.1s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.chat-suggestions{padding:10px 16px;display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border2)}
+.suggestion{padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:500;cursor:pointer;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);color:var(--blue-light);transition:all .15s;font-family:inherit}
+.suggestion:hover{background:rgba(59,130,246,.15)}
+.chat-input-area{padding:14px 16px;border-top:1px solid var(--border2);display:flex;gap:10px}
+
+/* ── ROADMAP ── */
+.rm-track{position:relative}
+.rm-track::before{content:'';position:absolute;left:27px;top:50px;bottom:40px;width:2px;background:linear-gradient(to bottom,var(--blue),rgba(59,130,246,.1));z-index:0}
+.rm-phase{display:flex;gap:20px;align-items:flex-start;padding:0 0 28px;position:relative;z-index:1}
+.rm-icon{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  border:2px solid;position:relative;z-index:2;
+}
+.rm-body{flex:1}
+.rm-phase-name{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.rm-time{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:2px 0 14px}
+.rm-ms{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:13.5px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.rm-ms-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* ── OPPORTUNITIES ── */
+.opp-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:14px;padding:20px;cursor:pointer;
+  transition:all .2s;display:flex;flex-direction:column;
+}
+.opp-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.opp-logo{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;flex-shrink:0}
+.opp-title{font-size:14px;font-weight:700;line-height:1.4;margin-bottom:5px}
+.opp-org{font-size:12px;color:var(--text2);margin-bottom:10px}
+.opp-deadline{font-size:11.5px;color:var(--amber);font-weight:600;margin-bottom:12px}
+.opp-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;flex:1}
+.opp-apply{width:100%;padding:9px;border-radius:8px;border:none;background:rgba(59,130,246,.12);color:var(--blue-light);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.opp-apply:hover{background:var(--blue);color:#fff}
+
+/* ── FEED ── */
+.post{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:20px;margin-bottom:14px;transition:border .15s}
+.post:hover{border-color:rgba(59,130,246,.2)}
+.post-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.post-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.post-name{font-size:14px;font-weight:700}
+.post-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.post-body{font-size:14px;line-height:1.7;color:#CBD5E1;margin-bottom:14px}
+.post-actions{display:flex;gap:4px}
+.act-btn{padding:7px 12px;border-radius:8px;background:none;border:none;font-size:12.5px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;font-family:inherit;font-weight:500}
+.act-btn:hover{background:rgba(255,255,255,.05);color:var(--text2)}
+.act-btn.liked{color:var(--pink);background:rgba(236,72,153,.08)}
+
+/* ── SAFE MODE ── */
+.safe-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:#030C0A;
+  display:flex;align-items:center;justify-content:center;
+  animation:fadeUp .4s ease;
+}
+.safe-inner{max-width:600px;width:90%;text-align:center}
+.breathe-ring{
+  width:130px;height:130px;border-radius:50%;margin:0 auto 32px;
+  background:radial-gradient(circle,rgba(16,185,129,.2),transparent 70%);
+  border:2px solid rgba(16,185,129,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:44px;
+  animation:pulse-breath 4s ease-in-out infinite;
+}
+@keyframes pulse-breath{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(16,185,129,.15)}50%{transform:scale(1.12);box-shadow:0 0 0 20px rgba(16,185,129,.0)}}
+.safe-title{font-size:30px;font-weight:900;color:#6EE7B7;margin-bottom:8px;letter-spacing:-.5px}
+.safe-sub{font-size:15px;color:#4ADE80;opacity:.7;margin-bottom:36px}
+.safe-journal-wrap{background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.15);border-radius:14px;padding:20px;text-align:left;margin-bottom:24px}
+.safe-journal-wrap label{font-size:12px;color:#4ADE80;font-weight:600;display:block;margin-bottom:8px}
+.safe-textarea{width:100%;background:transparent;border:none;color:#A7F3D0;font-size:14px;line-height:1.8;outline:none;resize:none;font-family:inherit}
+.safe-btns{display:flex;gap:12px;justify-content:center}
+.safe-btn{padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;border:1px solid rgba(16,185,129,.25);background:rgba(16,185,129,.1);color:#6EE7B7}
+.safe-btn:hover{background:rgba(16,185,129,.2)}
+.safe-btn-back{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--text3)}
+.safe-btn-back:hover{background:rgba(255,255,255,.08)}
+
+/* ── VISION BOARD ── */
+.board-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.board-card{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:14px;overflow:hidden;cursor:pointer;
+  transition:all .2s;position:relative;min-height:140px;
+  display:flex;flex-direction:column;
+}
+.board-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.3);border-color:rgba(59,130,246,.3)}
+.board-card-body{padding:18px;flex:1}
+.board-card-emoji{font-size:30px;margin-bottom:10px;display:block}
+.board-card-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.board-card-text{font-size:12.5px;color:var(--text2);line-height:1.5}
+.board-card-footer{padding:10px 16px;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.board-add{
+  background:var(--surface2);border:2px dashed rgba(59,130,246,.2);
+  border-radius:14px;min-height:140px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  transition:all .2s;color:var(--text3);font-size:13px;font-weight:500;
+}
+.board-add:hover{border-color:rgba(59,130,246,.5);color:var(--blue-light);background:rgba(59,130,246,.04)}
+
+/* ── FILTER TABS ── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter-tab{
+  padding:7px 15px;border-radius:20px;font-size:12.5px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border2);background:none;
+  color:var(--text3);transition:all .15s;font-family:inherit;
+}
+.filter-tab:hover{border-color:rgba(59,130,246,.35);color:var(--text2)}
+.filter-tab.on{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.4);color:var(--blue-light)}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border2);margin:20px 0}
+
+/* ── NOTIFICATIONS ── */
+.notif{
+  background:linear-gradient(135deg,rgba(59,130,246,.09),rgba(139,92,246,.06));
+  border:1px solid rgba(59,130,246,.2);border-radius:12px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+  font-size:13.5px;margin-bottom:22px;
+}
+.notif-icon{font-size:18px;flex-shrink:0}
+
+/* ── CANVAS RESULT ── */
+.cv-result{
+  background:linear-gradient(145deg,rgba(59,130,246,.08),rgba(139,92,246,.05));
+  border:1px solid rgba(59,130,246,.22);border-radius:18px;padding:30px;
+}
+.cv-vision{font-size:18px;font-weight:700;line-height:1.55;color:#BAE6FD;font-style:italic;margin:14px 0}
+
+/* ── ONBOARDING MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+.modal{background:var(--surface);border:1px solid rgba(59,130,246,.2);border-radius:20px;padding:32px;max-width:540px;width:100%;position:relative;animation:fadeUp .3s ease}
+
+/* ── UTILITIES ── */
+.flex{display:flex}.ai{align-items:center}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}.gap20{gap:20px}.sb{justify-content:space-between}.fw{flex-wrap:wrap}
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.fw7{font-weight:700}.fw8{font-weight:800}.fw6{font-weight:600}
+.text2{color:var(--text2)}.text3{color:var(--text3)}
+.f12{font-size:12px}.f13{font-size:13px}.f14{font-size:14px}.f16{font-size:16px}.f18{font-size:18px}.f22{font-size:22px}
+.upper{text-transform:uppercase;letter-spacing:1px}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:980px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.board-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.sidebar{display:none}.main{margin-left:0}.g2,.g3,.g4{grid-template-columns:1fr}.board-grid{grid-template-columns:1fr 1fr}.page{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+// ─── AI ENGINE ───────────────────────────────────────────────────────────────
+const R = {
+  stress:[
+    "I hear you — and I want you to know this feeling is valid.\n\nHere's what the research actually shows works:\n\n1. **Box breathing** — 4 counts in, 4 hold, 4 out, 4 hold. Do this 4x right now. It directly signals your nervous system to calm down.\n2. **Shrink the horizon** — don't plan beyond 48 hours when overwhelmed. What's ONE thing that would make today feel like a win?\n3. **Move your body** — even a 15-min walk reduces cortisol by 26%.\n\nYou don't have to push through alone. What's the biggest pressure right now?",
+    "Burnout is real. Here's the honest truth: the 'push through' strategy works until it doesn't — and when it breaks, it breaks hard.\n\nTry this framework:\n- **Name the stress**: Is it deadline pressure, comparison to others, or deeper uncertainty about your path?\n- **Reduce inputs**: For the next 24 hours, stop doom-scrolling, stop comparing. Focus only on what's in front of you.\n- **One anchor**: What's ONE small thing — 10 minutes — that brings you back to yourself? Do that today.\n\nYou're doing better than you think. What's been heaviest lately?"
+  ],
+  career:[
+    "Career clarity is built through experiments, not perfect plans.\n\nHere's a framework: find the intersection of (1) what genuinely interests you, (2) what you're building skill in, and (3) what the world needs.\n\nMost students only focus on #3 — what will 'get me a job.' Start with #1. What topics make you lose track of time? What problems make you angry? That's your signal.\n\nWhat field or role are you trying to figure out?",
+    "The students who land great opportunities in college do 3 things most students don't:\n\n1. They **build in public** — a project, portfolio, or LinkedIn presence that shows their thinking.\n2. They **collect mentors**, not just contacts. One meaningful conversation per month with someone doing what you want to do changes your trajectory.\n3. They say **yes to 2 things and no to everything else**. Depth beats breadth every time.\n\nWhere are you in your career exploration right now?"
+  ],
+  network:[
+    "Networking becomes easy when you stop thinking of it as 'asking for favors' and start seeing it as building a community of interesting people.\n\nBest moves for students:\n- **LinkedIn outreach**: 2 alumni/week with a specific, thoughtful question. Most respond.\n- **Events**: 1 event/month in your field. You need just 1 real connection per event.\n- **Give first**: Share an article, resource, or introduction before you ever ask for anything.\n\nThe secret? Most people LOVE being asked for advice. You're doing them a favor by asking.\n\nWho do you want to connect with?"
+  ],
+  goal:[
+    "Goals without systems are just wishes.\n\n**The 3-Layer System that works:**\n- 🌟 **North Star** (10yr): Directional, broad. Where are you heading?\n- 🎯 **Milestone** (12mo): Specific and measurable. What will you achieve this year?\n- 🔁 **Weekly habit**: What do you do EVERY week that compounds toward the milestone?\n\nThe weekly habit layer is what 90% of students skip. It's also what separates people who achieve their goals from those who just talk about them.\n\nWhat's your current 12-month goal?"
+  ],
+  scholarship:[
+    "Most scholarships go unclaimed because students don't know they exist or assume they won't qualify.\n\nStart here:\n1. **Your college's financial aid office** — school-specific awards are the least competitive\n2. **Fastweb.com** and **Scholarships.com** — filter by major and background\n3. **Local community foundations** — $500–$5K awards with almost no applicants\n4. **Professional associations** in your field — nearly all offer student scholarships\n\n📌 Pro tip: Apply for the 'small' ones ($500–$2K). Everyone ignores them. They add up fast.\n\nWhat's your field of study? I can get more specific."
+  ],
+  study:[
+    "Most students study wrong — rereading and highlighting give the *feeling* of learning without the retention.\n\nWhat the neuroscience actually says:\n\n1. **Active recall** — Close the book, write everything you remember. 3x more effective than rereading.\n2. **Spaced repetition** — Review at increasing intervals: 1 day → 3 days → 1 week → 2 weeks. Use Anki.\n3. **Feynman Technique** — Explain the concept like you're teaching a 10-year-old. Gaps in your explanation = gaps in understanding.\n4. **Environment design** — One dedicated study spot. Your brain will start associating it with focus.\n\nWhat subject or exam are you preparing for?"
+  ],
+  mentor:[
+    "Finding a mentor is a skill. Here's how to do it well:\n\n**Step 1 — Get specific**: Don't look for 'a mentor.' Look for someone who did the thing you want to do in the next 5 years.\n\n**Step 2 — Do your homework**: Read everything they've written. Watch their talks. Know their work.\n\n**Step 3 — The right ask**: Don't say 'Can you mentor me?' Instead: 'I read your work on X — it shaped how I think about Y. I have one specific question about Z. Could we connect for 20 minutes?'\n\n**Step 4 — Give value**: You have more to offer than you think — fresh perspective, energy, digital skills.\n\nWho in your field would you most like to learn from?"
+  ],
+  confidence:[
+    "Confidence isn't something you 'have' — it's built through accumulated proof.\n\nThe reframe that changes everything: **Courage comes before confidence.** You don't need to feel confident to act. You act despite uncertainty, and the confidence grows from that evidence.\n\nPractical tools:\n- Keep an **evidence file** — a note with every win, compliment, and thing you've done well. Read it when doubt spikes.\n- **Prepare obsessively** for high-stakes moments. Confidence there comes from preparation, not attitude.\n- Stop comparing your **beginning** to someone else's **middle**.\n\nWhat situation is bringing up the self-doubt right now?"
+  ],
+  default:[
+    "That's worth thinking through carefully.\n\nHere's my honest take: the most powerful thing you can do right now is build **self-awareness** — understanding what genuinely drives you, what your real strengths are, and what kind of impact you want to have.\n\nAll great decisions flow from that foundation. Most students skip it and end up chasing things that don't actually matter to them.\n\nWhat's the biggest question on your mind right now? Let's work through it together.",
+    "I'm glad you're asking. Here's something I've seen consistently: the students who thrive aren't necessarily the most talented — they're the most **intentional**.\n\nIntentionality means knowing WHY you're doing what you're doing, surrounding yourself with people who push you, and building habits that move you forward even on hard days.\n\nSo — what are you working toward? What does winning look like for you right now?"
+  ]
+};
+const ai=t=>{
+  const q=t.toLowerCase();
+  if(q.match(/stress|overwhelm|anxious|burnout|pressure|tired|panic|hard/))return pick(R.stress);
+  if(q.match(/career|job|intern|work|profession|industry|major|path/))return pick(R.career);
+  if(q.match(/network|connect|linkedin|people|relationship/))return pick(R.network);
+  if(q.match(/goal|vision|dream|future|ambition|purpose/))return pick(R.goal);
+  if(q.match(/scholarship|money|funding|financial|grant|award/))return pick(R.scholarship);
+  if(q.match(/study|learn|exam|grade|class|homework/))return pick(R.study);
+  if(q.match(/mentor|guide|coach|advisor|guidance/))return pick(R.mentor);
+  if(q.match(/confidence|doubt|imposter|afraid|fear|worth/))return pick(R.confidence);
+  return pick(R.default);
+};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+// ─── ROADMAP GENERATOR ────────────────────────────────────────────────────────
+const mkRoadmap=c=>{
+  const f=c?.major||'your field',g=c?.oneYear||'your major milestone';
+  return[
+    {n:1,label:'Foundation',time:'Months 1–3',color:'var(--blue)',bg:'rgba(59,130,246,.12)',e:'🌱',
+      ms:[`Define your personal brand: what makes you unique in ${f}?`,`Research 3 professionals whose paths you want to study deeply`,`Set up your professional presence — LinkedIn, portfolio, or relevant platform`,`Complete one certification or course directly tied to ${f}`]},
+    {n:2,label:'Momentum',time:'Months 3–6',color:'var(--purple)',bg:'rgba(139,92,246,.1)',e:'⚡',
+      ms:[`Apply to 2–3 real opportunities: internships, research roles, or projects`,`Attend or organize 1 event or community in your space`,`Build one tangible portfolio piece to demonstrate your capability`,`Have 1 meaningful career conversation with a professional in ${f}`]},
+    {n:3,label:'Impact',time:'Months 6–12',color:'var(--amber)',bg:'rgba(245,158,11,.1)',e:'🚀',
+      ms:[`Make significant progress toward: ${g}`,`Establish a mentorship relationship or advisory connection`,`Share your work publicly — conference, paper, or community contribution`,`Reflect and double down: what 20% of your efforts is driving 80% of results?`]},
+    {n:4,label:'Scale',time:'Year 2+',color:'var(--green)',bg:'rgba(16,185,129,.1)',e:'✦',
+      ms:[`Lead a project or team that creates measurable real-world impact`,`Build a network of 5+ genuine professional relationships`,`Define your 3-year horizon and begin laying groundwork today`,`Become a resource for others — mentor a peer, teach what you know`]}
+  ];
+};
+
+// ─── OPPORTUNITIES DATA ───────────────────────────────────────────────────────
+const OPPS=[
+  {id:1,e:'🎓',bg:'rgba(59,130,246,.12)',title:'Gates Millennium Scholars',org:'Bill & Melinda Gates Foundation',type:'scholarship',dl:'Jan 2027',tags:['$$$','Leadership','Full-Ride']},
+  {id:2,e:'💻',bg:'rgba(16,185,129,.12)',title:'Google Summer of Code',org:'Google Open Source',type:'internship',dl:'Mar 2027',tags:['Tech','Paid','Remote']},
+  {id:3,e:'🌍',bg:'rgba(245,158,11,.12)',title:'UN Youth Delegate Program',org:'United Nations',type:'program',dl:'Mar 2027',tags:['Global','Advocacy']},
+  {id:4,e:'🚀',bg:'rgba(139,92,246,.12)',title:'Founders of Tomorrow',org:'Techstars × University',type:'program',dl:'Rolling',tags:['Startup','Mentorship','Funding']},
+  {id:5,e:'💡',bg:'rgba(236,72,153,.12)',title:'Social Innovation Challenge',org:'Ashoka Changemakers',type:'competition',dl:'Apr 2027',tags:['$10K Prize','Social Impact']},
+  {id:6,e:'🏛️',bg:'rgba(59,130,246,.1)',title:'Congressional Internship',org:'US Senate / House',type:'internship',dl:'Oct 2026',tags:['Policy','DC','Paid']},
+  {id:7,e:'🔬',bg:'rgba(6,182,212,.12)',title:'Summer Research Fellowship',org:'NSF / NIH Programs',type:'internship',dl:'Feb 2027',tags:['Research','STEM','Paid']},
+  {id:8,e:'🌱',bg:'rgba(16,185,129,.1)',title:'Climate Solutions Fellowship',org:'Environmental Defense Fund',type:'program',dl:'Feb 2027',tags:['Climate','Fellowship']},
+  {id:9,e:'🎨',bg:'rgba(245,158,11,.1)',title:'Adobe Creative Residency',org:'Adobe Inc.',type:'program',dl:'Rolling',tags:['Design','Creative','Stipend']},
+  {id:10,e:'📊',bg:'rgba(59,130,246,.08)',title:'First-Gen Scholarship',org:'Jack Kent Cooke Foundation',type:'scholarship',dl:'Sep 2026',tags:['First-Gen','$$$']},
+  {id:11,e:'🏆',bg:'rgba(139,92,246,.1)',title:'National Merit Scholarship',org:'NMSC / College Board',type:'scholarship',dl:'Oct 2026',tags:['Merit','Academic','$']},
+  {id:12,e:'🤝',bg:'rgba(16,185,129,.08)',title:'Peer Mentorship Network',org:'Visionary Hub Community',type:'program',dl:'Always Open',tags:['Mentorship','Free','Community']},
+];
+
+// ─── BOARD DATA ───────────────────────────────────────────────────────────────
+const INIT_BOARD=[
+  {id:1,emoji:'💼',title:'Land My Dream Internship',text:'Summer 2027 · Fortune 500 or top startup',color:'var(--blue)',category:'Career'},
+  {id:2,emoji:'📚',title:'Graduate With Honors',text:'3.7+ GPA, dean\'s list senior year',color:'var(--purple)',category:'Academic'},
+  {id:3,emoji:'🌍',title:'Travel & Gain Global Perspective',text:'Study abroad or international program',color:'var(--green)',category:'Life'},
+  {id:4,emoji:'💰',title:'Secure $5K+ in Scholarships',text:'Fund my education without all the debt',color:'var(--amber)',category:'Financial'},
+  {id:5,emoji:'🤝',title:'Build My Network',text:'10 meaningful professional connections',color:'var(--cyan)',category:'Network'},
+  {id:6,emoji:'🚀',title:'Launch a Real Project',text:'Something people actually use and value',color:'var(--pink)',category:'Build'},
+];
+
+// ─── COMMUNITY DATA ───────────────────────────────────────────────────────────
+const INIT_POSTS=[
+  {id:1,name:'Maya Chen',initials:'MC',bg:'linear-gradient(135deg,#3B82F6,#8B5CF6)',time:'2h ago',major:'Computer Science',
+    body:'Just accepted my Google SWE internship for Summer 2027 🎉 18 months ago I didn\'t know what a for-loop was. Consistency truly beats talent. DMs open for anyone grinding for tech interviews.',
+    likes:47,liked:false,comments:12,tags:['Tech','CS','Win']},
+  {id:2,name:'Jordan Williams',initials:'JW',bg:'linear-gradient(135deg,#06B6D4,#10B981)',time:'5h ago',major:'Pre-Med / Biology',
+    body:'My first research paper was just accepted to the Journal of Undergraduate Biology ✅ Two years of lab work finally made real. To every student who feels like their work doesn\'t matter — it does. Keep going.',
+    likes:91,liked:false,comments:23,tags:['Research','Pre-Med','Publication']},
+  {id:3,name:'Priya Patel',initials:'PP',bg:'linear-gradient(135deg,#F59E0B,#EC4899)',time:'Yesterday',major:'Business / Entrepreneurship',
+    body:'Our startup just crossed $10K MRR 🚀 We built this using the accountability circles here. Finding your people genuinely changes everything. So grateful for this community.',
+    likes:134,liked:false,comments:38,tags:['Startup','Founder','Milestone']},
+  {id:4,name:'Alex Torres',initials:'AT',bg:'linear-gradient(135deg,#10B981,#3B82F6)',time:'2d ago',major:'Psychology / Public Health',
+    body:'Finished my congressional internship in DC last week. When I started college I was terrified of public speaking. Now I\'ve presented research to 3 senators. You grow into the rooms you put yourself in.',
+    likes:76,liked:false,comments:19,tags:['Policy','Leadership','Growth']},
+];
+
+// ─── STRENGTHS ────────────────────────────────────────────────────────────────
+const STRENGTHS=['Creative Thinking','Analytical Mind','Leadership','Communication','Empathy','Technical Skills','Storytelling','Problem-Solving','Research','Resilience','Collaboration','Strategic Vision','Writing','Public Speaking','Data Analysis','Design Thinking'];
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function Sidebar({page,setPage,setSafe,canvas}){
+  const nav1=[
+    {id:'dashboard',icon:'⊞',label:'Dashboard'},
+    {id:'canvas',icon:'◈',label:'Visionary Canvas'},
+    {id:'board',icon:'⊠',label:'Vision Board'},
+    {id:'roadmap',icon:'◎',label:'Life Roadmap'},
+  ];
+  const nav2=[
+    {id:'tutor',icon:'◆',label:'AI Tutor'},
+    {id:'opportunities',icon:'◉',label:'Opportunities'},
+    {id:'community',icon:'⊛',label:'Community'},
+  ];
+  const initials=canvas?.name?canvas.name.split(' ').map(w=>w[0]).join('').slice(0,2):'VH';
+  return(
+    <div className="sidebar">
+      <div className="sb-logo">
+        <div className="sb-logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <div className="sb-logo-name">Visionary Hub</div>
+          <div className="sb-logo-tag">Build Together</div>
+        </div>
+      </div>
+
+      <div className="sb-section">
+        <div className="sb-section-label">Workspace</div>
+        {nav1.map(n=>(
+          <button key={n.id} className={`sb-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+            <span className="sb-icon">{n.icon}</span> {n.label}
+            {n.id==='canvas'&&!canvas&&<span className="badge badge-blue" style={{marginLeft:'auto',fontSize:'9px',padding:'2px 6px'}}>Start</span>}
+          </button>
+        ))}
+      </div>
+
+      <div className="sb-section" style={{marginTop:8}}>
+        <div className="sb-section-label">Tools</div>
+        {nav2.map(n=>(
+          <button key={n.id} className={`sb-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+            <span className="sb-icon">{n.icon}</span> {n.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="sb-bottom">
+        <div className="sb-user" onClick={()=>setPage('canvas')}>
+          <div className="sb-avatar">{initials}</div>
+          <div className="sb-user-info">
+            <div className="sb-user-name">{canvas?.name||'Your Profile'}</div>
+            <div className="sb-user-role">{canvas?.major||'Build your canvas →'}</div>
+          </div>
+        </div>
+        <button className="sb-safe-btn" onClick={()=>setSafe(true)}>
+          <span>🌿</span> Safe Mode
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({setPage,canvas}){
+  const first=canvas?.name?.split(' ')[0];
+  const h=new Date().getHours();
+  const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  return(
+    <div className="page">
+      <div className="hero">
+        <div className="hero-eyebrow">
+          <span style={{width:6,height:6,borderRadius:'50%',background:'var(--blue)',display:'inline-block'}}/>
+          {g}{first?`, ${first}`:''}
+        </div>
+        <div className="hero-title">
+          Where visionaries<br/><span>build their future.</span>
+        </div>
+        <div className="hero-desc">
+          Connect with peers, access AI-powered tools, discover real opportunities, and turn your biggest vision into an actionable plan — together.
+        </div>
+        <div className="hero-actions">
+          <button className="btn btn-blue btn-lg" onClick={()=>setPage(canvas?'roadmap':'canvas')}>
+            {canvas?'→ View My Roadmap':'→ Start Your Vision Canvas'}
+          </button>
+          <button className="btn btn-ghost btn-lg" onClick={()=>setPage('community')}>
+            See Community
+          </button>
+        </div>
+      </div>
+
+      {!canvas&&(
+        <div className="notif mb24">
+          <span className="notif-icon">💡</span>
+          <div style={{flex:1}}>
+            <strong>Complete your Visionary Canvas</strong> to unlock your personalized roadmap and AI-matched opportunities.
+          </div>
+          <button className="btn btn-blue btn-sm" onClick={()=>setPage('canvas')}>Start Now →</button>
+        </div>
+      )}
+
+      <div className="g4 mb24">
+        {[
+          {icon:'◈',label:'Vision Score',val:canvas?'Active':'—',sub:'Canvas status',c:'var(--blue-light)'},
+          {icon:'◎',label:'Roadmap Phases',val:canvas?'4':'—',sub:'Phases unlocked',c:'var(--purple)'},
+          {icon:'◉',label:'Opportunities',val:'12',sub:'Matched for you',c:'var(--amber)'},
+          {icon:'⊛',label:'Community',val:'4',sub:'Active peers',c:'var(--green)'},
+        ].map((s,i)=>(
+          <div key={i} className="stat">
+            <div style={{fontSize:18,color:s.c,marginBottom:4}}>{s.icon}</div>
+            <div className="stat-num" style={{backgroundImage:`linear-gradient(135deg,${s.c},white)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.val}</div>
+            <div className="stat-label">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex sb ai mb16">
+        <div className="fw7 f16">Quick Actions</div>
+      </div>
+      <div className="g3 mb28">
+        {[
+          {e:'🤖',title:'Ask AI Tutor',desc:'Career, academics, stress, goals — get real guidance instantly.',page:'tutor',c:'rgba(59,130,246,.08)'},
+          {e:'🎯',title:'Explore Opportunities',desc:'Scholarships, internships, and programs matched to your vision.',page:'opportunities',c:'rgba(139,92,246,.07)'},
+          {e:'⊠',title:'Build Vision Board',desc:'Create a visual board of goals that keeps you inspired daily.',page:'board',c:'rgba(16,185,129,.06)'},
+        ].map((q,i)=>(
+          <div key={i} className="card hoverable" style={{cursor:'pointer',background:q.c,borderColor:'rgba(255,255,255,.07)'}} onClick={()=>setPage(q.page)}>
+            <div style={{fontSize:28,marginBottom:14}}>{q.e}</div>
+            <div className="fw7 f14 mb8">{q.title}</div>
+            <div className="f13 text2" style={{lineHeight:1.6}}>{q.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex sb ai mb16">
+        <div className="fw7 f16">Community Highlights</div>
+        <button className="btn btn-ghost btn-sm" onClick={()=>setPage('community')}>View All →</button>
+      </div>
+      {INIT_POSTS.slice(0,2).map(p=>(
+        <div key={p.id} className="post">
+          <div className="post-head">
+            <div className="post-av" style={{background:p.bg}}>{p.initials}</div>
+            <div>
+              <div className="post-name">{p.name} <span className="text3 f12" style={{fontWeight:400}}>· {p.major}</span></div>
+              <div className="post-meta">{p.time}</div>
+            </div>
+          </div>
+          <div className="post-body">{p.body}</div>
+          <div className="tag-row">
+            {p.tags.map(t=><span key={t} className="badge badge-blue">{t}</span>)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── VISIONARY CANVAS ─────────────────────────────────────────────────────────
+function VisionCanvas({canvas,setCanvas,setPage}){
+  const [step,setStep]=useState(0);
+  const [form,setForm]=useState(canvas||{name:'',major:'',vision:'',strengths:[],obstacle:'',oneYear:''});
+  const [done,setDone]=useState(!!canvas);
+  const u=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const toggleS=s=>setForm(f=>({...f,strengths:f.strengths.includes(s)?f.strengths.filter(x=>x!==s):[...f.strengths,s].slice(0,5)}));
+  const TOTAL=6;
+  const canGo=[
+    form.name.trim().length>1,
+    form.vision.trim().length>15,
+    form.strengths.length>=2,
+    form.obstacle.trim().length>8,
+    form.oneYear.trim().length>8,
+    true
+  ][step];
+  const next=()=>{
+    if(step<TOTAL-1)setStep(s=>s+1);
+    else{setCanvas(form);setDone(true);}
+  };
+
+  if(done&&canvas){
+    return(
+      <div className="page">
+        <div className="ph">
+          <div>
+            <div className="ph-title">◈ Visionary Canvas</div>
+            <div className="ph-sub">Your personal vision profile — the foundation of everything.</div>
+          </div>
+          <div className="flex gap8">
+            <button className="btn btn-ghost btn-sm" onClick={()=>{setDone(false);setStep(0);setForm(canvas);}}>✏ Edit</button>
+            <button className="btn btn-blue btn-sm" onClick={()=>setPage('roadmap')}>→ View Roadmap</button>
+          </div>
+        </div>
+        <div className="cv-result">
+          <div className="flex ai gap12 mb16">
+            <div style={{width:52,height:52,borderRadius:'50%',background:'linear-gradient(135deg,var(--blue),var(--purple))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>✦</div>
+            <div>
+              <div className="fw8 f18">{canvas.name}</div>
+              <div className="text2 f13">{canvas.major}</div>
+            </div>
+            <div style={{marginLeft:'auto'}}><span className="badge badge-green">✓ Complete</span></div>
+          </div>
+          <div className="divider"/>
+          <div className="f11 fw7 upper text3 mb8">My Vision</div>
+          <div className="cv-vision">"{canvas.vision}"</div>
+          <div className="divider"/>
+          <div className="g2" style={{gap:24,marginBottom:20}}>
+            <div>
+              <div className="f11 fw7 upper text3 mb12">Core Strengths</div>
+              <div className="tag-row">{canvas.strengths.map(s=><span key={s} className="badge badge-blue">{s}</span>)}</div>
+            </div>
+            <div>
+              <div className="f11 fw7 upper text3 mb12">12-Month Goal</div>
+              <div className="f14" style={{lineHeight:1.65,color:'#CBD5E1'}}>{canvas.oneYear}</div>
+            </div>
+          </div>
+          <div className="f11 fw7 upper text3 mb12">Main Challenge to Overcome</div>
+          <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.1)',borderRadius:10,padding:'12px 14px',fontSize:14,color:'#CBD5E1',lineHeight:1.6,display:'flex',gap:10,alignItems:'flex-start'}}>
+            <span style={{fontSize:18,flexShrink:0}}>⚡</span>{canvas.obstacle}
+          </div>
+        </div>
+        <div className="notif mt20">
+          <span className="notif-icon">🎯</span>
+          <div>Your canvas is now powering your roadmap, AI tutor context, and opportunity matching.</div>
+          <button className="btn btn-blue btn-sm" onClick={()=>setPage('roadmap')} style={{marginLeft:'auto',flexShrink:0}}>→ Roadmap</button>
+        </div>
+      </div>
+    );
+  }
+
+  const qs=[
+    {q:"Let's start. What's your name and what are you studying?",hint:'This personalizes your entire Visionary Hub experience.'},
+    {q:'What is your BIG vision? Don\'t hold back.',hint:'Think 10 years out. Describe the impact you want to have in the world. Be bold — this is your space.'},
+    {q:'Choose your 3–5 core strengths.',hint:'These are the superpowers you\'ll leverage to reach your vision. Pick the ones that feel most true to you.'},
+    {q:'What\'s your biggest obstacle or challenge right now?',hint:'Being real here helps build a roadmap that addresses your actual situation, not an idealized one.'},
+    {q:'What\'s the ONE thing you want to achieve in the next 12 months?',hint:'Make it specific and measurable. This becomes the anchor of your personalized roadmap.'},
+    {q:'Review your Vision Profile below.',hint:'This is the foundation of your Visionary Hub. You can always edit it.'},
+  ];
+
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">◈ Visionary Canvas</div>
+          <div className="ph-sub">Build your personal vision profile — it takes 5 minutes.</div>
+        </div>
+        <div className="text2 f13">Step {step+1} of {TOTAL}</div>
+      </div>
+
+      <div className="stepper mb24">
+        {Array.from({length:TOTAL}).map((_,i)=>(
+          <div key={i} className={`step-seg ${i<step?'done':i===step?'active':''}`} style={{cursor:i<step?'pointer':undefined}} onClick={()=>i<step&&setStep(i)}/>
+        ))}
+      </div>
+
+      <div className="card" style={{maxWidth:620}}>
+        <div style={{animation:'fadeUp .25s ease'}}>
+          <div className="fw8 f18 mb8" style={{lineHeight:1.35,letterSpacing:'-.3px'}}>{qs[step].q}</div>
+          <div className="f13 text2 mb20" style={{lineHeight:1.6}}>{qs[step].hint}</div>
+
+          {step===0&&(
+            <div>
+              <div className="input-wrap">
+                <div className="input-label">Full Name</div>
+                <input className="input" placeholder="e.g. Sarah Johnson" value={form.name} onChange={e=>u('name',e.target.value)}/>
+              </div>
+              <div className="input-wrap">
+                <div className="input-label">Major / Field of Study</div>
+                <input className="input" placeholder="e.g. Computer Science, Pre-Med, Business, Psychology..." value={form.major} onChange={e=>u('major',e.target.value)}/>
+              </div>
+            </div>
+          )}
+          {step===1&&(
+            <textarea className="input" rows={5} placeholder="In 10 years, I want to change how the world..." value={form.vision} onChange={e=>u('vision',e.target.value)}/>
+          )}
+          {step===2&&(
+            <div className="chip-grid">
+              {STRENGTHS.map(s=>(
+                <div key={s} className={`chip ${form.strengths.includes(s)?'sel':''}`} onClick={()=>toggleS(s)}>{s}</div>
+              ))}
+            </div>
+          )}
+          {step===3&&(
+            <textarea className="input" rows={4} placeholder="e.g. I struggle to stay consistent, I don't have connections in my field, I'm not sure where to start..." value={form.obstacle} onChange={e=>u('obstacle',e.target.value)}/>
+          )}
+          {step===4&&(
+            <textarea className="input" rows={3} placeholder="e.g. Land a summer research role, launch my first product, earn $5K+ in scholarships..." value={form.oneYear} onChange={e=>u('oneYear',e.target.value)}/>
+          )}
+          {step===5&&(
+            <div style={{background:'rgba(59,130,246,.06)',borderRadius:12,border:'1px solid rgba(59,130,246,.15)',padding:18}}>
+              <div className="fw7 f15 mb10">{form.name} <span className="text2" style={{fontWeight:400}}>· {form.major}</span></div>
+              <div className="f14" style={{fontStyle:'italic',color:'#93C5FD',marginBottom:12,lineHeight:1.55}}>"{form.vision.slice(0,120)}{form.vision.length>120?'…':''}"</div>
+              <div className="tag-row mb12">{form.strengths.map(s=><span key={s} className="badge badge-blue">{s}</span>)}</div>
+              <div className="f13 text2">12-month goal: <span style={{color:'var(--text)'}}>{form.oneYear.slice(0,80)}</span></div>
+            </div>
+          )}
+        </div>
+        <div className="flex sb ai mt24">
+          <button className="btn btn-ghost" onClick={()=>setStep(s=>s-1)} disabled={step===0} style={{opacity:step===0?.3:1}}>← Back</button>
+          <button className="btn btn-blue" onClick={next} disabled={!canGo} style={{opacity:canGo?1:.4}}>
+            {step===TOTAL-1?'✓ Complete Canvas':'Continue →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── VISION BOARD ─────────────────────────────────────────────────────────────
+function VisionBoard({canvas}){
+  const [board,setBoard]=useState(INIT_BOARD);
+  const [adding,setAdding]=useState(false);
+  const [form,setForm]=useState({emoji:'🎯',title:'',text:'',category:'Goal',mediaUrl:null,mediaType:null});
+  const cats=['Career','Academic','Financial','Life','Build','Network','Other'];
+  const catColors={'Career':'var(--blue)','Academic':'var(--purple)','Financial':'var(--amber)','Life':'var(--green)','Build':'var(--cyan)','Network':'var(--pink)','Other':'var(--text2)'};
+  const boardImgRef=useRef(null);
+  const del=id=>setBoard(b=>b.filter(x=>x.id!==id));
+  const add=()=>{
+    if(!form.title.trim())return;
+    setBoard(b=>[...b,{...form,id:Date.now(),color:catColors[form.category]||'var(--blue)'}]);
+    setForm({emoji:'🎯',title:'',text:'',category:'Goal',mediaUrl:null,mediaType:null});
+    setAdding(false);
+  };
+  const handleBoardMedia=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const url=URL.createObjectURL(file);
+    const type=file.type.startsWith('video/')?'video':'image';
+    setForm(f=>({...f,mediaUrl:url,mediaType:type}));
+  };
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">⊠ Vision Board</div>
+          <div className="ph-sub">Pin images, videos, and goals that drive you — your vision made visual.</div>
+        </div>
+        <button className="btn btn-blue btn-sm" onClick={()=>setAdding(true)}>+ Add Card</button>
+      </div>
+
+      {adding&&(
+        <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setAdding(false)}>
+          <div className="modal" style={{maxWidth:520}}>
+            <div className="fw8 f18 mb4">Add to Vision Board</div>
+            <div className="f13 text2 mb20">Pin a goal, image, or video that represents your future.</div>
+
+            {/* Media upload area */}
+            <div
+              onClick={()=>boardImgRef.current.click()}
+              style={{
+                border:`2px dashed ${form.mediaUrl?'rgba(59,130,246,.5)':'rgba(255,255,255,.1)'}`,
+                borderRadius:12,marginBottom:16,cursor:'pointer',overflow:'hidden',
+                minHeight:120,display:'flex',alignItems:'center',justifyContent:'center',
+                background:'var(--surface2)',transition:'all .2s',position:'relative',
+              }}
+            >
+              {form.mediaUrl?(
+                form.mediaType==='video'
+                  ?<video src={form.mediaUrl} style={{width:'100%',maxHeight:180,objectFit:'cover',display:'block'}} controls/>
+                  :<img src={form.mediaUrl} style={{width:'100%',maxHeight:180,objectFit:'cover',display:'block'}} alt="preview"/>
+              ):(
+                <div style={{textAlign:'center',padding:24}}>
+                  <div style={{fontSize:28,marginBottom:8}}>📸</div>
+                  <div className="fw6 f13">Upload Photo or Video</div>
+                  <div className="f12 text3 mt4">JPG, PNG, GIF, MP4 · Click to browse</div>
+                </div>
+              )}
+              {form.mediaUrl&&(
+                <button onClick={e=>{e.stopPropagation();setForm(f=>({...f,mediaUrl:null,mediaType:null}));}}
+                  style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,.7)',border:'none',color:'#fff',borderRadius:'50%',width:26,height:26,cursor:'pointer',fontSize:13}}>✕</button>
+              )}
+            </div>
+            <input ref={boardImgRef} type="file" accept="image/*,video/*" style={{display:'none'}} onChange={handleBoardMedia}/>
+
+            <div className="flex gap12 mb14">
+              <div style={{flex:'0 0 70px'}}>
+                <div className="input-label">Emoji</div>
+                <input className="input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:'center',fontSize:20}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div className="input-label">Category</div>
+                <select className="input" value={form.category} onChange={e=>setForm(f=>({...f,category:e.target.value}))}>
+                  {cats.map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="input-wrap">
+              <div className="input-label">Goal Title</div>
+              <input className="input" placeholder="e.g. Land a top-tier internship" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/>
+            </div>
+            <div className="input-wrap">
+              <div className="input-label">Details (optional)</div>
+              <input className="input" placeholder="e.g. Summer 2027 · Fortune 500 company" value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))}/>
+            </div>
+            <div className="flex gap10 mt4">
+              <button className="btn btn-blue" style={{flex:1}} onClick={add} disabled={!form.title.trim()}>Add to Board</button>
+              <button className="btn btn-ghost" onClick={()=>setAdding(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {canvas&&(
+        <div className="notif mb20">
+          <span className="notif-icon">✦</span>
+          <div>This board reflects your vision as <strong>{canvas.name}</strong> — add photos and videos that inspire you.</div>
+        </div>
+      )}
+
+      <div className="board-grid">
+        {board.map(c=>(
+          <div key={c.id} className="board-card">
+            {c.mediaUrl&&(
+              <div style={{width:'100%',aspectRatio:'16/9',overflow:'hidden',borderRadius:'14px 14px 0 0'}}>
+                {c.mediaType==='video'
+                  ?<video src={c.mediaUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} controls/>
+                  :<img src={c.mediaUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={c.title}/>
+                }
+              </div>
+            )}
+            <div className="board-card-body">
+              {!c.mediaUrl&&<span className="board-card-emoji">{c.emoji}</span>}
+              <div className="board-card-title">{c.title}</div>
+              {c.text&&<div className="board-card-text">{c.text}</div>}
+            </div>
+            <div className="board-card-footer">
+              <span className="badge" style={{background:`${c.color}22`,color:c.color,border:`1px solid ${c.color}44`,fontSize:10}}>{c.category}</span>
+              <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:13,padding:'3px 6px',borderRadius:6,transition:'all .15s'}} onClick={()=>del(c.id)}>✕</button>
+            </div>
+          </div>
+        ))}
+        <div className="board-add" onClick={()=>setAdding(true)}>
+          <span style={{fontSize:28}}>+</span>
+          <span>Add a goal</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LIFE ROADMAP ─────────────────────────────────────────────────────────────
+function LifeRoadmap({canvas,setPage}){
+  if(!canvas) return(
+    <div className="page">
+      <div className="ph"><div><div className="ph-title">◎ Life Roadmap</div></div></div>
+      <div className="card" style={{textAlign:'center',padding:56}}>
+        <div style={{fontSize:56,marginBottom:16}}>◈</div>
+        <div className="fw8 f18 mb10">Complete Your Visionary Canvas First</div>
+        <div className="text2 f14 mb24" style={{maxWidth:400,margin:'0 auto 24px'}}>Your roadmap is generated from your vision, strengths, and 12-month goal. Build your canvas to unlock it.</div>
+        <button className="btn btn-blue" onClick={()=>setPage('canvas')}>→ Build My Canvas</button>
+      </div>
+    </div>
+  );
+  const phases=mkRoadmap(canvas);
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">◎ Life Roadmap</div>
+          <div className="ph-sub">Your AI-generated path from where you are to where you're going.</div>
+        </div>
+        <span className="badge badge-green">✦ AI Generated</span>
+      </div>
+
+      <div className="card-blue-glow card mb24">
+        <div className="f11 fw7 upper" style={{color:'var(--blue-light)',marginBottom:6}}>Anchored to your vision</div>
+        <div className="f16 fw7" style={{color:'#BAE6FD',lineHeight:1.55,fontStyle:'italic',marginBottom:12}}>"{canvas.vision}"</div>
+        <div className="tag-row">{canvas.strengths.map(s=><span key={s} className="badge badge-blue">{s}</span>)}</div>
+      </div>
+
+      <div className="rm-track">
+        {phases.map(ph=>(
+          <div key={ph.n} className="rm-phase">
+            <div className="rm-icon" style={{background:ph.bg,borderColor:ph.color,color:ph.color,fontSize:24}}>{ph.e}</div>
+            <div className="rm-body">
+              <div className="rm-phase-name" style={{color:ph.color}}>Phase {ph.n}: {ph.label}</div>
+              <div className="rm-time" style={{color:ph.color,opacity:.7}}>{ph.time}</div>
+              {ph.ms.map((m,i)=>(
+                <div key={i} className="rm-ms">
+                  <div className="rm-ms-dot" style={{background:ph.color}}/>
+                  <span>{m}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:'rgba(59,130,246,.06)',border:'1px solid rgba(59,130,246,.15)',borderRadius:14,padding:20,marginTop:8}}>
+        <div className="fw7 mb8">💬 AI Insight</div>
+        <div className="f14 text2" style={{lineHeight:1.7}}>
+          Based on your canvas, the single most impactful move in the next 30 days is to <strong style={{color:'var(--text)'}}>identify one real professional in {canvas.major||'your field'} and request a 20-minute conversation</strong>. Students who do this early are 3× more likely to stay on track. Your AI Tutor can help you craft the outreach message.
+        </div>
+        <button className="btn btn-outline btn-sm mt12" onClick={()=>window.dispatchEvent(new CustomEvent('nav',{detail:'tutor'}))}>→ Ask AI Tutor</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── AI TUTOR ─────────────────────────────────────────────────────────────────
+function AITutor({canvas}){
+  const INIT=canvas
+    ?`Hi ${canvas.name.split(' ')[0]}! I've loaded your canvas — I know your vision is to ${canvas.vision.slice(0,70)}${canvas.vision.length>70?'…':''}, and your key strengths include ${canvas.strengths.slice(0,2).join(' and ')}.\n\nI'm here to help with career strategy, academic pressure, opportunities, networking, confidence — anything. What would you like to work through?`
+    :`Welcome to your AI Tutor. I'm here to help with:\n\n• Career planning & internship strategy\n• Academic challenges & study techniques\n• Finding scholarships & opportunities\n• Building confidence & managing stress\n• Networking & finding mentors\n\nWhat's on your mind? Ask me anything.`;
+
+  const [msgs,setMsgs]=useState([{id:0,role:'ai',text:INIT}]);
+  const [input,setInput]=useState('');
+  const [typing,setTyping]=useState(false);
+  const endRef=useRef(null);
+  useEffect(()=>endRef.current?.scrollIntoView({behavior:'smooth'}),[msgs,typing]);
+
+  const send=t=>{
+    if(!t.trim()||typing)return;
+    setMsgs(m=>[...m,{id:Date.now(),role:'user',text:t.trim()}]);
+    setInput('');
+    setTyping(true);
+    setTimeout(()=>{
+      setTyping(false);
+      setMsgs(m=>[...m,{id:Date.now()+1,role:'ai',text:ai(t)}]);
+    },900+Math.random()*700);
+  };
+
+  const SUGS=['How do I find a mentor?','I\'m feeling overwhelmed','Help me prep for interviews','What scholarships exist?','How to network better?','Build my confidence'];
+
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">◆ AI Tutor</div>
+          <div className="ph-sub">Your personal guide for career, academics, mental wellness, and opportunities.</div>
+        </div>
+        <div className="flex ai gap8 f12" style={{color:'var(--green)'}}>
+          <span style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',display:'inline-block'}}/>
+          Online
+        </div>
+      </div>
+
+      <div className="flex ai gap16 card mb20">
+        <div style={{width:48,height:48,borderRadius:'50%',background:'linear-gradient(135deg,var(--blue),var(--purple))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>✦</div>
+        <div style={{flex:1}}>
+          <div className="fw7 f14 mb2">Visionary AI — Your Personal Guide</div>
+          <div className="f12 text2" style={{lineHeight:1.6}}>Specialized in career planning, academic strategy, mental wellness, and opportunity discovery. Contextually aware of your vision and goals.</div>
+        </div>
+        {canvas&&<span className="badge badge-green">Context Loaded</span>}
+      </div>
+
+      <div className="chat-box">
+        <div className="chat-msgs">
+          {msgs.map(m=>(
+            <div key={m.id} className={`msg ${m.role}`}>
+              <div className={`msg-av ${m.role}`}>{m.role==='ai'?'✦':canvas?.name?.split(' ').map(w=>w[0]).join('').slice(0,2)||'U'}</div>
+              <div className="bubble" style={{whiteSpace:'pre-line'}}>{m.text}</div>
+            </div>
+          ))}
+          {typing&&(
+            <div className="msg ai">
+              <div className="msg-av ai">✦</div>
+              <div className="bubble"><div className="typing-anim">{[0,1,2].map(i=><div key={i} className="dot" style={{animationDelay:`${i*.2}s`}}/>)}</div></div>
+            </div>
+          )}
+          <div ref={endRef}/>
+        </div>
+        <div className="chat-suggestions">
+          {SUGS.map(s=><button key={s} className="suggestion" onClick={()=>send(s)}>{s}</button>)}
+        </div>
+        <div className="chat-input-area">
+          <input className="input" style={{flex:1}} placeholder="Ask anything — career, stress, goals, scholarships, confidence..." value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send(input)}/>
+          <button className="btn btn-blue" onClick={()=>send(input)} disabled={!input.trim()||typing}>Send →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── OPPORTUNITIES ────────────────────────────────────────────────────────────
+function Opportunities({canvas}){
+  const [filter,setFilter]=useState('all');
+  const [saved,setSaved]=useState([]);
+  const TYPES=['all','scholarship','internship','program','competition'];
+  const vis=filter==='all'?OPPS:OPPS.filter(o=>o.type===filter);
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">◉ Opportunities</div>
+          <div className="ph-sub">{canvas?`AI-matched for ${canvas.name.split(' ')[0]} · ${canvas.major}`:'Scholarships, internships, fellowships & programs curated for college students'}</div>
+        </div>
+        {canvas&&<span className="badge badge-blue">✦ Matched</span>}
+      </div>
+
+      {canvas&&(
+        <div className="notif mb20">
+          <span className="notif-icon">🎯</span>
+          <span>Showing opportunities aligned with <strong>{canvas.strengths[0]}</strong> and your goals in <strong>{canvas.major}</strong>.</span>
+        </div>
+      )}
+
+      <div className="filters">
+        {TYPES.map(t=>(
+          <button key={t} className={`filter-tab ${filter===t?'on':''}`} onClick={()=>setFilter(t)}>
+            {t.charAt(0).toUpperCase()+t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="g3">
+        {vis.map(o=>(
+          <div key={o.id} className="opp-card">
+            <div className="opp-logo" style={{background:o.bg}}>{o.e}</div>
+            <div className="opp-title">{o.title}</div>
+            <div className="opp-org">{o.org}</div>
+            <div className="opp-deadline">⏰ {o.dl}</div>
+            <div className="opp-tags">{o.tags.map(t=><span key={t} className="badge badge-cyan">{t}</span>)}</div>
+            <div className="flex gap8">
+              <button className="opp-apply" style={{flex:1}}>Apply Now →</button>
+              <button
+                className="btn btn-ghost btn-sm btn-icon"
+                onClick={e=>{e.stopPropagation();setSaved(s=>s.includes(o.id)?s.filter(x=>x!==o.id):[...s,o.id]);}}
+                style={{color:saved.includes(o.id)?'var(--amber)':'var(--text3)',flexShrink:0}}
+              >{saved.includes(o.id)?'★':'☆'}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── COMMUNITY ────────────────────────────────────────────────────────────────
+function Community({canvas}){
+  const [posts,setPosts]=useState(INIT_POSTS);
+  const [draft,setDraft]=useState('');
+  const [mediaUrl,setMediaUrl]=useState(null);
+  const [mediaType,setMediaType]=useState(null);
+  const feedImgRef=useRef(null);
+  const like=id=>setPosts(ps=>ps.map(p=>p.id===id?{...p,likes:p.liked?p.likes-1:p.likes+1,liked:!p.liked}:p));
+  const handleFeedMedia=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const url=URL.createObjectURL(file);
+    setMediaType(file.type.startsWith('video/')?'video':'image');
+    setMediaUrl(url);
+    e.target.value='';
+  };
+  const post=()=>{
+    if(!draft.trim()&&!mediaUrl)return;
+    const np={id:Date.now(),name:canvas?.name||'You',initials:canvas?.name?canvas.name.split(' ').map(w=>w[0]).join('').slice(0,2):'VH',
+      bg:'linear-gradient(135deg,var(--blue),var(--purple))',time:'Just now',major:canvas?.major||'',
+      body:draft,mediaUrl,mediaType,likes:0,liked:false,comments:0,tags:[]};
+    setPosts(ps=>[np,...ps]);
+    setDraft('');setMediaUrl(null);setMediaType(null);
+  };
+  return(
+    <div className="page">
+      <div className="ph">
+        <div>
+          <div className="ph-title">⊛ Community</div>
+          <div className="ph-sub">Share milestones, celebrate wins, connect with peers building their future.</div>
+        </div>
+        <span className="badge badge-green">4 peers online</span>
+      </div>
+
+      <div className="card mb20">
+        <div className="flex gap12" style={{alignItems:'flex-start'}}>
+          <div className="post-av" style={{background:'linear-gradient(135deg,var(--blue),var(--purple))',flexShrink:0}}>
+            {canvas?.name?canvas.name.split(' ').map(w=>w[0]).join('').slice(0,2):'✦'}
+          </div>
+          <div style={{flex:1}}>
+            <textarea className="input" rows={3} placeholder="Share a milestone, insight, or ask for support from your community..." value={draft} onChange={e=>setDraft(e.target.value)}/>
+
+            {/* Media preview */}
+            {mediaUrl&&(
+              <div style={{position:'relative',marginTop:10,borderRadius:10,overflow:'hidden',border:'1px solid var(--border2)'}}>
+                {mediaType==='video'
+                  ?<video src={mediaUrl} controls style={{width:'100%',maxHeight:300,objectFit:'cover',display:'block',background:'#000'}}/>
+                  :<img src={mediaUrl} style={{width:'100%',maxHeight:300,objectFit:'cover',display:'block'}} alt="preview"/>
+                }
+                <button onClick={()=>{setMediaUrl(null);setMediaType(null);}}
+                  style={{position:'absolute',top:8,right:8,background:'rgba(0,0,0,.75)',border:'none',color:'#fff',borderRadius:'50%',width:28,height:28,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+              </div>
+            )}
+
+            <div className="flex sb ai mt10" style={{flexWrap:'wrap',gap:8}}>
+              <div className="flex gap8 ai">
+                {/* Photo button */}
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{gap:6,fontSize:12}}
+                  onClick={()=>{feedImgRef.current.click();}}
+                >
+                  📷 Photo
+                </button>
+                {/* Video button */}
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{gap:6,fontSize:12}}
+                  onClick={()=>{feedImgRef.current.click();}}
+                >
+                  🎬 Video
+                </button>
+                <input ref={feedImgRef} type="file" accept="image/*,video/*" style={{display:'none'}} onChange={handleFeedMedia}/>
+                <span className="f11 text3">✦ Milestones earn Inspiration points</span>
+              </div>
+              <button className="btn btn-blue btn-sm" onClick={post} disabled={!draft.trim()&&!mediaUrl}>Post →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {posts.map(p=>(
+        <div key={p.id} className="post">
+          <div className="post-head">
+            <div className="post-av" style={{background:p.bg}}>{p.initials}</div>
+            <div style={{flex:1}}>
+              <div className="post-name">{p.name}{p.major&&<span className="text3" style={{fontWeight:400,fontSize:12}}> · {p.major}</span>}</div>
+              <div className="post-meta">{p.time}</div>
+            </div>
+          </div>
+          {p.body&&<div className="post-body">{p.body}</div>}
+          {p.mediaUrl&&(
+            <div style={{borderRadius:10,overflow:'hidden',marginBottom:14,border:'1px solid var(--border2)'}}>
+              {p.mediaType==='video'
+                ?<video src={p.mediaUrl} controls style={{width:'100%',maxHeight:360,objectFit:'cover',display:'block',background:'#000'}}/>
+                :<img src={p.mediaUrl} style={{width:'100%',maxHeight:360,objectFit:'cover',display:'block'}} alt="post media"/>
+              }
+            </div>
+          )}
+          {p.tags&&p.tags.length>0&&<div className="tag-row mb12">{p.tags.map(t=><span key={t} className="badge badge-blue">{t}</span>)}</div>}
+          <div className="post-actions">
+            <button className={`act-btn ${p.liked?'liked':''}`} onClick={()=>like(p.id)}>
+              {p.liked?'♥':'♡'} {p.likes>0&&p.likes}
+            </button>
+            <button className="act-btn">💬 {p.comments>0&&p.comments}</button>
+            <button className="act-btn">✦ Inspire</button>
+            <button className="act-btn">↗ Share</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── SAFE MODE ────────────────────────────────────────────────────────────────
+function SafeMode({onClose}){
+  const [phase,setPhase]=useState('breathe');
+  const [journal,setJournal]=useState('');
+  return(
+    <div className="safe-screen">
+      <div className="safe-inner">
+        {phase==='breathe'&&(
+          <>
+            <div className="breathe-ring">🌿</div>
+            <div className="safe-title">You're safe here.</div>
+            <div className="safe-sub">Step away. Breathe with this.</div>
+            <div style={{fontSize:13,color:'#4ADE80',opacity:.65,marginBottom:36}}>Breathe in slowly... hold... breathe out... Let go.</div>
+            <div className="safe-btns">
+              <button className="safe-btn" onClick={()=>setPhase('journal')}>→ Journal My Thoughts</button>
+              <button className="safe-btn safe-btn-back" onClick={onClose}>Return to Hub</button>
+            </div>
+          </>
+        )}
+        {phase==='journal'&&(
+          <>
+            <div style={{fontSize:26,fontWeight:900,color:'#6EE7B7',marginBottom:6,letterSpacing:'-.5px'}}>What's on your mind?</div>
+            <div style={{fontSize:14,color:'#4ADE80',opacity:.7,marginBottom:28}}>This space is only for you. Write freely.</div>
+            <div className="safe-journal-wrap">
+              <label>Private reflection</label>
+              <textarea className="safe-textarea" rows={7} placeholder="I'm feeling... I'm grateful for... One thing I can do right now is..." value={journal} onChange={e=>setJournal(e.target.value)}/>
+            </div>
+            <div className="safe-btns">
+              <button className="safe-btn" onClick={()=>setPhase('breathe')}>← Breathe</button>
+              <button className="safe-btn safe-btn-back" onClick={onClose}>Return to Hub</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App(){
+  const [page,setPage]=useState('dashboard');
+  const [canvas,setCanvas]=useState(null);
+  const [safe,setSafe]=useState(false);
+
+  useEffect(()=>{
+    const h=e=>setPage(e.detail);
+    window.addEventListener('nav',h);
+    return()=>window.removeEventListener('nav',h);
+  },[]);
+
+  const saveCv=data=>{setCanvas(data);setPage('roadmap');};
+
+  return(
+    <div className="layout">
+      <Sidebar page={page} setPage={setPage} setSafe={setSafe} canvas={canvas}/>
+      <div className="main">
+        {page==='dashboard'&&<Dashboard setPage={setPage} canvas={canvas}/>}
+        {page==='canvas'&&<VisionCanvas canvas={canvas} setCanvas={saveCv} setPage={setPage}/>}
+        {page==='board'&&<VisionBoard canvas={canvas}/>}
+        {page==='roadmap'&&<LifeRoadmap canvas={canvas} setPage={setPage}/>}
+        {page==='tutor'&&<AITutor canvas={canvas}/>}
+        {page==='opportunities'&&<Opportunities canvas={canvas}/>}
+        {page==='community'&&<Community canvas={canvas}/>}
+      </div>
+      {safe&&<SafeMode onClose={()=>setSafe(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "settings": {
+    "safeMode": false
+  },
+  "posts": [],
+  "mentors": [],
+  "canvases": [
+    {
+      "id": "1",
+      "name": "Study Canvas"
+    },
+    {
+      "id": "2",
+      "name": "Business Canvas"
+    },
+    {
+      "id": "3",
+      "name": "Innovation Canvas"
+    },
+    {
+      "id": "4",
+      "name": "Personal Growth Canvas"
+    }
+  ],
+  "currentCanvas": {
+    "id": "1",
+    "title": "Start a Community Garden"
+  },
+  "journal": [],
+  "projects": [
+    {
+      "id": "1",
+      "name": "Launch Pitch Deck",
+      "status": "in_progress",
+      "progress": 60,
+      "dueDate": null
+    },
+    {
+      "id": "2",
+      "name": "Learn Spanish",
+      "status": "in_progress",
+      "progress": 25,
+      "dueDate": null
+    }
+  ],
+  "goals": [
+    {
+      "id": "1",
+      "title": "Ship MVP by Q2",
+      "done": false
+    },
+    {
+      "id": "2",
+      "title": "Meditate daily",
+      "done": false
+    },
+    {
+      "id": "3",
+      "title": "Run 5K",
+      "done": false
+    }
+  ]
+}
