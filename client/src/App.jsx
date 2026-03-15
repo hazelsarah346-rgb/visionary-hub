@@ -280,8 +280,12 @@ const NAV = [
   { id: 'opportunities', icon: Compass,    label: 'Opportunities',   sub: 'Programs that match your goal' },
   { id: 'tutor',         icon: Brain,      label: 'AI Tutor',        sub: 'AI tuned to your vision' },
   { id: 'mentorship',    icon: Users,      label: 'Mentorship',      sub: 'Guided support for your stage' },
-  { id: 'roadmap',       icon: Map,        label: 'Life Roadmap',    sub: 'Structured path forward' },
-  { id: 'reflect',       icon: PenLine,    label: 'Reflect',         sub: 'Track your growth' },
+];
+
+// Secondary tabs — accessible via AI Coach / Vision Canvas shortcuts, not primary nav
+const NAV_SECONDARY = [
+  { id: 'roadmap', icon: Map,     label: 'Life Roadmap', sub: 'Structured path forward' },
+  { id: 'reflect', icon: PenLine, label: 'Reflect',      sub: 'Track your growth' },
 ];
 
 function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
@@ -299,7 +303,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
         </div>
         <div>
             <div style={{ fontSize: 15, fontWeight: 900, color: C.text, letterSpacing: -0.5, lineHeight: 1.1 }}>Visionary</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Hub</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, lineHeight: 1.1 }}>Space</div>
           </div>
         </div>
       </div>
@@ -747,7 +751,7 @@ function AuthPage() {
         </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: C.text, letterSpacing: -0.5 }}>Visionary</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Hub</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: C.blueLight, letterSpacing: -0.5, marginTop: -4 }}>Space</div>
         </div>
         </div>
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: '32px 28px', textAlign: 'center' }}>
@@ -1640,7 +1644,7 @@ const CANVAS_STEPS = [
   { key: 'goal12Month', label: '12-Month North Star', icon: '🚀', multi: true, placeholder: 'One specific, measurable, meaningful goal for the next 12 months', coach: 'Not a wish: a commitment. What will you point back to as proof you moved?', example: '"Launch my MVP and get 50 paying users by December 2026."' },
 ];
 
-function CanvasTab({ canvas, setCanvas }) {
+function CanvasTab({ canvas, setCanvas, setTab }) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(canvas || {});
   const [view, setView] = useState(canvas?.bigVision ? 'view' : 'build');
@@ -1855,6 +1859,32 @@ function CanvasTab({ canvas, setCanvas }) {
           <div style={{ fontSize: 15, color: C.text, lineHeight: 1.65, fontWeight: 600 }}>{canvas.goal12Month}</div>
         </div>
       )}
+
+      {/* Quick-access: Roadmap + Reflect */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
+        <button onClick={() => setTab?.('roadmap')}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: `${C.blue}0A`, border: `1px solid ${C.blue}25`, borderRadius: 13, cursor: 'pointer', fontFamily: 'inherit', color: C.text, textAlign: 'left', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.blue + '66'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.blue + '25'}>
+          <Map size={18} color={C.blueLight} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>My Roadmap</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Your structured path forward</div>
+          </div>
+          <ChevronRight size={14} color={C.muted} style={{ marginLeft: 'auto' }} />
+        </button>
+        <button onClick={() => setTab?.('reflect')}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 13, cursor: 'pointer', fontFamily: 'inherit', color: C.text, textAlign: 'left', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.purple + '66'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.purple + '25'}>
+          <PenLine size={18} color={C.purple} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Reflect & Journal</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Track your growth</div>
+          </div>
+          <ChevronRight size={14} color={C.muted} style={{ marginLeft: 'auto' }} />
+        </button>
+      </div>
 
       {/* Vision Board: image upload + AI insight */}
       <VisionBoardSection canvas={canvas} />
@@ -3865,7 +3895,7 @@ function MainApp({ user, onSignOut }) {
 
   const views = {
     flow:          <FlowTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
-    canvas:        <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} />,
+    canvas:        <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} setTab={setTab} />,
     roadmap:       <RoadmapTab canvas={canvas} />,
     tutor:         <TutorTab canvas={canvas} files={tutorFiles} setFiles={setTutorFiles}
                      timerRunning={timerRunning} setTimerRunning={setTimerRunning}
@@ -3957,7 +3987,7 @@ function MainApp({ user, onSignOut }) {
       {/* Mobile slide-up "More" drawer */}
       {showMobileMenu && (
         <div className="vh-mobile-nav" style={{ position: 'fixed', bottom: 64, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 799, padding: '12px 10px', flexDirection: 'column', gap: 4, boxShadow: '0 -8px 32px rgba(0,0,0,0.4)' }}>
-          {NAV.filter(n => !MOBILE_NAV.find(m => m.id === n.id)).map(item => {
+          {[...NAV, ...NAV_SECONDARY].filter(n => !MOBILE_NAV.find(m => m.id === n.id)).map(item => {
             const active = tab === item.id;
             return (
               <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); }}
