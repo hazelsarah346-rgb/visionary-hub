@@ -4102,11 +4102,10 @@ function MainApp({ user, onSignOut }) {
   };
 
   const MOBILE_NAV = [
-    { id: 'flow',         icon: Home,     label: 'Flow' },
-    { id: 'canvas',       icon: Lightbulb,label: 'Canvas' },
-    { id: 'opportunities',icon: Compass,  label: 'Explore' },
-    { id: 'mentorship',   icon: Users,    label: 'Mentors' },
-    { id: 'settings',     icon: Settings, label: 'Account' },
+    { id: 'flow',         icon: Home,      label: 'Flow' },
+    { id: 'canvas',       icon: Lightbulb, label: 'Canvas' },
+    { id: 'opportunities',icon: Compass,   label: 'Explore' },
+    { id: 'mentorship',   icon: Users,     label: 'Mentors' },
   ];
 
   return (
@@ -4122,18 +4121,22 @@ function MainApp({ user, onSignOut }) {
         .vh-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
         .vh-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .vh-tutor-split { display: grid; grid-template-columns: 2fr 3fr; gap: 12px; }
+        .vh-topbar-btn { display: flex; }
         @media (max-width: 768px) {
           .vh-sidebar { display: none !important; }
           .vh-mobile-nav { display: flex !important; }
-          .vh-main { padding: 16px 14px 80px 14px !important; }
+          .vh-main { padding: 12px 14px 90px 14px !important; }
           .vh-grid-2 { grid-template-columns: 1fr !important; }
           .vh-grid-3 { grid-template-columns: 1fr 1fr !important; }
           .vh-tutor-split { grid-template-columns: 1fr !important; }
-          .vh-coach-panel { width: 100% !important; }
-          h1 { font-size: 20px !important; }
+          .vh-coach-panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100% !important; z-index: 950; border-left: none !important; }
+          .vh-topbar-btn { display: none !important; }
+          h1 { font-size: 19px !important; }
+          h2 { font-size: 17px !important; }
         }
         @media (max-width: 480px) {
           .vh-grid-3 { grid-template-columns: 1fr !important; }
+          .vh-main { padding: 10px 12px 90px 12px !important; }
         }
       `}</style>
 
@@ -4144,7 +4147,7 @@ function MainApp({ user, onSignOut }) {
 
       {/* Main content */}
       <main className="vh-main" style={{ flex: 1, overflowY: 'auto', maxHeight: '100vh', marginRight: showCoach ? 380 : 0, transition: 'margin-right 0.3s ease' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14, gap: 8 }}>
+        <div className="vh-topbar-btn" style={{ justifyContent: 'flex-end', marginBottom: 14, gap: 8 }}>
           <button onClick={() => setShowWellbeing(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.teal}10`, border: `1px solid ${C.teal}28`, borderRadius: 8, padding: '7px 14px', cursor: 'pointer', color: C.teal, fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>
             <Wind size={12} /> Rest & Recharge
           </button>
@@ -4152,59 +4155,29 @@ function MainApp({ user, onSignOut }) {
         {views[tab]}
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="vh-mobile-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 800, padding: '6px 0 8px', justifyContent: 'space-around', alignItems: 'center' }}>
+      {/* Mobile bottom nav — 5 tabs: 4 main + Vision AI */}
+      <nav className="vh-mobile-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 800, paddingBottom: 'env(safe-area-inset-bottom)', justifyContent: 'space-around', alignItems: 'center' }}>
         {MOBILE_NAV.map(item => {
           const active = tab === item.id;
           return (
-            <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: active ? C.blueLight : C.muted, fontFamily: 'inherit', minWidth: 44 }}>
-              <item.icon size={20} color={active ? C.blueLight : C.muted} />
-              <span style={{ fontSize: 9, fontWeight: active ? 700 : 500 }}>{item.label}</span>
+            <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); setShowCoach(false); }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 6px 6px', color: active ? C.blueLight : C.muted, fontFamily: 'inherit', flex: 1 }}>
+              <item.icon size={22} color={active ? C.blueLight : C.muted} />
+              <span style={{ fontSize: 10, fontWeight: active ? 700 : 400 }}>{item.label}</span>
             </button>
           );
         })}
-        <button onClick={() => setShowCoach(s => !s)}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: C.purple, fontFamily: 'inherit', minWidth: 44 }}>
-          <Bot size={20} color={C.purple} />
-          <span style={{ fontSize: 9, fontWeight: 600 }}>Coach</span>
-        </button>
-        {/* More drawer trigger */}
-        <button onClick={() => setShowMobileMenu(s => !s)}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: showMobileMenu ? C.blueLight : C.muted, fontFamily: 'inherit', minWidth: 44 }}>
-          <Menu size={20} color={showMobileMenu ? C.blueLight : C.muted} />
-          <span style={{ fontSize: 9, fontWeight: showMobileMenu ? 700 : 500 }}>More</span>
+        {/* Vision AI tab — purple, prominent */}
+        <button onClick={() => { setShowCoach(s => !s); setShowMobileMenu(false); }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 6px 6px', fontFamily: 'inherit', flex: 1 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: showCoach ? `${C.purple}` : `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 1 }}>
+            <Bot size={17} color={showCoach ? '#fff' : C.purple} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: C.purple }}>Vision AI</span>
         </button>
       </nav>
 
-      {/* Mobile slide-up "More" drawer */}
-      {showMobileMenu && (
-        <div className="vh-mobile-nav" style={{ position: 'fixed', bottom: 64, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 799, padding: '12px 10px', flexDirection: 'column', gap: 4, boxShadow: '0 -8px 32px rgba(0,0,0,0.4)' }}>
-          {[...NAV, ...NAV_SECONDARY].filter(n => !MOBILE_NAV.find(m => m.id === n.id)).map(item => {
-            const active = tab === item.id;
-            return (
-              <button key={item.id} onClick={() => { setTab(item.id); setShowMobileMenu(false); }}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderRadius: 11, border: 'none', cursor: 'pointer', background: active ? `${C.blue}1A` : 'transparent', fontFamily: 'inherit', color: active ? C.text : C.muted, textAlign: 'left' }}>
-                <item.icon size={16} color={active ? C.blueLight : C.muted} />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: active ? 700 : 500 }}>{item.label}</div>
-                  <div style={{ fontSize: 10, color: active ? C.blueLight : '#334155' }}>{item.sub}</div>
-                </div>
-              </button>
-            );
-          })}
-          <div style={{ borderTop: `1px solid ${C.border}`, margin: '4px 0', paddingTop: 8, display: 'flex', gap: 8, alignItems: 'center', padding: '8px 14px 0' }}>
-            <button onClick={() => setShowWellbeing(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, border: `1px solid ${C.teal}30`, background: `${C.teal}0A`, cursor: 'pointer', color: C.teal, fontFamily: 'inherit', fontSize: 12, fontWeight: 600 }}>
-              <Wind size={13} /> Rest & Recharge
-            </button>
-            {onSignOut && (
-              <button onClick={onSignOut} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10, border: `1px solid ${C.red}25`, background: `${C.red}0A`, cursor: 'pointer', color: '#FCA5A5', fontFamily: 'inherit', fontSize: 12, fontWeight: 600 }}>
-                <LogOut size={13} /> Sign Out
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Mobile account/settings quick bar — shows on Canvas tab at top */}
 
       {showCoach && <AICoachPanel canvas={canvas} onClose={() => setShowCoach(false)} />}
       {showWellbeing && <WellbeingModal onClose={() => setShowWellbeing(false)} />}
