@@ -10,7 +10,7 @@ import {
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor, clearMyPosts } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -2755,7 +2755,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: C.text, lineHeight: 1.55, marginBottom: 14, fontStyle: 'italic' }}>"{m.quote}"</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 11, color: C.muted }}>{m.stats?.mentored || 0}+ guided · ⭐ {m.stats?.rating || 5.0}</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>{m.stats?.mentored > 0 ? `${m.stats.mentored}+ guided · ⭐ ${m.stats.rating || 5.0}` : 'New mentor'}</div>
                   <Btn size="sm" onClick={() => openChat(m)}>Start Session →</Btn>
                 </div>
               </div>
@@ -2939,7 +2939,7 @@ function MentorshipTab({ mentors: mentorsProp }) {
 }
 
 // ─── REFLECT TAB ──────────────────────────────────────────────────────────────
-function ReflectTab({ canvas }) {
+function ReflectTab({ canvas, user }) {
   const [view, setView] = useState('home'); // home | journal | insights
   const [journalText, setJournalText] = useState('');
   const [entries, setEntries] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_journal') || '[]'); } catch { return []; } });
@@ -3072,7 +3072,7 @@ function ReflectTab({ canvas }) {
                 <>
                   <input value={glowText} onChange={e => setGlowText(e.target.value)} placeholder="Send encouragement, a quote, or a win…" onClick={e => e.stopPropagation()}
                     style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '8px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { await fetch('/api/feed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: glowText.trim(), authorName: 'Anonymous Glow', authorImg: null }) }); } catch (_) {} setGlowSent(true); }}>
+                  <Btn size="sm" variant="green" onClick={async (e) => { e.stopPropagation(); if (!glowText.trim()) return; try { const u = canvas?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Visionary'; const img = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null; await insertPost({ authorName: u, authorImg: img, content: `✨ ${glowText.trim()}`, mediaType: null, userId: user?.id || null }); } catch (_) {} setGlowSent(true); }}>
                     Send
                   </Btn>
                 </>
@@ -3879,7 +3879,7 @@ function MainApp({ user, onSignOut }) {
                      timerIsBreak={timerIsBreak} setTimerIsBreak={setTimerIsBreak}
                      startTimer={startTimer} resetTimer={resetTimer} />,
     mentorship:    <MentorshipTab mentors={mentors} />,
-    reflect:       <ReflectTab canvas={canvas} />,
+    reflect:       <ReflectTab canvas={canvas} user={user} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
     settings:      <SettingsTab user={user} onSignOut={onSignOut} />,
   };
