@@ -122,6 +122,52 @@ export async function uploadMedia(file) {
   }
 }
 
+// ─── USER DATA SYNC (cross-device: web + phone) ───────────────────────────────
+// Requires this table in Supabase:
+//
+// CREATE TABLE user_data (
+//   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+//   canvas jsonb, journal jsonb DEFAULT '[]',
+//   roadmap jsonb, roadmap_done jsonb DEFAULT '{}',
+//   xp integer DEFAULT 0, streak integer DEFAULT 0,
+//   last_challenge text, vb_goals jsonb DEFAULT '[]',
+//   tutor_notes text DEFAULT '', profile jsonb DEFAULT '{}',
+//   updated_at timestamptz DEFAULT now()
+// );
+// ALTER TABLE user_data ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "own data" ON user_data FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+export async function loadUserData(userId) {
+  if (!supabase || !userId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('user_data')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    if (error && error.code !== 'PGRST116') {
+      console.error('loadUserData:', error.message);
+      return null;
+    }
+    return data || null;
+  } catch (e) {
+    console.error('loadUserData exception:', e.message);
+    return null;
+  }
+}
+
+export async function saveUserData(userId, payload) {
+  if (!supabase || !userId) return;
+  try {
+    await supabase.from('user_data').upsert(
+      { user_id: userId, ...payload, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+  } catch (e) {
+    console.error('saveUserData exception:', e.message);
+  }
+}
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function normalizePost(p) {
   return {

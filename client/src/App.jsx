@@ -10,7 +10,7 @@ import {
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, deleteMentor, loadUserData, saveUserData } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -4084,7 +4084,84 @@ function MainApp({ user, onSignOut }) {
     return unsub;
   }, []);
 
-  const handleSetCanvas = c => { setCanvas(c); localStorage.setItem('vh_canvas', JSON.stringify(c)); };
+  // ── Cross-device sync ──────────────────────────────────────────────────────
+  const syncTimerRef = useRef(null);
+
+  // Load from Supabase on login — hydrates all user data (remote wins if present)
+  useEffect(() => {
+    if (!user?.id) return;
+    loadUserData(user.id).then(remote => {
+      if (!remote) return;
+      if (remote.canvas)        { setCanvas(remote.canvas); localStorage.setItem('vh_canvas', JSON.stringify(remote.canvas)); }
+      if (remote.journal)       localStorage.setItem('vh_journal', JSON.stringify(remote.journal));
+      if (remote.roadmap)       localStorage.setItem('vh_roadmap', JSON.stringify(remote.roadmap));
+      if (remote.roadmap_done)  localStorage.setItem('vh_rm_done', JSON.stringify(remote.roadmap_done));
+      if (remote.xp != null)    localStorage.setItem('vh_xp', String(remote.xp));
+      if (remote.streak != null) localStorage.setItem('vh_streak', String(remote.streak));
+      if (remote.tutor_notes)   localStorage.setItem('vh_tutor_notes', remote.tutor_notes);
+      if (remote.vb_goals)      localStorage.setItem('vh_vb', JSON.stringify(remote.vb_goals));
+    });
+  }, [user?.id]);
+
+  // Always points to the current user id — avoids stale closure inside debounce
+  const userIdRef = useRef(user?.id);
+  useEffect(() => { userIdRef.current = user?.id; }, [user?.id]);
+
+  // Debounced helper — writes to both localStorage + Supabase (2 s delay)
+  const syncToSupabase = (patch) => {
+    clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      const uid = userIdRef.current;
+      if (!uid) return;
+      const get = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || fallback); } catch { return JSON.parse(fallback); } };
+      saveUserData(uid, {
+        canvas:       get('vh_canvas', 'null'),
+        journal:      get('vh_journal', '[]'),
+        roadmap:      get('vh_roadmap', 'null'),
+        roadmap_done: get('vh_rm_done', '{}'),
+        xp:           parseInt(localStorage.getItem('vh_xp') || '0'),
+        streak:       parseInt(localStorage.getItem('vh_streak') || '0'),
+        tutor_notes:  localStorage.getItem('vh_tutor_notes') || '',
+        vb_goals:     get('vh_vb', '[]'),
+        ...patch,
+      });
+    }, 2000);
+  };
+
+  const handleSetCanvas = c => {
+    setCanvas(c);
+    localStorage.setItem('vh_canvas', JSON.stringify(c));
+    syncToSupabase({ canvas: c });
+  };
+
+  // Periodic sync (30 s) + sync-on-hide — catches all child-component localStorage writes
+  // (journal saves, roadmap generates, milestone toggles, XP gains, notes, vision board)
+  useEffect(() => {
+    const fullSync = () => {
+      const uid = userIdRef.current;
+      if (!uid) return;
+      const get = (key, fb) => { try { return JSON.parse(localStorage.getItem(key) || fb); } catch { return JSON.parse(fb); } };
+      saveUserData(uid, {
+        canvas:       get('vh_canvas', 'null'),
+        journal:      get('vh_journal', '[]'),
+        roadmap:      get('vh_roadmap', 'null'),
+        roadmap_done: get('vh_rm_done', '{}'),
+        xp:           parseInt(localStorage.getItem('vh_xp') || '0'),
+        streak:       parseInt(localStorage.getItem('vh_streak') || '0'),
+        tutor_notes:  localStorage.getItem('vh_tutor_notes') || '',
+        vb_goals:     get('vh_vb', '[]'),
+      });
+    };
+    const interval = setInterval(fullSync, 30000);
+    const onVisChange = () => { if (document.visibilityState === 'hidden') fullSync(); };
+    document.addEventListener('visibilitychange', onVisChange);
+    window.addEventListener('beforeunload', fullSync);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisChange);
+      window.removeEventListener('beforeunload', fullSync);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const views = {
     flow:          <FlowTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
