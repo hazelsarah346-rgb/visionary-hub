@@ -346,13 +346,49 @@
       content:''; position:absolute; inset:0; opacity:.1;
       background: radial-gradient(circle at 30% 50%, white, transparent 60%);
     }
-    .arch-emoji-big { font-size: 80px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 20px rgba(255,255,255,.3)); }
-    .arch-type-tag  { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 12px; }
-    .arch-name      { font-size: 30px; font-weight: 900; color: #fff; margin-bottom: 6px; }
-    .arch-tagline   { font-size: 16px; font-weight: 600; color: rgba(255,255,255,.8); font-style: italic; margin-bottom: 16px; }
-    .arch-desc      { font-size: 14px; color: rgba(255,255,255,.7); line-height: 1.7; margin-bottom: 18px; }
-    .strength-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
-    .strength-chip  { border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); color: #fff; }
+    @keyframes revealPop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    @keyframes shimmer { 0%,100%{opacity:.7} 50%{opacity:1} }
+
+    .arch-reveal-label {
+      font-size: 12px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.5); margin-bottom: 10px;
+    }
+    .arch-you-are {
+      font-size: 18px; font-weight: 700; color: rgba(255,255,255,.7);
+      margin-bottom: 4px;
+    }
+    .arch-emoji-big {
+      font-size: 96px; display: block; margin: 8px auto 10px;
+      filter: drop-shadow(0 0 30px rgba(255,255,255,.4));
+      animation: revealPop .5s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .arch-name {
+      font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 8px;
+      animation: revealPop .55s .1s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .arch-tagline {
+      font-size: 17px; font-weight: 600; color: rgba(255,255,255,.85);
+      font-style: italic; margin-bottom: 18px;
+      animation: fadeUp .4s .2s both;
+    }
+    .arch-desc {
+      font-size: 14px; color: rgba(255,255,255,.72); line-height: 1.75;
+      margin-bottom: 20px; animation: fadeUp .4s .3s both;
+    }
+    .arch-northstar-box {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 18px;
+      animation: fadeUp .4s .35s both; text-align: left;
+    }
+    .arch-northstar-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 6px; }
+    .arch-northstar-text  { font-size: 13px; color: rgba(255,255,255,.8); line-height: 1.6; }
+    .strength-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; animation: fadeUp .4s .4s both; }
+    .strength-chip  {
+      border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 700;
+      background: rgba(255,255,255,.12); color: #fff;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .arch-type-tag { display: none; }
 
     .game-survey-cta {
       background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
@@ -912,24 +948,37 @@ function showArchetypeResult() {
   gameState.archetype = key;
   surveyArchetype = key; // share with survey mode
   spawnConfetti();
-  const chips = arch.strengths.map(s => `<span class="strength-chip">${s}</span>`).join('');
+  const chips = arch.strengths.map(s => `<span class="strength-chip" style="background:${arch.color}25;border-color:${arch.color}44;color:#fff">${s}</span>`).join('');
+  const northStarMsg = {
+    V: "On North Star, we'll match you with mentors who think as big as you do, and build you a roadmap that turns your vision into a real plan.",
+    B: "On North Star, we'll give you the tools, mentors, and step-by-step roadmap you need to keep building — faster and smarter.",
+    E: "On North Star, we'll help you explore your options, connect you with diverse mentors, and find the path that fits who you actually are.",
+    C: "On North Star, we'll plug you into a community of ambitious people and mentors who grow through relationships — just like you.",
+    A: "On North Star, we'll give you the research, clarity, and strategic mentors you need to make your best move with confidence.",
+    D: "On North Star, we'll connect you with bold mentors who've broken the mould, and help you chart the unconventional path forward.",
+  };
   const c = document.getElementById('game-container');
   c.innerHTML = `
     <div class="game-result">
-      <div class="arch-card" style="background:linear-gradient(135deg,${arch.color}33,${arch.color}11);border:1px solid ${arch.color}55">
+      <div class="arch-card" style="background:linear-gradient(160deg,${arch.color}40,${arch.color}18 60%,${arch.color}08);border:1.5px solid ${arch.color}66">
+        <div class="arch-reveal-label">✨ Your North Star Archetype</div>
+        <div class="arch-you-are">You are...</div>
         <span class="arch-emoji-big">${arch.emoji}</span>
-        <div class="arch-type-tag">YOUR PATH ARCHETYPE</div>
-        <div class="arch-name">${arch.name}</div>
+        <div class="arch-name" style="color:${arch.color};text-shadow:0 0 30px ${arch.color}66">${arch.name}</div>
         <div class="arch-tagline">${arch.tagline}</div>
         <div class="arch-desc">${arch.desc}</div>
+        <div class="arch-northstar-box">
+          <div class="arch-northstar-label">💡 What this means on North Star</div>
+          <div class="arch-northstar-text">${northStarMsg[key] || northStarMsg.V}</div>
+        </div>
         <div class="strength-chips">${chips}</div>
       </div>
       <div class="stars-row">
-        ${'<span class="star lit" style="filter:drop-shadow(0 0 6px gold)">⭐</span>'.repeat(8)}
+        ${'<span class="star lit" style="filter:drop-shadow(0 0 8px gold)">⭐</span>'.repeat(8)}
       </div>
       <div class="game-survey-cta">
-        <h3>You earned ${gameState.xp} XP 🏆</h3>
-        <p>Help us build North Star for people like you.<br>Takes 2 minutes, your answers shape the product.</p>
+        <h3>🏆 ${gameState.xp} XP earned — you're a natural!</h3>
+        <p>Now help us build North Star for people exactly like you.<br>2 minutes. Your answers shape what we build first.</p>
         <button class="btn-game-primary" style="background:linear-gradient(135deg,${arch.color},#2563EB);box-shadow:0 8px 28px ${arch.color}55" onclick="goToSurveyContact()">
           Take the Full Survey →
         </button>
