@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>North Star — Market Research Survey</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050F1E; --card: #0C1D30; --border: #162A42;
+      --blue: #2563EB; --purple: #7C3AED; --text: #EFF6FF;
+      --muted: #64748B; --green: #10B981;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding: 20px 16px 60px;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.2);opacity:1} }
+    @keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-120vh);opacity:0} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .logo { display:flex; align-items:center; gap:10px; margin-bottom:28px; margin-top:8px; }
+    .logo-icon { width:42px; height:42px; background:linear-gradient(135deg,var(--blue),var(--purple)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .logo-text { font-size:18px; font-weight:800; color:var(--text); }
+    .logo-sub { font-size:11px; color:var(--muted); font-weight:500; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 24px;
+      width: 100%; max-width: 520px;
+      animation: fadeUp 0.3s ease;
+    }
+    .progress-wrap { width:100%; max-width:520px; margin-bottom:14px; }
+    .progress-bar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--purple)); border-radius:2px; transition:width 0.4s ease; }
+    .progress-label { display:flex; justify-content:space-between; margin-top:5px; font-size:11px; color:var(--muted); }
+    .dots { display:flex; gap:4px; margin-top:8px; }
+    .dot { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); transition:background 0.3s; }
+    .dot.done { background:var(--purple); }
+
+    h1 { font-size:22px; font-weight:900; margin-bottom:10px; line-height:1.3; }
+    h2 { font-size:18px; font-weight:800; margin-bottom:20px; line-height:1.4; text-align:center; }
+    p { color:var(--muted); font-size:14px; line-height:1.7; }
+    .emoji-big { font-size:48px; text-align:center; margin-bottom:12px; display:block; }
+
+    .btn-primary {
+      width:100%; padding:14px 0; border:none; border-radius:50px;
+      background:linear-gradient(135deg,var(--blue),var(--purple));
+      color:#fff; font-size:16px; font-weight:700; cursor:pointer;
+      font-family:inherit; transition:opacity 0.15s;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+    }
+    .btn-primary:hover { opacity:0.9; }
+    .btn-primary:disabled { background:var(--border); box-shadow:none; cursor:default; opacity:0.6; }
+    .btn-secondary {
+      width:100%; padding:12px 0; border:1px solid var(--border);
+      border-radius:50px; background:rgba(255,255,255,0.03);
+      color:var(--muted); font-size:14px; font-weight:600; cursor:pointer;
+      font-family:inherit; margin-top:10px; transition:all 0.15s;
+    }
+    .btn-secondary:hover { border-color:var(--blue); color:var(--text); }
+
+    .choice-list { display:flex; flex-direction:column; gap:9px; }
+    .choice-btn {
+      background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.09);
+      border-radius:12px; padding:13px 16px; color:var(--text);
+      font-size:14px; font-weight:500; cursor:pointer; text-align:left;
+      transition:all 0.15s; font-family:inherit; line-height:1.4;
+    }
+    .choice-btn:hover { background:rgba(37,99,235,0.15); border-color:var(--blue); }
+
+    .scale-wrap { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .scale-btn {
+      flex:1 1 110px; padding:14px 10px; border:1.5px solid rgba(255,255,255,0.09);
+      border-radius:12px; background:rgba(255,255,255,0.04);
+      color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
+      text-align:center; font-family:inherit; transition:all 0.15s;
+    }
+    .scale-btn:hover { background:rgba(37,99,235,0.15); border-color:var(--blue); }
+
+    input, textarea {
+      width:100%; background:rgba(255,255,255,0.04);
+      border:1.5px solid rgba(255,255,255,0.1);
+      border-radius:12px; padding:13px 16px;
+      color:var(--text); font-size:14px; outline:none;
+      font-family:inherit; transition:border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color:var(--blue); }
+    input::placeholder, textarea::placeholder { color:var(--muted); }
+    textarea { resize:vertical; min-height:80px; }
+
+    .tag-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .tag-btn {
+      background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.09);
+      border-radius:20px; padding:7px 14px; color:var(--text);
+      font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+      transition:all 0.15s;
+    }
+    .tag-btn:hover, .tag-btn.selected { background:rgba(124,58,237,0.2); border-color:var(--purple); color:#fff; }
+
+    .archetype-badge {
+      border-radius:14px; padding:14px 16px; margin-bottom:14px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .archetype-emoji { font-size:28px; }
+    .archetype-name { font-size:15px; font-weight:800; color:#fff; }
+    .archetype-tag { font-size:12px; color:var(--muted); margin-top:2px; }
+    .strengths-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .strength-chip { border-radius:20px; padding:4px 12px; font-size:12px; }
+
+    .info-rows > div { display:flex; align-items:center; gap:8px; color:#94A3B8; font-size:13px; padding:5px 0; }
+    .confetti-piece { position:fixed; pointer-events:none; border-radius:2px; }
+
+    .quiz-progress { display:flex; gap:4px; margin-bottom:16px; }
+    .quiz-dot { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); transition:background 0.3s; }
+    .quiz-dot.done { background:var(--purple); }
+
+    .quiz-opt {
+      background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.1);
+      border-radius:14px; padding:16px 18px; color:var(--text);
+      font-size:14px; font-weight:500; cursor:pointer; text-align:left;
+      display:flex; align-items:center; gap:14px; transition:all 0.15s; width:100%;
+      font-family:inherit; margin-bottom:9px;
+    }
+    .quiz-opt:hover { background:rgba(124,58,237,0.2); border-color:var(--purple); }
+    .quiz-opt.selected { background:rgba(124,58,237,0.35); border-color:var(--purple); transform:scale(1.02); }
+    .opt-emoji { font-size:24px; flex-shrink:0; }
+
+    .section-label { font-size:11px; font-weight:700; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+    .small-note { font-size:11px; color:#334155; text-align:center; margin-top:8px; }
+
+    @media (max-width: 480px) {
+      .card { padding:22px 18px; }
+      h1 { font-size:20px; }
+      h2 { font-size:16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Logo -->
+<div class="logo">
+  <div class="logo-icon">💡</div>
+  <div>
+    <div class="logo-text">North Star</div>
+    <div class="logo-sub">Market Research · Confidential</div>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// Replace with your Supabase credentials
+const SUPABASE_URL = 'https://hazhdsxngovturtysfby.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhemhkc3huZ292dHVydHlzZmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5OTM3ODYsImV4cCI6MjA1NzU2OTc4Nn0.k5JvBJRqTWS-z6T1K-L20JEdKa8ULSy97n-nWOEJD40';
+
+async function saveSurvey(data) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/survey_responses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(data),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error('Save failed:', e);
+    return false;
+  }
+}
+
+// ─── QUIZ DATA ────────────────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  { q: "It's Saturday morning, no plans. What actually happens?",
+    opts: [
+      { e:'💡', t:"I start sketching a big idea that's been brewing", type:'V' },
+      { e:'🔨', t:"I tackle a project I've been putting off", type:'B' },
+      { e:'🗺️', t:"I go somewhere new or try something different", type:'E' },
+      { e:'📱', t:"I reach out to people I've been meaning to call", type:'C' },
+    ]},
+  { q: "You're completely stuck on a hard problem. Your move?",
+    opts: [
+      { e:'🔍', t:"Research everything until I fully understand it", type:'A' },
+      { e:'🛠️', t:"Break it into pieces and start doing something", type:'B' },
+      { e:'🌌', t:"Zoom out and think about the bigger picture", type:'V' },
+      { e:'🤝', t:"Find someone who's already solved it", type:'C' },
+    ]},
+  { q: "A friend calls at midnight with a wild startup idea. You say...",
+    opts: [
+      { e:'🚀', t:'"When can we start? I\'m in."', type:'D' },
+      { e:'📊', t:'"Tell me more — what problem does it solve?"', type:'A' },
+      { e:'✨', t:'"Here\'s how I see it growing in 5 years..."', type:'V' },
+      { e:'👥', t:'"I know exactly who we need to talk to."', type:'C' },
+    ]},
+  { q: "What's your honest relationship with rules?",
+    opts: [
+      { e:'⚡', t:"Rules are starting points — I upgrade them", type:'D' },
+      { e:'📐', t:"I follow them once I understand why they exist", type:'A' },
+      { e:'🏗️', t:"I like structure — it helps me build faster", type:'B' },
+      { e:'🌍', t:"Depends — I go where curiosity leads", type:'E' },
+    ]},
+  { q: "Someone asks where you see yourself in 5 years. You...",
+    opts: [
+      { e:'🌟', t:"Paint a vivid, detailed picture of your vision", type:'V' },
+      { e:'📋', t:"Pull out your actual plan (yes, you have one)", type:'B' },
+      { e:'🤷', t:'"Not sure yet — still discovering what\'s possible"', type:'E' },
+      { e:'💛', t:"Talk about the impact you want on people's lives", type:'C' },
+    ]},
+  { q: "How do you make a big decision?",
+    opts: [
+      { e:'📈', t:"Data, research, pros/cons — then decide", type:'A' },
+      { e:'🎯', t:"Gut + vision — I can feel the right path", type:'V' },
+      { e:'🧪', t:"Try a small version first, then scale up", type:'B' },
+      { e:'💬', t:"Talk it through with people I trust", type:'C' },
+    ]},
+  { q: "Pick the energy that matches you most:",
+    opts: [
+      { e:'🔥', t:'"I want to disrupt. The old way doesn\'t work."', type:'D' },
+      { e:'🌱', t:'"I want to explore. I haven\'t found my thing yet."', type:'E' },
+      { e:'⚙️', t:'"I want to build. Give me a problem to solve."', type:'B' },
+      { e:'🔭', t:'"I want to understand. Why does this work this way?"', type:'A' },
+    ]},
+  { q: "What do you want people to say about you in 10 years?",
+    opts: [
+      { e:'🌍', t:'"They changed how we do things."', type:'D' },
+      { e:'🏆', t:'"They built something real that lasts."', type:'B' },
+      { e:'🫂', t:'"They brought people together."', type:'C' },
+      { e:'💡', t:'"They saw it before anyone else did."', type:'V' },
+    ]},
+];
+
+const ARCHETYPES = {
+  V:{ name:'The Visionary',  emoji:'🌟', color:'#7C3AED', tagline:"You see the future others can't yet.",    strengths:['Big-picture thinking','Creative leadership','Inspiring others','Long-term vision'] },
+  B:{ name:'The Builder',    emoji:'🔨', color:'#2563EB', tagline:"You turn ideas into real things.",         strengths:['Execution','Problem-solving','Systems thinking','Reliability'] },
+  E:{ name:'The Explorer',   emoji:'🗺️', color:'#059669', tagline:"You learn by going.",                     strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness'] },
+  C:{ name:'The Connector',  emoji:'🤝', color:'#D97706', tagline:"Your network is your net worth.",         strengths:['Relationship building','Empathy','Collaboration','Community'] },
+  A:{ name:'The Analyst',    emoji:'🔍', color:'#0891B2', tagline:"You understand what others overlook.",    strengths:['Critical thinking','Research','Pattern recognition','Precision'] },
+  D:{ name:'The Disruptor',  emoji:'⚡', color:'#DC2626', tagline:"You challenge what everyone else accepts.", strengths:['Bold thinking','Risk-taking','Innovation','Resilience'] },
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  phase: 'intro',   // intro | survey | quiz-intro | quiz | quiz-result | done
+  surveyStep: 0,
+  answers: {},
+  quizAnswers: {},
+  quizStep: 0,
+  archetype: null,
+  name: '', email: '', location: '', challenge_open: '',
+  selectedTags: [],
+  animating: false,
+};
+
+const SURVEY_STEPS = [
+  { id:'situation', emoji:'📍', q:"What best describes where you are right now?",
+    type:'choice', opts:['🎓  Student / still in school','🔄  Career switcher / pivoting','🚀  Recent grad looking for my first role','💼  Working but want something more','🌱  Just figuring it out — no clear direction'] },
+  { id:'challenge', emoji:'🧱', q:"What's your #1 challenge right now?",
+    type:'choice', opts:["💭  I don't know what direction to go","🗺️  I have a goal but no clear path to it","🤝  I lack the right connections or mentors","📉  I start things but struggle to follow through","😶  I feel behind everyone else and don't know why"] },
+  { id:'mentor_value', emoji:'✨', q:"How valuable would access to a mentor in your field be?",
+    type:'scale', opts:['Not at all','Somewhat useful','Very valuable','Honestly game-changing'] },
+  { id:'peer_connect', emoji:'🤝', q:"Would connecting with peers at your exact stage help you?",
+    type:'choice', opts:['💯  Absolutely — that would change things for me',"🤔  Maybe, I'm not sure yet",'😊  Nice to have but not essential',"🙅  I prefer to work alone"] },
+  { id:'mentorship_format', emoji:'🎯', q:"What kind of mentorship would help you most?",
+    type:'choice', opts:['📞  1-on-1 calls with someone in my field','💬  Ongoing chat / messaging access','📚  Structured programmes with clear milestones','👥  Group sessions with peers + a mentor','🔍  Help finding opportunities and next steps'] },
+  { id:'tools', emoji:'🛠️', q:"How do you currently manage your goals and vision?",
+    type:'choice', opts:['📝  Notes app or journal','📊  Spreadsheet or task manager','🧠  Mostly in my head','📱  I use a goal-tracking app',"❌  I don't really track them"] },
+  { id:'location', emoji:'🌍', q:"Where are you based?", type:'text', placeholder:'City, Country  (e.g. London, UK)' },
+  { id:'challenge_open', emoji:'💬', q:"In your own words — what would change everything for you right now?", type:'textarea', placeholder:'Be honest. No wrong answers.' },
+  { id:'name_email', emoji:'👋', q:"Last step — a little about you", type:'name_email' },
+];
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  if (state.phase === 'intro')        app.appendChild(renderIntro());
+  else if (state.phase === 'survey')  app.appendChild(renderSurvey());
+  else if (state.phase === 'quiz-intro') app.appendChild(renderQuizIntro());
+  else if (state.phase === 'quiz')    app.appendChild(renderQuiz());
+  else if (state.phase === 'quiz-result') app.appendChild(renderQuizResult());
+  else if (state.phase === 'done')    app.appendChild(renderDone());
+}
+
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null) continue;
+    if (typeof c === 'string') e.appendChild(document.createTextNode(c));
+    else e.appendChild(c);
+  }
+  return e;
+}
+
+function renderIntro() {
+  return el('div', { class:'card', style:'animation:fadeUp 0.35s ease' },
+    el('span', { class:'emoji-big' }, '🗺️'),
+    el('h1', { style:'text-align:center;margin-bottom:12px' }, 'Help Shape North Star'),
+    el('p', { style:'text-align:center;margin-bottom:22px' },
+      '2 minutes · 8 questions · No spam. Your honest answers help us build the right product for people like you.'),
+    el('div', { class:'info-rows', style:'background:#091525;border-radius:12px;padding:14px 16px;margin-bottom:24px' },
+      el('div',{},'📍 Where you are right now'),
+      el('div',{},'🧱 Your biggest challenge'),
+      el('div',{},'🤝 What kind of support would help'),
+      el('div',{},'💡 Your personality type (fun quiz!)'),
+    ),
+    el('button', { class:'btn-primary', onClick: () => { state.phase='survey'; state.surveyStep=0; render(); } }, 'Start Survey →'),
+    el('button', { class:'btn-secondary', onClick: () => { state.phase='quiz-intro'; render(); } }, '✨ Or take the personality quiz first'),
+  );
+}
+
+function renderSurvey() {
+  const step = SURVEY_STEPS[state.surveyStep];
+  const total = SURVEY_STEPS.length;
+  const pct = Math.round((state.surveyStep / total) * 100);
+
+  const wrap = el('div', {});
+
+  // Progress
+  const dotsHtml = SURVEY_STEPS.map((_,i) =>
+    el('div', { class: 'dot' + (i < state.surveyStep ? ' done' : ''), style: i < state.surveyStep ? 'background:var(--purple)' : '' })
+  );
+  wrap.appendChild(
+    el('div', { class:'progress-wrap' },
+      el('div', { class:'progress-bar' },
+        el('div', { class:'progress-fill', style:`width:${pct}%` })
+      ),
+      el('div', { class:'progress-label' },
+        el('span',{}, `Question ${state.surveyStep+1} of ${total}`),
+        el('span',{}, `${pct}%`)
+      ),
+      el('div', { class:'dots' }, ...dotsHtml),
+    )
+  );
+
+  const card = el('div', { class:'card' });
+  card.appendChild(el('span', { class:'emoji-big' }, step.emoji));
+  card.appendChild(el('h2', {}, step.q));
+
+  if (step.type === 'choice') {
+    const list = el('div', { class:'choice-list' });
+    step.opts.forEach(opt => {
+      const btn = el('button', { class:'choice-btn' }, opt);
+      btn.addEventListener('click', () => {
+        state.answers[step.id] = opt;
+        advanceSurvey();
+      });
+      list.appendChild(btn);
+    });
+    card.appendChild(list);
+  }
+
+  if (step.type === 'scale') {
+    const row = el('div', { class:'scale-wrap' });
+    step.opts.forEach(opt => {
+      const btn = el('button', { class:'scale-btn' }, opt);
+      btn.addEventListener('click', () => {
+        state.answers[step.id] = opt;
+        advanceSurvey();
+      });
+      row.appendChild(btn);
+    });
+    card.appendChild(row);
+  }
+
+  if (step.type === 'text') {
+    const inp = el('input', { type:'text', placeholder:step.placeholder, value:state.answers[step.id]||'' });
+    inp.addEventListener('input', e => state.answers[step.id] = e.target.value);
+    inp.addEventListener('keydown', e => { if (e.key==='Enter' && state.answers[step.id]?.trim()) advanceSurvey(); });
+    card.appendChild(inp);
+    setTimeout(() => inp.focus(), 100);
+    const btn = el('button', { class:'btn-primary', style:'margin-top:14px' }, 'Continue →');
+    btn.addEventListener('click', () => { if (state.answers[step.id]?.trim()) advanceSurvey(); });
+    card.appendChild(btn);
+  }
+
+  if (step.type === 'textarea') {
+    const ta = el('textarea', { placeholder:step.placeholder });
+    ta.value = state.answers[step.id] || '';
+    ta.addEventListener('input', e => state.answers[step.id] = e.target.value);
+    card.appendChild(ta);
+    setTimeout(() => ta.focus(), 100);
+    const btn = el('button', { class:'btn-primary', style:'margin-top:14px' }, 'Continue →');
+    btn.addEventListener('click', () => { if ((state.answers[step.id]||'').trim()) advanceSurvey(); else advanceSurvey(); });
+    card.appendChild(btn);
+    const skip = el('button', { class:'btn-secondary' }, 'Skip this one');
+    skip.addEventListener('click', advanceSurvey);
+    card.appendChild(skip);
+  }
+
+  if (step.type === 'name_email') {
+    const nameInp = el('input', { type:'text', placeholder:'Your first name', style:'margin-bottom:10px' });
+    nameInp.value = state.name;
+    nameInp.addEventListener('input', e => state.name = e.target.value);
+
+    const emailInp = el('input', { type:'email', placeholder:'Your email address', style:'margin-bottom:10px' });
+    emailInp.value = state.email;
+    emailInp.addEventListener('input', e => state.email = e.target.value);
+
+    const locInp = el('input', { type:'text', placeholder:'City, Country  (e.g. Toronto, Canada)', style:'margin-bottom:12px' });
+    locInp.value = state.location;
+    locInp.addEventListener('input', e => state.location = e.target.value);
+
+    card.appendChild(el('p', { style:'text-align:center;margin-bottom:16px;font-size:13px' }, "We'll send you updates on North Star's launch."));
+
+    if (state.archetype) {
+      const arch = ARCHETYPES[state.archetype];
+      const badge = el('div', { class:'archetype-badge', style:`background:${arch.color}18;border:1px solid ${arch.color}44;margin-bottom:14px` },
+        el('span', { class:'archetype-emoji' }, arch.emoji),
+        el('div', {},
+          el('div', { class:'archetype-name' }, arch.name),
+          el('div', { class:'archetype-tag', style:`color:${arch.color}` }, arch.tagline),
+        )
+      );
+      card.appendChild(badge);
+    }
+
+    card.appendChild(nameInp);
+    card.appendChild(emailInp);
+    card.appendChild(locInp);
+
+    const submitBtn = el('button', { class:'btn-primary' }, 'Submit →');
+    submitBtn.addEventListener('click', async () => {
+      if (!state.name.trim() || !state.email.trim()) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+      await submitSurveyData();
+      state.phase = 'done';
+      render();
+    });
+    card.appendChild(submitBtn);
+    card.appendChild(el('p', { class:'small-note' }, 'No spam. Ever. Unsubscribe anytime.'));
+    setTimeout(() => nameInp.focus(), 100);
+  }
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function advanceSurvey() {
+  if (state.surveyStep < SURVEY_STEPS.length - 1) {
+    state.surveyStep++;
+    render();
+  }
+}
+
+async function submitSurveyData() {
+  const payload = {
+    name: state.name,
+    email: state.email,
+    location: state.location,
+    situation: state.answers.situation || null,
+    challenge: state.answers.challenge || null,
+    mentor_value: state.answers.mentor_value || null,
+    peer_connect: state.answers.peer_connect || null,
+    mentorship_format: state.answers.mentorship_format || null,
+    tools: state.answers.tools || null,
+    challenge_open: state.answers.challenge_open || null,
+    archetype: state.archetype || null,
+    submitted_at: new Date().toISOString(),
+  };
+  await saveSurvey(payload);
+}
+
+// ─── QUIZ ─────────────────────────────────────────────────────────────────────
+function renderQuizIntro() {
+  const archLabels = Object.values(ARCHETYPES).map(a =>
+    el('span', { style:`background:${a.color}1a;border:1px solid ${a.color}44;border-radius:20px;padding:5px 13px;color:#fff;font-size:12px;font-weight:600` }, `${a.emoji} ${a.name.replace('The ','')}`)
+  );
+  const tagsWrap = el('div', { style:'display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:26px' }, ...archLabels);
+
+  const card = el('div', { class:'card', style:'text-align:center' },
+    el('span', { class:'emoji-big' }, '🧭'),
+    el('h1', { style:'margin-bottom:10px' }, 'What\'s Your Path Archetype?'),
+    el('p', { style:'margin-bottom:22px' }, '8 quick questions. No wrong answers.\nDiscover which of 6 archetypes drives how you think, decide, and grow.'),
+    tagsWrap,
+    el('button', { class:'btn-primary', onClick: () => { state.phase='quiz'; state.quizStep=0; state.quizAnswers={}; render(); } }, "Let's Find Out ✨"),
+    el('button', { class:'btn-secondary', onClick: () => { state.phase= state.answers.situation ? 'survey' : 'intro'; render(); } }, '← Back'),
+  );
+  return card;
+}
+
+function renderQuiz() {
+  const q = QUIZ_QUESTIONS[state.quizStep];
+  const total = QUIZ_QUESTIONS.length;
+  const pct = Math.round((state.quizStep / total) * 100);
+
+  const wrap = el('div', {});
+
+  // Progress
+  const qdots = QUIZ_QUESTIONS.map((_,i) => el('div', { class:'quiz-dot'+(i<state.quizStep?' done':''), style:i<state.quizStep?'background:var(--purple)':'' }));
+  wrap.appendChild(
+    el('div', { class:'progress-wrap' },
+      el('div', { class:'progress-bar' }, el('div', { class:'progress-fill', style:`width:${pct}%` })),
+      el('div', { class:'progress-label' }, el('span',{},`Question ${state.quizStep+1} of ${total}`), el('span',{},`${pct}%`)),
+      el('div', { class:'dots' }, ...qdots),
+    )
+  );
+
+  const card = el('div', { class:'card' });
+  card.appendChild(el('h2', {}, q.q));
+
+  q.opts.forEach(opt => {
+    const btn = el('button', { class:'quiz-opt' },
+      el('span', { class:'opt-emoji' }, opt.e),
+      el('span', {}, opt.t),
+    );
+    btn.addEventListener('click', () => {
+      btn.classList.add('selected');
+      setTimeout(() => {
+        state.quizAnswers[state.quizStep] = opt.type;
+        if (state.quizStep >= QUIZ_QUESTIONS.length - 1) {
+          state.archetype = calcArchetype();
+          state.phase = 'quiz-result';
+        } else {
+          state.quizStep++;
+        }
+        render();
+      }, 380);
+    });
+    card.appendChild(btn);
+  });
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function calcArchetype() {
+  const s = { V:0,B:0,E:0,C:0,A:0,D:0 };
+  Object.values(state.quizAnswers).forEach(t => { if (s[t]!==undefined) s[t]++; });
+  return Object.entries(s).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function renderQuizResult() {
+  const arch = ARCHETYPES[state.archetype];
+  spawnConfetti();
+
+  const strengthChips = arch.strengths.map(s =>
+    el('span', { class:'strength-chip', style:`background:${arch.color}1a;border:1px solid ${arch.color}44;color:#fff` }, s)
+  );
+
+  const card = el('div', { class:'card', style:'text-align:center' },
+    el('div', { style:'font-size:72px;margin-bottom:10px;filter:drop-shadow(0 0 20px rgba(255,255,255,0.2))' }, arch.emoji),
+    el('div', { style:`display:inline-block;background:linear-gradient(135deg,${arch.color},${arch.color}aa);border-radius:50px;padding:4px 16px;color:#fff;font-size:11px;font-weight:800;letter-spacing:1.4px;margin-bottom:14px` }, 'YOUR ARCHETYPE'),
+    el('h1', { style:'margin-bottom:6px' }, arch.name),
+    el('p', { style:`color:${arch.color};font-size:16px;font-weight:700;font-style:italic;margin-bottom:18px` }, arch.tagline),
+    el('div', { style:`background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px 18px;margin-bottom:20px;text-align:left` },
+      el('div', { class:'section-label' }, 'YOUR STRENGTHS'),
+      el('div', { class:'strengths-row' }, ...strengthChips),
+    ),
+    el('button', { class:'btn-primary',
+      style:`background:linear-gradient(135deg,${arch.color},${arch.color}aa);box-shadow:0 8px 28px ${arch.color}55`,
+      onClick: () => {
+        if (!state.answers.situation) { state.phase='survey'; state.surveyStep=0; render(); }
+        else { state.phase='survey'; state.surveyStep=SURVEY_STEPS.findIndex(s=>s.id==='name_email'); render(); }
+      }
+    }, state.answers.situation ? 'Continue to Final Step →' : 'Continue to Survey →'),
+    el('button', { class:'btn-secondary', onClick: () => { state.quizAnswers={}; state.quizStep=0; state.archetype=null; state.phase='quiz'; render(); } }, '↺ Retake quiz'),
+  );
+  return card;
+}
+
+function renderDone() {
+  const arch = state.archetype ? ARCHETYPES[state.archetype] : null;
+  spawnConfetti();
+
+  return el('div', { class:'card', style:'text-align:center' },
+    el('div', { style:'font-size:64px;margin-bottom:14px' }, '🎉'),
+    el('h1', { style:'margin-bottom:10px' }, `Thank you, ${state.name || 'Explorer'}!`),
+    el('p', { style:'margin-bottom:20px' }, "Your answers will directly shape what we build.\nWe'll reach out when North Star launches — you're on the list."),
+    arch ? el('div', { class:'archetype-badge', style:`background:${arch.color}18;border:1px solid ${arch.color}44;margin-bottom:20px;justify-content:center` },
+      el('span', { class:'archetype-emoji' }, arch.emoji),
+      el('div', {},
+        el('div', { class:'archetype-name' }, arch.name),
+        el('div', { class:'archetype-tag', style:`color:${arch.color}` }, arch.tagline),
+      )
+    ) : null,
+    el('div', { style:'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;text-align:left;margin-bottom:20px' },
+      el('div', { class:'section-label' }, 'WHAT NORTH STAR IS BUILDING'),
+      ['🧭 Vision Canvas — your goal, made concrete', '🗺️ AI-built roadmap for your exact stage', '🤝 Mentors who have actually walked your path', '👥 Community of peers figuring it out together'].map(t =>
+        el('div', { style:'color:#94A3B8;font-size:13px;padding:4px 0' }, t)
+      ),
+    ),
+    el('p', { class:'small-note' }, 'Share this with someone who needs it 👇'),
+    el('button', { class:'btn-secondary', onClick: () => {
+      navigator.clipboard?.writeText(window.location.href).then(() => { alert('Link copied!'); });
+    }}, '🔗 Copy survey link'),
+  );
+}
+
+function spawnConfetti() {
+  const colors = ['#7C3AED','#2563EB','#059669','#D97706','#DC2626','#0891B2'];
+  for (let i = 0; i < 28; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    const size = Math.random()*8+5;
+    c.style.cssText = `width:${size}px;height:${size}px;background:${colors[i%6]};left:${Math.random()*100}%;top:80%;animation:floatUp ${1.8+Math.random()*0.8}s ${Math.random()*0.5}s ease-in forwards;`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

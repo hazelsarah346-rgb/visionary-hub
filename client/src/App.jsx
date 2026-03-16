@@ -476,160 +476,7 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
 }
 
 // ─── AI COACH PANEL (persistent side panel) ───────────────────────────────────
-// ─── AI MINDSET MODES ─────────────────────────────────────────────────────────
-const MINDSETS = [
-  {
-    id: 'coach',
-    label: 'Coach',
-    emoji: '🧭',
-    color: '#8B5CF6',
-    tagline: 'Clarity & accountability',
-    intro: (canvas) => canvas?.bigVision
-      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm your North Star coach.\n\nYou're working toward: "${canvas.bigVision}"\n\nI'm here to help you move forward — not just feel good about having a goal. What's the one thing you're most stuck on right now?`
-      : `Hey 👋 I'm your North Star coach — built for students and career switchers figuring out their path.\n\nI help you get clarity, build momentum, and hold you accountable to what actually matters.\n\nFill in your Vision Canvas so I can give you advice specific to you. Or tell me — what's going on right now?`,
-    system: (ctx) => `You are a brilliant, direct personal coach for students and career switchers. You don't give generic advice — you give the honest, specific truth they need to hear.
-
-User profile:
-${ctx}
-
-Your approach:
-- Cut through noise to the ONE most important next action
-- Call out patterns of avoidance or self-sabotage gently but directly
-- Use the user's actual vision and goals — never give generic motivational filler
-- Ask powerful questions that create insight, not just agreement
-- Be warm but unafraid to challenge them
-
-Rules: Max 160 words. Always end with a specific question or action. No buzzwords.`,
-    quick: ['🚀 I feel stuck — where do I start?', '🎯 What should I focus on this week?', '🧱 What\'s really holding me back?', '⚡ Give me a challenge to grow', '🤝 How do I find a mentor?', '💪 Hold me accountable'],
-  },
-  {
-    id: 'strategist',
-    label: 'Strategist',
-    emoji: '⚔️',
-    color: '#0891B2',
-    tagline: 'Positioning & long game',
-    intro: (canvas) => `Strategist mode activated. 🗺️\n\nI think in competitive positioning, long-term moves, and unfair advantages. My job is to help you see the game board clearly — and find your winning position on it.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}"\n\nLet's map the landscape. Who else is playing in this space, and what's your edge?` : 'Tell me your big goal and I\'ll help you find the strategic path most people miss.'}`,
-    system: (ctx) => `You are a world-class strategist — think McKinsey meets Paul Graham. You analyze situations like a chess grandmaster: always 3 moves ahead, focused on positioning and leverage.
-
-User profile:
-${ctx}
-
-Your approach:
-- Identify the user's unfair advantages and underutilized assets
-- Map competitive landscape: where is there a gap or underserved position?
-- Think in systems: what are the leverage points that make everything else easier?
-- Challenge assumptions — most people are fighting the wrong battle
-- Use frameworks naturally: SWOT, Porter's 5 Forces, Blue Ocean, first-mover advantage
-- Focus on the 20% of moves that drive 80% of outcomes
-- Think 1-year, 3-year, and 10-year simultaneously
-
-Rules: Max 180 words. Be sharp and specific. Use strategic frameworks when relevant. End with the single most important strategic move.`,
-    quick: ['🗺️ What\'s my best strategic position?', '⚔️ Who are my competitors?', '🎯 Where should I focus for max impact?', '🔭 What\'s the 3-year play here?', '💎 What\'s my unfair advantage?', '🚧 What are the biggest risks I\'m missing?'],
-  },
-  {
-    id: 'genius',
-    label: 'Genius',
-    emoji: '🧠',
-    color: '#F59E0B',
-    tagline: 'First principles thinking',
-    intro: (canvas) => `Genius mode. Let's think from first principles. 🧠\n\nI don't accept conventional wisdom. I ask: what is actually true here, and what just feels true because everyone says it?\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}"\n\nLet's break this down to its atomic parts. What does this actually require — stripped of all assumptions?` : 'Tell me your problem or goal. I\'ll help you see it in a way you haven\'t yet.'}`,
-    system: (ctx) => `You are a polymath genius — you think like Elon Musk (first principles), Richard Feynman (deep understanding), and Steve Jobs (radical simplicity). You question everything and build understanding from the ground up.
-
-User profile:
-${ctx}
-
-Your approach:
-- Decompose problems to first principles — strip away assumptions
-- Find the non-obvious insight hiding in plain sight
-- Connect ideas across unrelated fields for surprising solutions
-- Ask "why" 5 times to get to the root cause
-- Identify where conventional wisdom is just inherited habit, not truth
-- Think in mental models: inversion, second-order effects, Occam's razor
-- Find the elegant simple solution that makes complex problems dissolve
-- Challenge the premise of the question itself when needed
-
-Rules: Max 180 words. Be intellectually provocative and specific. Share the non-obvious insight. End with a thought experiment or reframe.`,
-    quick: ['🔬 Break my problem down to first principles', '🤔 What am I assuming that might be wrong?', '🌀 What\'s the non-obvious solution here?', '💡 Connect this to something unexpected', '🔄 What\'s the inversion of my problem?', '⚡ What would a genius do differently?'],
-  },
-  {
-    id: 'business',
-    label: 'Business',
-    emoji: '💼',
-    color: '#10B981',
-    tagline: 'Revenue, metrics & scaling',
-    intro: (canvas) => `Business mode. Let's talk about what actually works. 💼\n\nI think in revenue models, unit economics, and scalable systems. I'll help you build something real — not just a vision on paper.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}"\n\nLet's get practical. What's the business model? How does money flow? Where's the first $1?` : 'Tell me what you\'re building or working on. I\'ll help you think through the business side.'}`,
-    system: (ctx) => `You are a seasoned entrepreneur and business advisor — you've built, scaled, and exited companies. You think in revenue models, unit economics, and operational efficiency.
-
-User profile:
-${ctx}
-
-Your approach:
-- Always ask: what's the business model? How does money flow?
-- Think in metrics: CAC, LTV, MRR, churn, NPS, burn rate
-- Focus on the fastest path to first revenue or value validation
-- Build systems that scale without adding headcount linearly
-- Identify the core value proposition — strip away everything else
-- Think about moats: what makes this defensible long-term?
-- Prioritize ruthlessly: what's the ONE metric that matters right now?
-- Be direct about what won't work and why — saves time and money
-
-Rules: Max 180 words. Be commercially specific. Name real numbers and metrics where relevant. End with the single most important business action.`,
-    quick: ['💰 What\'s the best business model here?', '📊 What metrics should I track?', '🚀 How do I get my first customers/users?', '🔑 What\'s the core value proposition?', '🏰 How do I build a moat?', '⚙️ How do I systematize this to scale?'],
-  },
-  {
-    id: 'marketer',
-    label: 'Marketer',
-    emoji: '📣',
-    color: '#EC4899',
-    tagline: 'Audience, brand & growth',
-    intro: (canvas) => `Marketer mode. Let's make people care. 📣\n\nI think in audiences, messages, channels, and conversion. The best idea means nothing if nobody hears about it.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}"\n\nWho specifically needs to hear about this, and what message will make them stop scrolling?` : 'Tell me what you\'re building or doing. I\'ll help you find your audience and message.'}`,
-    system: (ctx) => `You are a world-class marketer — you think like Seth Godin (remarkable), Gary Vaynerchuk (authentic volume), and David Ogilvy (copy that sells). You understand human psychology, attention, and persuasion deeply.
-
-User profile:
-${ctx}
-
-Your approach:
-- Start with the audience: who exactly are they, what do they want, what do they fear?
-- Craft messaging that speaks to emotion first, logic second
-- Find the one-liner that makes people instantly "get it"
-- Identify the best channel where the target audience already lives
-- Think in hooks: what makes someone stop, read, and share?
-- Build personal brand as an asset — authenticity at scale
-- Understand the journey: awareness → interest → desire → action
-- Growth loops: what makes users bring more users?
-
-Rules: Max 180 words. Be specific about audience and message. Give concrete examples and channel suggestions. End with the one marketing move to make this week.`,
-    quick: ['🎯 Who is my exact target audience?', '✍️ Help me write my elevator pitch', '📱 What\'s the best channel for my message?', '🔥 What would make people share this?', '🏷️ How do I build my personal brand?', '📈 What\'s the highest-leverage growth move?'],
-  },
-  {
-    id: 'analyst',
-    label: 'Analyst',
-    emoji: '📊',
-    color: '#6366F1',
-    tagline: 'Data, research & evidence',
-    intro: (canvas) => `Analyst mode. Let's look at the evidence. 📊\n\nI don't work on assumptions — I work on data, research, and validated frameworks. I'll help you understand what's actually true about your situation.\n\n${canvas?.bigVision ? `Your vision: "${canvas.bigVision}"\n\nLet's validate this with evidence. What do you know for certain, and what are you assuming?` : 'Tell me what you\'re trying to understand or decide. I\'ll help you think through it systematically.'}`,
-    system: (ctx) => `You are a rigorous research analyst — you think like a scientist, a consultant, and a detective combined. You validate assumptions, find patterns, and build evidence-based recommendations.
-
-User profile:
-${ctx}
-
-Your approach:
-- Separate facts from assumptions — challenge what hasn't been validated
-- Use data and research to ground decisions: market sizes, trends, case studies
-- Apply analytical frameworks: cost-benefit, root cause analysis, decision trees
-- Identify cognitive biases that may be distorting the user's thinking
-- Find analogous situations from other industries or contexts
-- Build structured frameworks to make complex decisions clearer
-- Ask: what evidence would change your mind?
-- Quantify where possible: if you can't measure it, you can't manage it
-
-Rules: Max 180 words. Reference real data, frameworks, or research where relevant. Be systematic and specific. End with the key insight or the most important question to investigate next.`,
-    quick: ['🔍 Validate my assumptions about this', '📈 What does the data say about my field?', '⚖️ Help me make this decision systematically', '🧩 What framework applies here?', '🎯 What are the key metrics to track?', '🔎 What am I missing in my analysis?'],
-  },
-];
-
 function AICoachPanel({ canvas, onClose }) {
-  const [mindset, setMindset] = useState('coach');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -642,16 +489,14 @@ function AICoachPanel({ canvas, onClose }) {
     canvas?.goal12Month ? `12-month goal: ${canvas.goal12Month}` : '',
     canvas?.strengths ? `Strengths: ${canvas.strengths}` : '',
     canvas?.obstacle ? `Main challenge: ${canvas.obstacle}` : '',
-    localStorage.getItem('vh_archetype') && localStorage.getItem('vh_archetype') !== 'skip'
-      ? `Path archetype: ${ARCHETYPES[localStorage.getItem('vh_archetype')]?.name || ''}` : '',
   ].filter(Boolean).join('\n');
 
-  const currentMindset = MINDSETS.find(m => m.id === mindset) || MINDSETS[0];
-
-  // Reset conversation when mindset changes
   useEffect(() => {
-    setMessages([{ role: 'ai', content: currentMindset.intro(canvas), mindset }]);
-  }, [mindset]);
+    const intro = contextSummary
+      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm North Star — your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal — and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
+      : `Hey 👋 I'm North Star — built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything — I won't give you generic answers.`;
+    setMessages([{ role: 'ai', content: intro }]);
+  }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
@@ -661,60 +506,41 @@ function AICoachPanel({ canvas, onClose }) {
     setMessages(newMsgs); setInput(''); setLoading(true);
     try {
       const apiMsgs = newMsgs.slice(-10).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-      const ctx = contextSummary || 'No Vision Canvas filled in yet.';
-      // Inject system prompt as a user-prefixed message since the API uses messages array
-      const messagesWithSystem = [
-        { role: 'user', content: `[SYSTEM CONTEXT - follow these instructions for this entire conversation]\n${currentMindset.system(ctx)}\n[END SYSTEM CONTEXT]\n\nUser message: ${apiMsgs[apiMsgs.length - 1]?.content}` },
-        ...apiMsgs.slice(0, -1).reverse().slice(0, 8).reverse(),
-        apiMsgs[apiMsgs.length - 1],
-      ];
-      const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, systemPrompt: currentMindset.system(ctx), mode: 'vision', canvas, fileContent: '' }) });
+      const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, mode: 'vision', canvas, fileContent: '' }) });
       const d = await r.json();
-      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Let me think about that differently — can you tell me more?", mindset }]);
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Tell me more — what specifically is blocking you right now?" }]);
     } catch (_) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. While you wait — write down the single most important question you need answered right now.", mindset }]);
+      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. While you wait — write down the ONE thing you most need clarity on right now." }]);
     }
     setLoading(false);
   };
 
+  const QUICK = [
+    '🔍 Find opportunities in my field',
+    '📄 Help me improve my resume/CV',
+    '📅 What events should I attend?',
+    '🚀 I feel stuck — where do I start?',
+    '🤝 How do I find a mentor?',
+    '💼 How do I land my first internship?',
+  ];
+
   return (
-    <div className="vh-coach-panel" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: 400, background: C.surface, borderLeft: `1px solid ${C.border}`, zIndex: 900, display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(0,0,0,0.5)' }}>
-
-      {/* Header */}
-      <div style={{ padding: '14px 16px 0', borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, background: `linear-gradient(135deg, ${currentMindset.color}, ${C.blue})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s', fontSize: 16 }}>
-              {currentMindset.emoji}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>North Star AI</div>
-              <div style={{ fontSize: 10, color: currentMindset.color, fontWeight: 600 }}>● {currentMindset.label} — {currentMindset.tagline}</div>
-            </div>
+    <div className="vh-coach-panel" style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: 380, background: C.surface, borderLeft: `1px solid ${C.border}`, zIndex: 900, display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(0,0,0,0.4)' }}>
+      <div style={{ padding: '16px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, background: `linear-gradient(135deg, ${C.purple}, ${C.blue})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Bot size={17} color="#fff" /></div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>North Star</div>
+            <div style={{ fontSize: 11, color: C.purple }}>● Your personal guide</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted }}><X size={17} /></button>
         </div>
-
-        {/* Mindset selector */}
-        <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' }}>
-          {MINDSETS.map(m => (
-            <button key={m.id} onClick={() => setMindset(m.id)}
-              style={{ flexShrink: 0, background: mindset === m.id ? `${m.color}22` : 'transparent', border: `1.5px solid ${mindset === m.id ? m.color : C.border}`, borderRadius: 99, padding: '4px 10px', color: mindset === m.id ? m.color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-              <span>{m.emoji}</span> {m.label}
-            </button>
-          ))}
-        </div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted }}><X size={18} /></button>
       </div>
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 8px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 8px' }}>
         {messages.map((m, i) => (
           <div key={i} style={{ marginBottom: 14, display: 'flex', gap: 8, flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
-            {m.role === 'ai' && (
-              <div style={{ width: 26, height: 26, borderRadius: 8, background: `${(MINDSETS.find(ms => ms.id === (m.mindset || mindset))?.color || C.purple)}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2, fontSize: 12 }}>
-                {MINDSETS.find(ms => ms.id === (m.mindset || mindset))?.emoji || '🧭'}
-              </div>
-            )}
+            {m.role === 'ai' && <div style={{ width: 26, height: 26, borderRadius: 8, background: `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}><Bot size={12} color={C.purple} /></div>}
             <div style={{ maxWidth: '85%', background: m.role === 'user' ? `${C.blue}22` : C.card, border: `1px solid ${m.role === 'user' ? C.blue + '33' : C.border}`, borderRadius: m.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px', padding: '9px 13px', fontSize: 12, color: C.text, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
               {m.content}
             </div>
@@ -722,30 +548,27 @@ function AICoachPanel({ canvas, onClose }) {
         ))}
         {loading && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <div style={{ width: 26, height: 26, borderRadius: 8, background: `${currentMindset.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>{currentMindset.emoji}</div>
+            <div style={{ width: 26, height: 26, borderRadius: 8, background: `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Bot size={12} color={C.purple} /></div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 3px', padding: '10px 14px', display: 'flex', gap: 4 }}>
-              {[0,1,2].map(j => <div key={j} style={{ width: 6, height: 6, borderRadius: '50%', background: currentMindset.color, opacity: 0.5, animation: `bounce 1.2s ${j*0.15}s infinite` }} />)}
+              {[0,1,2].map(j => <div key={j} style={{ width: 6, height: 6, borderRadius: '50%', background: C.purple, opacity: 0.5, animation: `bounce 1.2s ${j*0.15}s infinite` }} />)}
             </div>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      {/* Quick prompts */}
-      <div style={{ padding: '8px 12px', borderTop: `1px solid ${C.border}22`, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-        {currentMindset.quick.map(q => (
-          <button key={q} onClick={() => send(q)} style={{ background: `${currentMindset.color}0E`, border: `1px solid ${currentMindset.color}28`, color: currentMindset.color, borderRadius: 99, padding: '4px 9px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, whiteSpace: 'nowrap' }}>{q}</button>
+      <div style={{ padding: '8px 14px', borderTop: `1px solid ${C.border}33`, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        {QUICK.map(q => (
+          <button key={q} onClick={() => send(q)} style={{ background: `${C.purple}0E`, border: `1px solid ${C.purple}28`, color: C.purple, borderRadius: 99, padding: '4px 10px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, whiteSpace: 'nowrap' }}>{q}</button>
         ))}
       </div>
 
-      {/* Input */}
       <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
-        <textarea value={input} onChange={e => setInput(e.target.value)}
-          placeholder={`Ask your ${currentMindset.label.toLowerCase()}...`} rows={2}
+        <textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your AI coach anything..." rows={2}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '8px 11px', fontSize: 12, outline: 'none', fontFamily: 'inherit', resize: 'none' }} />
         <button onClick={() => send()} disabled={!input.trim() || loading}
-          style={{ width: 36, borderRadius: 9, background: input.trim() && !loading ? currentMindset.color : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
+          style={{ width: 36, borderRadius: 9, background: input.trim() && !loading ? C.purple : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Send size={13} color="#fff" />
         </button>
       </div>
@@ -4663,237 +4486,6 @@ function PersonalityQuiz({ user, onComplete, onSkip }) {
   );
 }
 
-// ─── PUBLIC SURVEY PAGE ────────────────────────────────────────────────────────
-function SurveyPage() {
-  const SURVEY_STEPS = [
-    { id: 'intro' },
-    { id: 'situation', q: "What best describes where you are right now?", emoji: '📍', type: 'choice',
-      opts: ['🎓 Student / still in school', '🔄 Career switcher / pivoting', '🚀 Recent grad / first job', '💼 Working but want more', '🌱 Just figuring it out'] },
-    { id: 'challenge', q: "What's your #1 challenge right now?", emoji: '🧱', type: 'choice',
-      opts: ["💭 I don't know what direction to go", "🗺️ I have a goal but no clear path", "🤝 I lack the right connections/mentors", "📉 I start things but don't follow through", "😶 I feel behind everyone else"] },
-    { id: 'mentor', q: "How valuable would access to a mentor be for you?", emoji: '✨', type: 'scale',
-      labels: ['Not at all', 'Somewhat', 'Very', 'Game-changing'] },
-    { id: 'connect', q: "Would connecting with peers at your exact stage help?", emoji: '🤝', type: 'choice',
-      opts: ['💯 Absolutely — that would help a lot', "🤔 Maybe, I'm not sure", '😊 Nice to have', "🙅 I prefer to work alone"] },
-    { id: 'tool', q: "How do you currently manage your goals/vision?", emoji: '🛠️', type: 'choice',
-      opts: ['📝 Notes app / journal', '📊 Spreadsheet', '🧠 Just in my head', '📱 I use another app', "❌ I don't really track them"] },
-    { id: 'location', q: "Where are you based?", emoji: '🌍', type: 'text', placeholder: 'City, Country (e.g. London, UK)' },
-    { id: 'name_email', q: "Last step — who are you?", emoji: '👋', type: 'name_email' },
-    { id: 'done' },
-  ];
-
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [textVal, setTextVal] = useState('');
-  const [nameVal, setNameVal] = useState('');
-  const [emailVal, setEmailVal] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [animating, setAnimating] = useState(false);
-  const [archetype, setArchetype] = useState(null);
-  const [showQuiz, setShowQuiz] = useState(false);
-
-  const currentStep = SURVEY_STEPS[step];
-  const questionSteps = SURVEY_STEPS.filter(s => s.id !== 'intro' && s.id !== 'done');
-  const qIndex = SURVEY_STEPS.findIndex(s => s.id === currentStep?.id);
-  const totalQ = questionSteps.length;
-  const qNum = questionSteps.findIndex(s => s.id === currentStep?.id) + 1;
-  const progress = currentStep?.id === 'done' ? 100 : Math.max((qNum / totalQ) * 100, 0);
-
-  const advance = () => {
-    setAnimating(true);
-    setTimeout(() => { setStep(s => s + 1); setTextVal(''); setAnimating(false); }, 260);
-  };
-
-  const handleChoice = (val) => {
-    setAnswers(a => ({ ...a, [currentStep.id]: val }));
-    advance();
-  };
-
-  const handleScale = (val) => {
-    setAnswers(a => ({ ...a, [currentStep.id]: val }));
-    advance();
-  };
-
-  const handleText = () => {
-    if (!textVal.trim()) return;
-    setAnswers(a => ({ ...a, [currentStep.id]: textVal.trim() }));
-    advance();
-  };
-
-  const handleSubmit = async () => {
-    if (!nameVal.trim() || !emailVal.trim()) return;
-    setSubmitting(true);
-    const payload = { ...answers, name: nameVal.trim(), email: emailVal.trim(), archetype, submitted_at: new Date().toISOString() };
-    try {
-      if (supabase) {
-        await supabase.from('survey_responses').insert([payload]);
-      }
-    } catch (_) {}
-    setSubmitted(true);
-    setSubmitting(false);
-    setStep(SURVEY_STEPS.findIndex(s => s.id === 'done'));
-  };
-
-  const bg = 'linear-gradient(160deg, #050F1E 0%, #0C1D30 60%, #091525 100%)';
-  const cardStyle = { background: '#0C1D30', border: '1px solid #162A42', borderRadius: 20, padding: '32px 28px', maxWidth: 520, width: '100%', margin: '0 auto' };
-
-  if (showQuiz) return (
-    <PersonalityQuiz
-      onComplete={(type, arch) => { setArchetype(type); setShowQuiz(false); }}
-      onSkip={() => setShowQuiz(false)}
-    />
-  );
-
-  return (
-    <div style={{ minHeight: '100vh', background: bg, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <style>{`@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
-
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #2563EB, #7C3AED)', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-          <Lightbulb size={22} color="#fff" />
-        </div>
-        <div style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>North Star</div>
-      </div>
-
-      {/* Progress bar */}
-      {currentStep?.id !== 'intro' && currentStep?.id !== 'done' && (
-        <div style={{ width: '100%', maxWidth: 520, marginBottom: 16 }}>
-          <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #2563EB, #7C3AED)', borderRadius: 2, transition: 'width 0.4s ease' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Question {qNum} of {totalQ}</span>
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{Math.round(progress)}%</span>
-          </div>
-        </div>
-      )}
-
-      <div style={{ ...cardStyle, opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'all 0.26s ease', animation: 'fadeSlideIn 0.3s ease' }}>
-
-        {/* Intro */}
-        {currentStep?.id === 'intro' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 56, marginBottom: 14 }}>🗺️</div>
-            <h1 style={{ color: '#EFF6FF', fontSize: 24, fontWeight: 900, margin: '0 0 10px' }}>Help Us Build North Star</h1>
-            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.7, margin: '0 0 20px' }}>
-              2 minutes. 7 questions. No spam.<br />
-              We're building a platform for people figuring out their path — your answers directly shape what we build next.
-            </p>
-            <div style={{ background: '#091525', borderRadius: 12, padding: '14px 16px', marginBottom: 24, textAlign: 'left' }}>
-              {["🎯 What stage you're at", "🧱 Your biggest challenge", "🤝 What kind of support helps most", "📍 Where you're based"].map(t => (
-                <div key={t} style={{ color: '#94A3B8', fontSize: 13, padding: '4px 0' }}>{t}</div>
-              ))}
-            </div>
-            <button onClick={() => { advance(); }} style={{ background: 'linear-gradient(135deg, #2563EB, #7C3AED)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%' }}>
-              Start Survey →
-            </button>
-            <button onClick={() => setShowQuiz(true)} style={{ display: 'block', width: '100%', marginTop: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50, padding: '12px 0', color: '#94A3B8', fontSize: 14, cursor: 'pointer', fontWeight: 600 }}>
-              ✨ Or take the fun personality quiz first
-            </button>
-          </div>
-        )}
-
-        {/* Choice question */}
-        {currentStep?.type === 'choice' && (
-          <div>
-            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
-            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.45 }}>{currentStep.q}</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              {currentStep.opts.map((opt, i) => (
-                <button key={i} onClick={() => handleChoice(opt)}
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.09)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.18)'; e.currentTarget.style.borderColor = '#2563EB'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}>
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Scale question */}
-        {currentStep?.type === 'scale' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>{currentStep.emoji}</div>
-            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, margin: '0 0 24px', lineHeight: 1.45 }}>{currentStep.q}</h2>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {currentStep.labels.map((label, i) => (
-                <button key={i} onClick={() => handleScale(label)}
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.09)', borderRadius: 12, padding: '14px 18px', color: '#EFF6FF', fontSize: 13, fontWeight: 600, cursor: 'pointer', flex: '1 1 120px', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.18)'; e.currentTarget.style.borderColor = '#2563EB'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Text question */}
-        {currentStep?.type === 'text' && (
-          <div>
-            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
-            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.45 }}>{currentStep.q}</h2>
-            <input value={textVal} onChange={e => setTextVal(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleText()}
-              placeholder={currentStep.placeholder}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
-            <button onClick={handleText} disabled={!textVal.trim()}
-              style={{ background: textVal.trim() ? 'linear-gradient(135deg, #2563EB, #7C3AED)' : 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: 50, padding: '13px 0', fontSize: 15, fontWeight: 700, cursor: textVal.trim() ? 'pointer' : 'default', width: '100%' }}>
-              Continue →
-            </button>
-          </div>
-        )}
-
-        {/* Name + Email step */}
-        {currentStep?.id === 'name_email' && (
-          <div>
-            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
-            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 6px' }}>{currentStep.q}</h2>
-            <p style={{ color: '#64748B', fontSize: 13, textAlign: 'center', margin: '0 0 20px' }}>So we can send you early access when North Star launches.</p>
-            <input value={nameVal} onChange={e => setNameVal(e.target.value)} placeholder="Your name"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }} />
-            <input value={emailVal} onChange={e => setEmailVal(e.target.value)} placeholder="Your email" type="email"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
-            {archetype && (
-              <div style={{ background: `${ARCHETYPES[archetype]?.color}18`, border: `1px solid ${ARCHETYPES[archetype]?.color}44`, borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 22 }}>{ARCHETYPES[archetype]?.emoji}</span>
-                <div>
-                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{ARCHETYPES[archetype]?.name}</div>
-                  <div style={{ color: '#64748B', fontSize: 11 }}>Your path archetype — we'll personalise your experience</div>
-                </div>
-              </div>
-            )}
-            <button onClick={handleSubmit} disabled={submitting || !nameVal.trim() || !emailVal.trim()}
-              style={{ background: nameVal.trim() && emailVal.trim() ? 'linear-gradient(135deg, #2563EB, #7C3AED)' : 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', width: '100%' }}>
-              {submitting ? 'Submitting...' : 'Submit & Get Early Access 🚀'}
-            </button>
-            <p style={{ color: '#334155', fontSize: 11, textAlign: 'center', margin: '10px 0 0' }}>No spam. Ever. Unsubscribe anytime.</p>
-          </div>
-        )}
-
-        {/* Done */}
-        {currentStep?.id === 'done' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 64, marginBottom: 14 }}>🎉</div>
-            <h2 style={{ color: '#EFF6FF', fontSize: 22, fontWeight: 900, margin: '0 0 10px' }}>Thank you, {nameVal || 'Explorer'}!</h2>
-            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.7, margin: '0 0 24px' }}>
-              Your answers will help us build North Star around real people's needs.<br />
-              We'll reach out when early access opens.
-            </p>
-            <button onClick={() => setShowQuiz(true)} style={{ background: 'linear-gradient(135deg, #7C3AED, #2563EB)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', width: '100%', marginBottom: 10 }}>
-              ✨ Discover Your Path Archetype
-            </button>
-            <a href="/" style={{ display: 'block', color: '#64748B', fontSize: 13, textDecoration: 'none', padding: '10px 0' }}>← Go to North Star App</a>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function NavTour({ user, onDone }) {
   const firstName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer').split(' ')[0];
 
@@ -5291,7 +4883,6 @@ function MainApp({ user, onSignOut }) {
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   // Standalone survey page — no auth required
-  if (window.location.pathname === '/survey') return <SurveyPage />;
 
   // session: undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState(undefined);
