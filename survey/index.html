@@ -690,7 +690,7 @@ async function saveSurvey(data) {
   // Only send columns that exist in the DB
   const allowed = ['name','email','location','situation','challenge','mentor_value',
                    'peer_connect','mentorship_format','tools','challenge_open',
-                   'dream_feature','archetype','wanted_features','likelihood'];
+                   'dream_feature','archetype','wanted_features','likelihood','source'];
   const payload = {};
   allowed.forEach(k => { if (data[k] !== undefined && data[k] !== '') payload[k] = data[k]; });
   try {
@@ -786,7 +786,28 @@ async function submitSurvey() {
   const openAns  = document.getElementById('open-answer').value.trim();
   const dreamAns = document.getElementById('dream-answer').value.trim();
   const btn      = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = 'Saving...';
+  const emailEl  = document.getElementById('s-email');
+
+  // Validate email
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (email && !emailValid) {
+    emailEl.style.border = '2px solid #ef4444';
+    emailEl.style.outline = 'none';
+    emailEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    emailEl.focus();
+    // Show error below
+    let errEl = document.getElementById('survey-email-error');
+    if (!errEl) {
+      errEl = document.createElement('p');
+      errEl.id = 'survey-email-error';
+      errEl.style.cssText = 'color:#f87171;font-size:12px;margin-top:5px';
+      emailEl.parentNode.insertBefore(errEl, emailEl.nextSibling);
+    }
+    errEl.textContent = '⚠️ Please enter a valid email — did you include the @?';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Saving... 🚀';
   await saveSurvey({ ...surveyAnswers, name, email, location, challenge_open: openAns, dream_feature: dreamAns, archetype: surveyArchetype });
   showSurveyDone(name);
 }
@@ -981,9 +1002,13 @@ function showArchetypeResult() {
         <p style="margin-bottom:20px">Be the first to know when North Star launches for <strong style="color:${arch.color}">${arch.name}s</strong> like you.</p>
 
         <div id="quiz-signup-form">
-          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
             <input id="quiz-name" type="text" placeholder="Your name" style="flex:1;min-width:120px;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
-            <input id="quiz-email" type="email" placeholder="Your email" style="flex:2;min-width:160px;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
+            <input id="quiz-location" type="text" placeholder="Your country 🌍" style="flex:1;min-width:120px;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
+          </div>
+          <div style="margin-bottom:10px;position:relative">
+            <input id="quiz-email" type="email" placeholder="Your email address" style="width:100%;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
+            <div id="quiz-email-error" style="display:none;font-size:12px;color:#f87171;margin-top:5px">⚠️ Please enter a valid email address (include @)</div>
           </div>
           <button id="quiz-signup-btn" onclick="submitQuizSignup('${key}','${arch.color}')" style="width:100%;padding:14px 0;border:none;border-radius:50px;background:linear-gradient(135deg,${arch.color},#2563EB);box-shadow:0 8px 28px ${arch.color}55;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">
             🚀 Sign me up for early access
@@ -1008,16 +1033,26 @@ function showArchetypeResult() {
 }
 
 async function submitQuizSignup(archetypeKey, color) {
-  const name  = document.getElementById('quiz-name').value.trim();
-  const email = document.getElementById('quiz-email').value.trim();
-  if (!email) {
-    document.getElementById('quiz-email').style.borderColor = '#ef4444';
-    document.getElementById('quiz-email').focus();
+  const name     = document.getElementById('quiz-name').value.trim();
+  const email    = document.getElementById('quiz-email').value.trim();
+  const location = document.getElementById('quiz-location').value.trim();
+  const emailEl  = document.getElementById('quiz-email');
+  const errorEl  = document.getElementById('quiz-email-error');
+
+  // Validate email properly
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!email || !emailValid) {
+    emailEl.style.borderColor = '#ef4444';
+    errorEl.style.display = 'block';
+    emailEl.focus();
     return;
   }
+  emailEl.style.borderColor = '#10b981'; // green = valid
+  errorEl.style.display = 'none';
+
   const btn = document.getElementById('quiz-signup-btn');
-  btn.disabled = true; btn.textContent = 'Saving...';
-  await saveSurvey({ name, email, archetype: archetypeKey, source: 'quiz' });
+  btn.disabled = true; btn.textContent = '🚀 Saving...';
+  await saveSurvey({ name, email, location, archetype: archetypeKey, source: 'quiz' });
   document.getElementById('quiz-signup-form').style.display = 'none';
   document.getElementById('quiz-signup-done').style.display = 'block';
 }
