@@ -204,6 +204,34 @@
       border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
     }
 
+    /* Quiz nudge banner */
+    .quiz-nudge {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(37,99,235,.12));
+      border: 1.5px solid rgba(124,58,237,.4); border-radius: 16px;
+      padding: 18px 20px; margin-bottom: 20px; cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .quiz-nudge:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,.25); }
+    .quiz-nudge-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .quiz-nudge-sub   { font-size: 12px; color: #A78BFA; line-height: 1.5; }
+    .quiz-nudge-arrow { font-size: 15px; font-weight: 800; color: var(--purple2); white-space: nowrap; flex-shrink: 0; }
+
+    /* Multi-select buttons */
+    .multi-list { display: flex; flex-direction: column; gap: 8px; }
+    .multi-btn {
+      width: 100%; text-align: left; padding: 13px 16px;
+      background: rgba(255,255,255,.04); border: 1.5px solid var(--border);
+      border-radius: 12px; color: #94A3B8; font-size: 14px; font-weight: 500;
+      cursor: pointer; font-family: inherit; transition: all .15s; line-height: 1.4;
+    }
+    .multi-btn:hover { border-color: var(--blue2); color: var(--text); background: rgba(59,130,246,.08); }
+    .multi-btn.picked {
+      border-color: var(--blue2); color: var(--text);
+      background: linear-gradient(135deg, rgba(59,130,246,.15), rgba(124,58,237,.1));
+    }
+    .multi-btn.picked::before { content: '✓ '; color: var(--blue2); font-weight: 800; }
+
     /* Trust bar */
     .trust-bar {
       display: flex; justify-content: center; align-items: center; gap: 20px;
@@ -511,6 +539,49 @@
       <p style="font-size:12px;color:var(--muted)">This is the most important question. Even one sentence helps.</p>
     </div>
 
+    <div class="section-divider">Build It With Us</div>
+
+    <div class="card">
+      <h2>✨ What would you most want North Star to do for you?</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Pick as many as you want. Be greedy.</p>
+      <div class="multi-list" data-q="wanted_features">
+        <button class="multi-btn">🤝 Match me with a mentor in my field</button>
+        <button class="multi-btn">🗺️ Build me a personal career roadmap</button>
+        <button class="multi-btn">💼 Show me internships and job opportunities</button>
+        <button class="multi-btn">👥 Connect me with ambitious peers like me</button>
+        <button class="multi-btn">🧠 AI that gives me advice specific to my situation</button>
+        <button class="multi-btn">📚 Courses and skills that actually matter for my goal</button>
+        <button class="multi-btn">🎯 Help me figure out what I actually want to do</button>
+        <button class="multi-btn">💬 A community that keeps me accountable</button>
+        <button class="multi-btn">🌍 Access to a global network, not just my city</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💡 What's the one thing you wish existed that doesn't yet?</h2>
+      <textarea id="dream-answer" placeholder="Dream big. No filter. What would actually change your life right now?" rows="4"></textarea>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Your idea could become a feature. We read every single response.</p>
+    </div>
+
+    <div class="card">
+      <h2>⚡ How likely are you to use something like North Star?</h2>
+      <div class="scale-wrap" data-q="likelihood">
+        <button class="scale-btn">Not really</button>
+        <button class="scale-btn">Maybe</button>
+        <button class="scale-btn">Probably yes</button>
+        <button class="scale-btn">100% sign me up</button>
+      </div>
+    </div>
+
+    <!-- Quiz CTA nudge -->
+    <div class="quiz-nudge" onclick="switchMode('game')">
+      <div class="quiz-nudge-left">
+        <div class="quiz-nudge-title">🎮 Don't miss the Quiz Game!</div>
+        <div class="quiz-nudge-sub">8 fun questions. Find your career archetype. Takes 90 seconds.</div>
+      </div>
+      <div class="quiz-nudge-arrow">Play →</div>
+    </div>
+
     <div class="section-divider">Almost There</div>
 
     <div class="contact-card" id="contact-section">
@@ -569,13 +640,24 @@ async function saveSurvey(data) {
 const surveyAnswers = {};
 let surveyArchetype = null;
 
-// Wire choice buttons
+// Wire choice buttons (single-select)
 document.querySelectorAll('.choice-list').forEach(list => {
   list.querySelectorAll('.choice-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       list.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('picked'));
       btn.classList.add('picked');
       surveyAnswers[list.dataset.q] = btn.textContent.trim();
+    });
+  });
+});
+
+// Wire multi-select buttons
+document.querySelectorAll('.multi-list').forEach(list => {
+  list.querySelectorAll('.multi-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('picked');
+      const picked = [...list.querySelectorAll('.multi-btn.picked')].map(b => b.textContent.replace(/^✓ /,'').trim());
+      surveyAnswers[list.dataset.q] = picked.join(' | ');
     });
   });
 });
@@ -594,9 +676,10 @@ async function submitSurvey() {
   const email    = document.getElementById('s-email').value.trim();
   const location = document.getElementById('s-location').value.trim();
   const openAns  = document.getElementById('open-answer').value.trim();
+  const dreamAns = document.getElementById('dream-answer').value.trim();
   const btn      = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
-  await saveSurvey({ ...surveyAnswers, name, email, location, challenge_open: openAns, archetype: surveyArchetype });
+  await saveSurvey({ ...surveyAnswers, name, email, location, challenge_open: openAns, dream_feature: dreamAns, archetype: surveyArchetype });
   showSurveyDone(name);
 }
 
