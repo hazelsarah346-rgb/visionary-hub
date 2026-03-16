@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>North Star, Survey Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050F1E; --surface: #091525; --card: #0C1D30; --border: #162A42;
+      --blue: #2563EB; --blue2: #3B82F6; --purple: #7C3AED; --purple2: #A78BFA;
+      --text: #EFF6FF; --muted: #64748B; --green: #10B981; --yellow: #F59E0B;
+      --red: #EF4444;
+    }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 40px 32px; width: 100%; max-width: 380px; text-align: center;
+    }
+    .login-logo { font-size: 36px; margin-bottom: 16px; }
+    .login-box h2 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+    .login-box p  { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .login-input {
+      width: 100%; padding: 13px 16px; background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; color: var(--text); font-size: 15px; font-family: inherit;
+      outline: none; margin-bottom: 12px; transition: border-color .15s;
+    }
+    .login-input:focus { border-color: var(--blue2); }
+    .login-btn {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, var(--blue), var(--purple));
+      border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .login-error { font-size: 12px; color: var(--red); margin-top: 8px; display: none; }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; }
+    .top-bar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar-brand { display: flex; align-items: center; gap: 10px; }
+    .top-bar-icon {
+      width: 36px; height: 36px; background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .top-bar-title { font-size: 16px; font-weight: 800; }
+    .top-bar-sub   { font-size: 11px; color: var(--muted); }
+    .top-bar-right { display: flex; align-items: center; gap: 10px; }
+    .refresh-btn, .export-btn, .logout-btn {
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: inherit; border: none; transition: opacity .15s;
+    }
+    .refresh-btn { background: rgba(59,130,246,.15); color: var(--blue2); border: 1px solid rgba(59,130,246,.3); }
+    .export-btn  { background: rgba(16,185,129,.15); color: var(--green);  border: 1px solid rgba(16,185,129,.3); }
+    .logout-btn  { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+    .refresh-btn:hover, .export-btn:hover, .logout-btn:hover { opacity: .8; }
+
+    .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px 18px;
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 36px; font-weight: 900; color: var(--text); line-height: 1; }
+    .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .stat-card.highlight { border-color: rgba(37,99,235,.4); background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(124,58,237,.06)); }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 13px; font-weight: 800; color: var(--muted); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .chart-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+    }
+    .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+    /* Bar chart */
+    .bar-row { margin-bottom: 10px; }
+    .bar-label { font-size: 12px; color: #94A3B8; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .bar-label span { color: var(--text); font-weight: 700; }
+    .bar-track { height: 8px; background: rgba(255,255,255,.06); border-radius: 50px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 50px; transition: width .6s ease; }
+
+    /* Open text table */
+    .text-list { display: flex; flex-direction: column; gap: 10px; }
+    .text-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .text-item-quote { font-size: 13px; color: var(--text); line-height: 1.6; font-style: italic; margin-bottom: 8px; }
+    .text-item-meta  { font-size: 11px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+    .text-item-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* Responses table */
+    .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th { background: var(--surface); padding: 10px 14px; text-align: left; color: var(--muted); font-weight: 700; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid rgba(22,42,66,.6); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    tbody td { padding: 10px 14px; color: #94A3B8; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tbody td.name { color: var(--text); font-weight: 600; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+
+    /* Loading / empty */
+    .loading { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .loading-spinner { font-size: 32px; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 600px) {
+      .content { padding: 16px; }
+      .top-bar { padding: 12px 16px; }
+      .stat-value { font-size: 28px; }
+      .top-bar-sub { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">💡</div>
+    <h2>North Star Dashboard</h2>
+    <p>Survey analytics and responses. Team access only.</p>
+    <input class="login-input" type="password" id="pw-input" placeholder="Enter access password" />
+    <button class="login-btn" onclick="checkLogin()">Access Dashboard</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="top-bar-icon">💡</div>
+      <div>
+        <div class="top-bar-title">North Star Dashboard</div>
+        <div class="top-bar-sub">Survey Analytics</div>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <span id="last-updated" style="font-size:11px;color:var(--muted)"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <button class="export-btn"  onclick="exportCSV()">↓ Export CSV</button>
+      <button class="logout-btn"  onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="loading-state" class="loading">
+      <div class="loading-spinner">⚡</div>
+      <div>Loading responses...</div>
+    </div>
+    <div id="main-content" style="display:none">
+
+      <!-- Stat cards -->
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Question breakdowns -->
+      <div class="section">
+        <div class="section-title">Question Breakdowns</div>
+        <div class="chart-grid" id="chart-grid"></div>
+      </div>
+
+      <!-- Feature wishlist -->
+      <div class="section">
+        <div class="section-title">Feature Wishlist Rankings</div>
+        <div class="chart-card" id="features-chart"></div>
+      </div>
+
+      <!-- Open text responses -->
+      <div class="section">
+        <div class="section-title">What Would Change Things (Open Text)</div>
+        <div class="text-list" id="open-answers"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Dream Feature Responses</div>
+        <div class="text-list" id="dream-answers"></div>
+      </div>
+
+      <!-- All responses table -->
+      <div class="section">
+        <div class="section-title">All Responses</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Location</th>
+                <th>Situation</th>
+                <th>Challenge</th>
+                <th>Mentor Value</th>
+                <th>Likelihood</th>
+                <th>Archetype</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="responses-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://hazhdsxngovturtysfby.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhemhkc3huZ292dHVydHlzZmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5OTM3ODYsImV4cCI6MjA1NzU2OTc4Nn0.k5JvBJRqTWS-z6T1K-L20JEdKa8ULSy97n-nWOEJD40';
+const ACCESS_PASSWORD = 'northstar2026';
+
+let allResponses = [];
+
+// ── AUTH ──
+function checkLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ACCESS_PASSWORD) {
+    sessionStorage.setItem('ns_dash', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkLogin(); });
+
+function logout() {
+  sessionStorage.removeItem('ns_dash');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+}
+
+// Auto-login if session active
+if (sessionStorage.getItem('ns_dash')) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+// ── DATA ──
+async function loadData() {
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('main-content').style.display = 'none';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/survey_responses?select=*&order=created_at.desc&limit=1000`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    allResponses = await res.json();
+    if (!Array.isArray(allResponses)) allResponses = [];
+    render();
+  } catch(e) {
+    document.getElementById('loading-state').innerHTML = `<div style="color:var(--red);padding:40px;text-align:center">Failed to load data. Check connection.<br><small style="color:var(--muted)">${e.message}</small></div>`;
+  }
+}
+
+// ── RENDER ──
+function render() {
+  const n = allResponses.length;
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  // ── STAT CARDS ──
+  const likelyCount = allResponses.filter(r => r.likelihood && (r.likelihood.includes('Probably') || r.likelihood.includes('100%'))).length;
+  const withEmail   = allResponses.filter(r => r.email && r.email.trim()).length;
+  const topSituation = topValue(allResponses.map(r => r.situation));
+  const topWanted    = topFeature(allResponses);
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card highlight">
+      <div class="stat-label">Total Responses</div>
+      <div class="stat-value">${n}</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">On the Waitlist</div>
+      <div class="stat-value" style="color:var(--green)">${withEmail}</div>
+      <div class="stat-sub">Left their email</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Likely to Use</div>
+      <div class="stat-value" style="color:var(--blue2)">${n ? Math.round(likelyCount/n*100) : 0}%</div>
+      <div class="stat-sub">"Probably yes" or "100% sign me up"</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Top Audience</div>
+      <div class="stat-value" style="font-size:16px;padding-top:8px;line-height:1.4">${topSituation || 'N/A'}</div>
+      <div class="stat-sub">Most common situation</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Most Wanted Feature</div>
+      <div class="stat-value" style="font-size:14px;padding-top:8px;line-height:1.4">${topWanted || 'N/A'}</div>
+      <div class="stat-sub">From wishlist</div>
+    </div>
+  `;
+
+  // ── CHARTS ──
+  const questions = [
+    { key: 'situation',          label: '📍 Where are they now?',              color: '#3B82F6' },
+    { key: 'challenge',          label: '🧱 Biggest challenge',                 color: '#7C3AED' },
+    { key: 'mentor_value',       label: '✨ Mentor value rating',               color: '#F59E0B' },
+    { key: 'mentorship_format',  label: '🤝 Preferred mentorship format',       color: '#10B981' },
+    { key: 'peer_connect',       label: '👥 Would peer connection help?',       color: '#0891B2' },
+    { key: 'tools',              label: '🛠️ How they manage goals now',         color: '#8B5CF6' },
+    { key: 'likelihood',         label: '⚡ Likelihood to use North Star',      color: '#EC4899' },
+    { key: 'archetype',          label: '🌟 Archetype distribution (quiz)',     color: '#F59E0B' },
+  ];
+
+  document.getElementById('chart-grid').innerHTML = questions.map(q => {
+    const counts = countValues(allResponses.map(r => r[q.key]));
+    const total  = Object.values(counts).reduce((a,b) => a+b, 0);
+    const bars   = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,6).map(([label, count]) => {
+      const pct = total ? Math.round(count/total*100) : 0;
+      const short = label.replace(/^[^\s]+\s/, '').slice(0, 48);
+      return `<div class="bar-row">
+        <div class="bar-label">${short} <span>${count} (${pct}%)</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${q.color}"></div></div>
+      </div>`;
+    }).join('');
+    return `<div class="chart-card">
+      <div class="chart-title">${q.label}</div>
+      ${bars || '<div class="empty-state">No data yet</div>'}
+    </div>`;
+  }).join('');
+
+  // ── FEATURE WISHLIST ──
+  const featureCounts = {};
+  allResponses.forEach(r => {
+    if (!r.wanted_features) return;
+    r.wanted_features.split(' | ').forEach(f => {
+      const clean = f.replace(/^✓ /,'').trim();
+      if (clean) featureCounts[clean] = (featureCounts[clean] || 0) + 1;
+    });
+  });
+  const ftotal = allResponses.filter(r => r.wanted_features).length;
+  const fbars  = Object.entries(featureCounts).sort((a,b)=>b[1]-a[1]).map(([label,count]) => {
+    const pct = ftotal ? Math.round(count/ftotal*100) : 0;
+    return `<div class="bar-row">
+      <div class="bar-label">${label.slice(0,60)} <span>${count} people (${pct}%)</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--purple2)"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('features-chart').innerHTML = `
+    <div class="chart-title">✨ What people want North Star to do for them</div>
+    ${fbars || '<div class="empty-state">No wishlist data yet</div>'}
+  `;
+
+  // ── OPEN TEXT ──
+  const openAnswers = allResponses.filter(r => r.challenge_open && r.challenge_open.trim());
+  document.getElementById('open-answers').innerHTML = openAnswers.length
+    ? openAnswers.map(r => `<div class="text-item">
+        <div class="text-item-quote">"${r.challenge_open}"</div>
+        <div class="text-item-meta">
+          ${r.name ? `<span>👤 ${r.name}</span>` : ''}
+          ${r.situation ? `<span>📍 ${r.situation.replace(/^[^\s]+\s/,'').slice(0,40)}</span>` : ''}
+          ${r.created_at ? `<span>🗓 ${new Date(r.created_at).toLocaleDateString()}</span>` : ''}
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state">No open text responses yet</div>';
+
+  const dreamAnswers = allResponses.filter(r => r.dream_feature && r.dream_feature.trim());
+  document.getElementById('dream-answers').innerHTML = dreamAnswers.length
+    ? dreamAnswers.map(r => `<div class="text-item">
+        <div class="text-item-quote">"${r.dream_feature}"</div>
+        <div class="text-item-meta">
+          ${r.name ? `<span>👤 ${r.name}</span>` : ''}
+          ${r.location ? `<span>📍 ${r.location}</span>` : ''}
+          ${r.created_at ? `<span>🗓 ${new Date(r.created_at).toLocaleDateString()}</span>` : ''}
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state">No dream feature responses yet</div>';
+
+  // ── TABLE ──
+  document.getElementById('responses-table').innerHTML = allResponses.length
+    ? allResponses.map((r, i) => `<tr>
+        <td>${allResponses.length - i}</td>
+        <td class="name">${r.name || '—'}</td>
+        <td>${r.email || '—'}</td>
+        <td>${r.location || '—'}</td>
+        <td>${(r.situation || '').replace(/^[^\s]+\s/,'').slice(0,30)}</td>
+        <td>${(r.challenge || '').replace(/^[^\s]+\s/,'').slice(0,30)}</td>
+        <td>${r.mentor_value || '—'}</td>
+        <td><span class="badge" style="background:${likelihoodColor(r.likelihood)};color:#fff">${r.likelihood || '—'}</span></td>
+        <td>${r.archetype || '—'}</td>
+        <td>${r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="10" class="empty-state">No responses yet. Share your survey to get started!</td></tr>`;
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+}
+
+// ── HELPERS ──
+function countValues(arr) {
+  return arr.reduce((acc, v) => { if (v) acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+}
+function topValue(arr) {
+  const counts = countValues(arr);
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  return top ? top[0].replace(/^[^\s]+\s/,'').slice(0, 30) : null;
+}
+function topFeature(responses) {
+  const fc = {};
+  responses.forEach(r => {
+    if (!r.wanted_features) return;
+    r.wanted_features.split(' | ').forEach(f => {
+      const c = f.replace(/^✓ /,'').trim().replace(/^[^\s]+\s/,'');
+      if (c) fc[c] = (fc[c]||0)+1;
+    });
+  });
+  const top = Object.entries(fc).sort((a,b)=>b[1]-a[1])[0];
+  return top ? top[0].slice(0,30) : null;
+}
+function likelihoodColor(v) {
+  if (!v) return '#334155';
+  if (v.includes('100%')) return '#10B981';
+  if (v.includes('Probably')) return '#3B82F6';
+  if (v.includes('Maybe')) return '#F59E0B';
+  return '#EF4444';
+}
+
+// ── CSV EXPORT ──
+function exportCSV() {
+  if (!allResponses.length) return alert('No data to export yet.');
+  const keys = ['name','email','location','situation','challenge','mentor_value','mentorship_format','peer_connect','tools','wanted_features','likelihood','challenge_open','dream_feature','archetype','created_at'];
+  const rows = [keys.join(','), ...allResponses.map(r =>
+    keys.map(k => `"${(r[k] || '').toString().replace(/"/g,'""')}"`).join(',')
+  )];
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `northstar-survey-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
