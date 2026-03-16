@@ -22,6 +22,115 @@ const C = {
 };
 const PHASE_COLORS = ['#2563EB', '#8B5CF6', '#F59E0B', '#10B981'];
 
+// ─── PERSONALITY QUIZ ─────────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  {
+    q: "It's Saturday morning, zero plans. What actually happens?",
+    opts: [
+      { emoji: '💡', text: "I start sketching a big idea that's been brewing", type: 'V' },
+      { emoji: '🔨', text: "I tackle that project I've been putting off", type: 'B' },
+      { emoji: '🗺️', text: "I go somewhere new or try something different", type: 'E' },
+      { emoji: '📱', text: "I reach out to people I've been meaning to call", type: 'C' },
+    ],
+  },
+  {
+    q: "You're completely stuck on a hard problem. Your move?",
+    opts: [
+      { emoji: '🔍', text: "Research everything until I fully understand it", type: 'A' },
+      { emoji: '🛠️', text: "Break it into pieces and start doing something", type: 'B' },
+      { emoji: '🌌', text: "Zoom out and think about the bigger picture", type: 'V' },
+      { emoji: '🤝', text: "Find someone who's already solved it", type: 'C' },
+    ],
+  },
+  {
+    q: "A friend calls at midnight with a wild startup idea. You say...",
+    opts: [
+      { emoji: '🚀', text: '"When can we start? I\'m in."', type: 'D' },
+      { emoji: '📊', text: '"Tell me more — what problem does it solve?"', type: 'A' },
+      { emoji: '✨', text: '"Here\'s how I see it growing in 5 years..."', type: 'V' },
+      { emoji: '👥', text: '"I know exactly who we need to talk to."', type: 'C' },
+    ],
+  },
+  {
+    q: "What's your honest relationship with rules?",
+    opts: [
+      { emoji: '⚡', text: "Rules are starting points — I upgrade them", type: 'D' },
+      { emoji: '📐', text: "I follow them once I understand why they exist", type: 'A' },
+      { emoji: '🏗️', text: "I like structure — it helps me build faster", type: 'B' },
+      { emoji: '🌍', text: "Depends — I go where curiosity leads", type: 'E' },
+    ],
+  },
+  {
+    q: "Someone asks where you see yourself in 5 years. You...",
+    opts: [
+      { emoji: '🌟', text: "Paint a vivid, detailed picture of your vision", type: 'V' },
+      { emoji: '📋', text: "Pull out your actual plan (yes, you have one)", type: 'B' },
+      { emoji: '🤷', text: '"Not sure yet — still discovering what\'s possible"', type: 'E' },
+      { emoji: '💛', text: "Talk about the impact you want on people's lives", type: 'C' },
+    ],
+  },
+  {
+    q: "How do you make a big decision?",
+    opts: [
+      { emoji: '📈', text: "Data, research, pros/cons list — then decide", type: 'A' },
+      { emoji: '🎯', text: "Gut + vision — I can feel the right path", type: 'V' },
+      { emoji: '🧪', text: "Try a small version first, then scale up", type: 'B' },
+      { emoji: '💬', text: "Talk it through with people I trust", type: 'C' },
+    ],
+  },
+  {
+    q: "Pick the energy that matches you most right now:",
+    opts: [
+      { emoji: '🔥', text: '"I want to disrupt. The old way doesn\'t work."', type: 'D' },
+      { emoji: '🌱', text: '"I want to explore. I haven\'t found my thing yet."', type: 'E' },
+      { emoji: '⚙️', text: '"I want to build. Give me a problem to solve."', type: 'B' },
+      { emoji: '🔭', text: '"I want to understand. Why does this work this way?"', type: 'A' },
+    ],
+  },
+  {
+    q: "What do you want people to say about you in 10 years?",
+    opts: [
+      { emoji: '🌍', text: '"They changed how we do things."', type: 'D' },
+      { emoji: '🏆', text: '"They built something real that lasts."', type: 'B' },
+      { emoji: '🫂', text: '"They brought people together."', type: 'C' },
+      { emoji: '💡', text: '"They saw it before anyone else did."', type: 'V' },
+    ],
+  },
+];
+
+const ARCHETYPES = {
+  V: { name: 'The Visionary',  emoji: '🌟', color: '#7C3AED', color2: '#5B21B6',
+    tagline: "You see the future others can't yet.",
+    desc: "You think in possibilities. While others see problems, you see potential. Your superpower is painting a picture of what could be — and making people believe in it. You're built for big ideas, creative leadership, and paths that don't exist yet.",
+    strengths: ['Big-picture thinking', 'Creative leadership', 'Inspiring others', 'Long-term vision'],
+    focus: ['Vision Canvas', 'North Star AI', 'Mentorship'] },
+  B: { name: 'The Builder',    emoji: '🔨', color: '#2563EB', color2: '#1D4ED8',
+    tagline: "You turn ideas into real things.",
+    desc: "You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and deliverables. Your superpower is execution — and you don't stop until something works.",
+    strengths: ['Execution', 'Problem-solving', 'Systems thinking', 'Reliability'],
+    focus: ['Roadmap', 'Vision Canvas', 'Daily challenges'] },
+  E: { name: 'The Explorer',   emoji: '🗺️', color: '#059669', color2: '#047857',
+    tagline: "You learn by going.",
+    desc: "You're drawn to what's new and unexplored. You don't have one passion — you have many, and that's your advantage. Your journey is wider than most, and that breadth becomes your unique edge. You discover who you are by trying.",
+    strengths: ['Adaptability', 'Curiosity', 'Diverse thinking', 'Open-mindedness'],
+    focus: ['Opportunities', 'Mentorship', 'Peer community'] },
+  C: { name: 'The Connector',  emoji: '🤝', color: '#D97706', color2: '#B45309',
+    tagline: "Your network is your net worth.",
+    desc: "People gravitate toward you — and you make things happen through relationships. You understand that most big things in life are built with others, not alone. Your superpower is community, empathy, and bringing the right people together.",
+    strengths: ['Relationship building', 'Empathy', 'Collaboration', 'Community'],
+    focus: ['Connect', 'Peer Groups', 'Mentorship'] },
+  A: { name: 'The Analyst',    emoji: '🔍', color: '#0891B2', color2: '#0E7490',
+    tagline: "You understand what others overlook.",
+    desc: "You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what actually matters. Depth is your advantage.",
+    strengths: ['Critical thinking', 'Research', 'Pattern recognition', 'Precision'],
+    focus: ['Vision Canvas', 'Roadmap', 'North Star AI'] },
+  D: { name: 'The Disruptor',  emoji: '⚡', color: '#DC2626', color2: '#B91C1C',
+    tagline: "You challenge what everyone else accepts.",
+    desc: "You're allergic to 'that's just how it works.' You see broken systems and feel compelled to fix them. Bold, unconventional, and a little bit wild. Your superpower is seeing what's wrong and having the nerve to do something about it.",
+    strengths: ['Bold thinking', 'Risk-taking', 'Innovation', 'Resilience'],
+    focus: ['Opportunities', 'Mentorship', 'Vision Canvas'] },
+};
+
 const DAILY_PROMPTS = [
   'What challenged me today, and what did it teach me?',
   'What am I most grateful for right now?',
@@ -3765,7 +3874,7 @@ function SecurityPasswordReset({ email }) {
 }
 
 // ─── SETTINGS / ACCOUNT TAB ───────────────────────────────────────────────────
-function SettingsTab({ user, onSignOut, onTour }) {
+function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
   const meta = user?.user_metadata || {};
   const providerAvatar = meta.avatar_url || meta.picture || null;
   const email = user?.email || '';
@@ -3978,7 +4087,7 @@ function SettingsTab({ user, onSignOut, onTour }) {
           <span style={{ fontSize: 11, color: C.green, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Shield size={11} /> Private</span>
         </div>
         {/* App guide */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>App Guide</div>
             <div style={{ fontSize: 11, color: C.muted }}>Replay the navigation tour that explains each section</div>
@@ -3987,6 +4096,30 @@ function SettingsTab({ user, onSignOut, onTour }) {
             <Map size={11} /> Take Tour
           </Btn>
         </div>
+        {/* Path Archetype */}
+        {(() => {
+          const arcType = localStorage.getItem('vh_archetype');
+          const arch = arcType && arcType !== 'skip' ? ARCHETYPES[arcType] : null;
+          return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Path Archetype</div>
+                {arch ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                    <span style={{ fontSize: 16 }}>{arch.emoji}</span>
+                    <span style={{ fontSize: 12, color: arch.color, fontWeight: 700 }}>{arch.name}</span>
+                    <span style={{ fontSize: 11, color: C.muted }}>— {arch.tagline}</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11, color: C.muted }}>Discover which of 6 archetypes you are</div>
+                )}
+              </div>
+              <Btn size="sm" variant="secondary" onClick={onQuiz}>
+                {arch ? '↺ Retake' : '✨ Discover'}
+              </Btn>
+            </div>
+          );
+        })()}
       </Card>
 
       {/* ── SECURITY CARD ───────────────────────────────────────────────────── */}
@@ -4226,6 +4359,383 @@ function ConnectTab({ canvas, user, feed }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 // ─── NAV TOUR (first-time navigation guide) ───────────────────────────────────
+// ─── PERSONALITY QUIZ COMPONENT ───────────────────────────────────────────────
+function PersonalityQuiz({ user, onComplete, onSkip }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [selected, setSelected] = useState(null);
+  const [animating, setAnimating] = useState(false);
+  const [result, setResult] = useState(null);
+  const [burst, setBurst] = useState(false);
+
+  const calcResult = (ans) => {
+    const s = { V: 0, B: 0, E: 0, C: 0, A: 0, D: 0 };
+    Object.values(ans).forEach(t => { if (s[t] !== undefined) s[t]++; });
+    return Object.entries(s).sort((a, b) => b[1] - a[1])[0][0];
+  };
+
+  const handleSelect = (type) => {
+    if (animating) return;
+    setSelected(type);
+    setTimeout(() => {
+      const newAns = { ...answers, [step - 1]: type };
+      setAnswers(newAns);
+      setSelected(null);
+      setAnimating(true);
+      if (step >= QUIZ_QUESTIONS.length) {
+        const r = calcResult(newAns);
+        setResult(r);
+        setBurst(true);
+        setTimeout(() => setBurst(false), 2500);
+        setStep(step + 1);
+      } else {
+        setStep(step + 1);
+      }
+      setTimeout(() => setAnimating(false), 280);
+    }, 380);
+  };
+
+  const progress = Math.min((step / QUIZ_QUESTIONS.length) * 100, 100);
+  const currentQ = step >= 1 && step <= QUIZ_QUESTIONS.length ? QUIZ_QUESTIONS[step - 1] : null;
+
+  const overlayStyle = {
+    position: 'fixed', inset: 0, zIndex: 9999, overflowY: 'auto',
+    background: 'linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #1a0533 100%)',
+    fontFamily: "'Inter', system-ui, sans-serif",
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+  };
+
+  // Intro screen
+  if (step === 0) return (
+    <div style={overlayStyle}>
+      <style>{`@keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-120vh);opacity:0}}`}</style>
+      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%' }}>
+        <div style={{ fontSize: 72, marginBottom: 16 }}>🧭</div>
+        <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 900, margin: '0 0 10px' }}>What's Your Path Archetype?</h1>
+        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 15, lineHeight: 1.7, margin: '0 0 28px' }}>
+          8 quick questions. No wrong answers.<br />Discover which of 6 archetypes drives how you think, decide, and grow.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+          {Object.values(ARCHETYPES).map(a => (
+            <span key={a.name} style={{ background: `${a.color}22`, border: `1px solid ${a.color}44`, borderRadius: 20, padding: '5px 14px', color: '#fff', fontSize: 12, fontWeight: 600 }}>
+              {a.emoji} {a.name.replace('The ', '')}
+            </span>
+          ))}
+        </div>
+        <button onClick={() => setStep(1)} style={{ background: 'linear-gradient(135deg, #7C3AED, #2563EB)', color: '#fff', border: 'none', borderRadius: 50, padding: '16px 48px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 32px rgba(124,58,237,0.5)', width: '100%', maxWidth: 300 }}>
+          Let's Find Out ✨
+        </button>
+        <button onClick={onSkip} style={{ display: 'block', margin: '14px auto 0', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 13 }}>Skip for now</button>
+      </div>
+    </div>
+  );
+
+  // Result screen
+  if (step > QUIZ_QUESTIONS.length && result) {
+    const arch = ARCHETYPES[result];
+    const confetti = burst ? Array.from({ length: 24 }, (_, i) => ({
+      id: i, x: Math.random() * 100, color: ['#7C3AED','#2563EB','#059669','#D97706','#DC2626','#0891B2'][i % 6],
+      delay: Math.random() * 0.6, size: Math.random() * 8 + 5,
+    })) : [];
+    return (
+      <div style={overlayStyle}>
+        <style>{`@keyframes floatUp{0%{transform:translateY(0) rotate(${Math.random()*30-15}deg);opacity:1}100%{transform:translateY(-110vh) rotate(${Math.random()*60-30}deg);opacity:0}}`}</style>
+        {confetti.map(p => (
+          <div key={p.id} style={{ position: 'fixed', left: `${p.x}%`, top: '80%', width: p.size, height: p.size, background: p.color, borderRadius: 2, animation: `floatUp 2.2s ${p.delay}s ease-in forwards`, pointerEvents: 'none' }} />
+        ))}
+        <div style={{ textAlign: 'center', maxWidth: 520, width: '100%' }}>
+          <div style={{ fontSize: 80, marginBottom: 8, filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.3))' }}>{arch.emoji}</div>
+          <div style={{ background: `linear-gradient(135deg, ${arch.color}, ${arch.color2})`, borderRadius: 50, display: 'inline-block', padding: '5px 18px', color: '#fff', fontSize: 11, fontWeight: 800, marginBottom: 14, letterSpacing: 1.5 }}>YOUR ARCHETYPE</div>
+          <h1 style={{ color: '#fff', fontSize: 34, fontWeight: 900, margin: '0 0 6px' }}>{arch.name}</h1>
+          <p style={{ color: arch.color, fontSize: 17, fontWeight: 700, margin: '0 0 20px', fontStyle: 'italic' }}>{arch.tagline}</p>
+          <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 14, lineHeight: 1.75, margin: '0 0 24px', padding: '0 8px' }}>{arch.desc}</p>
+          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '16px 20px', marginBottom: 14, textAlign: 'left' }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: 1.2, marginBottom: 10 }}>YOUR STRENGTHS</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {arch.strengths.map(s => <span key={s} style={{ background: `${arch.color}1a`, border: `1px solid ${arch.color}44`, borderRadius: 20, padding: '4px 12px', color: '#fff', fontSize: 12 }}>{s}</span>)}
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '16px 20px', marginBottom: 28, textAlign: 'left' }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: 1.2, marginBottom: 10 }}>START HERE IN NORTH STAR</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {arch.focus.map(f => <span key={f} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: '4px 12px', color: '#fff', fontSize: 12 }}>→ {f}</span>)}
+            </div>
+          </div>
+          <button onClick={() => onComplete(result, arch)} style={{ background: `linear-gradient(135deg, ${arch.color}, ${arch.color2})`, color: '#fff', border: 'none', borderRadius: 50, padding: '16px 0', fontSize: 17, fontWeight: 800, cursor: 'pointer', width: '100%', maxWidth: 320, boxShadow: `0 8px 32px ${arch.color}66` }}>
+            Start My Journey 🚀
+          </button>
+          <button onClick={() => { setStep(0); setAnswers({}); setResult(null); }} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 12 }}>Retake quiz</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Question screen
+  if (!currentQ) return null;
+  return (
+    <div style={overlayStyle}>
+      {/* Progress bar */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '20px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Question {step} of {QUIZ_QUESTIONS.length}</span>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{Math.round(progress)}%</span>
+        </div>
+        <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #7C3AED, #2563EB)', borderRadius: 2, transition: 'width 0.4s ease' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          {QUIZ_QUESTIONS.map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < step ? '#7C3AED' : 'rgba(255,255,255,0.08)', transition: 'background 0.3s' }} />
+          ))}
+        </div>
+      </div>
+      <div style={{ maxWidth: 540, width: '100%', padding: '80px 16px 16px', opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'all 0.28s ease' }}>
+        <h2 style={{ color: '#fff', fontSize: 22, fontWeight: 800, textAlign: 'center', marginBottom: 28, lineHeight: 1.45 }}>{currentQ.q}</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {currentQ.opts.map((opt, i) => (
+            <button key={i} onClick={() => handleSelect(opt.type)}
+              style={{ background: selected === opt.type ? 'rgba(124,58,237,0.35)' : 'rgba(255,255,255,0.05)', border: `2px solid ${selected === opt.type ? '#7C3AED' : 'rgba(255,255,255,0.1)'}`, borderRadius: 14, padding: '16px 18px', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14, transition: 'all 0.15s', transform: selected === opt.type ? 'scale(1.02)' : 'scale(1)' }}>
+              <span style={{ fontSize: 26, flexShrink: 0 }}>{opt.emoji}</span>
+              <span style={{ lineHeight: 1.4 }}>{opt.text}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PUBLIC SURVEY PAGE ────────────────────────────────────────────────────────
+function SurveyPage() {
+  const SURVEY_STEPS = [
+    { id: 'intro' },
+    { id: 'situation', q: "What best describes where you are right now?", emoji: '📍', type: 'choice',
+      opts: ['🎓 Student / still in school', '🔄 Career switcher / pivoting', '🚀 Recent grad / first job', '💼 Working but want more', '🌱 Just figuring it out'] },
+    { id: 'challenge', q: "What's your #1 challenge right now?", emoji: '🧱', type: 'choice',
+      opts: ["💭 I don't know what direction to go", "🗺️ I have a goal but no clear path", "🤝 I lack the right connections/mentors", "📉 I start things but don't follow through", "😶 I feel behind everyone else"] },
+    { id: 'mentor', q: "How valuable would access to a mentor be for you?", emoji: '✨', type: 'scale',
+      labels: ['Not at all', 'Somewhat', 'Very', 'Game-changing'] },
+    { id: 'connect', q: "Would connecting with peers at your exact stage help?", emoji: '🤝', type: 'choice',
+      opts: ['💯 Absolutely — that would help a lot', "🤔 Maybe, I'm not sure", '😊 Nice to have', "🙅 I prefer to work alone"] },
+    { id: 'tool', q: "How do you currently manage your goals/vision?", emoji: '🛠️', type: 'choice',
+      opts: ['📝 Notes app / journal', '📊 Spreadsheet', '🧠 Just in my head', '📱 I use another app', "❌ I don't really track them"] },
+    { id: 'location', q: "Where are you based?", emoji: '🌍', type: 'text', placeholder: 'City, Country (e.g. London, UK)' },
+    { id: 'name_email', q: "Last step — who are you?", emoji: '👋', type: 'name_email' },
+    { id: 'done' },
+  ];
+
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [textVal, setTextVal] = useState('');
+  const [nameVal, setNameVal] = useState('');
+  const [emailVal, setEmailVal] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [archetype, setArchetype] = useState(null);
+  const [showQuiz, setShowQuiz] = useState(false);
+
+  const currentStep = SURVEY_STEPS[step];
+  const questionSteps = SURVEY_STEPS.filter(s => s.id !== 'intro' && s.id !== 'done');
+  const qIndex = SURVEY_STEPS.findIndex(s => s.id === currentStep?.id);
+  const totalQ = questionSteps.length;
+  const qNum = questionSteps.findIndex(s => s.id === currentStep?.id) + 1;
+  const progress = currentStep?.id === 'done' ? 100 : Math.max((qNum / totalQ) * 100, 0);
+
+  const advance = () => {
+    setAnimating(true);
+    setTimeout(() => { setStep(s => s + 1); setTextVal(''); setAnimating(false); }, 260);
+  };
+
+  const handleChoice = (val) => {
+    setAnswers(a => ({ ...a, [currentStep.id]: val }));
+    advance();
+  };
+
+  const handleScale = (val) => {
+    setAnswers(a => ({ ...a, [currentStep.id]: val }));
+    advance();
+  };
+
+  const handleText = () => {
+    if (!textVal.trim()) return;
+    setAnswers(a => ({ ...a, [currentStep.id]: textVal.trim() }));
+    advance();
+  };
+
+  const handleSubmit = async () => {
+    if (!nameVal.trim() || !emailVal.trim()) return;
+    setSubmitting(true);
+    const payload = { ...answers, name: nameVal.trim(), email: emailVal.trim(), archetype, submitted_at: new Date().toISOString() };
+    try {
+      if (supabase) {
+        await supabase.from('survey_responses').insert([payload]);
+      }
+    } catch (_) {}
+    setSubmitted(true);
+    setSubmitting(false);
+    setStep(SURVEY_STEPS.findIndex(s => s.id === 'done'));
+  };
+
+  const bg = 'linear-gradient(160deg, #050F1E 0%, #0C1D30 60%, #091525 100%)';
+  const cardStyle = { background: '#0C1D30', border: '1px solid #162A42', borderRadius: 20, padding: '32px 28px', maxWidth: 520, width: '100%', margin: '0 auto' };
+
+  if (showQuiz) return (
+    <PersonalityQuiz
+      onComplete={(type, arch) => { setArchetype(type); setShowQuiz(false); }}
+      onSkip={() => setShowQuiz(false)}
+    />
+  );
+
+  return (
+    <div style={{ minHeight: '100vh', background: bg, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <style>{`@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #2563EB, #7C3AED)', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+          <Lightbulb size={22} color="#fff" />
+        </div>
+        <div style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>North Star</div>
+      </div>
+
+      {/* Progress bar */}
+      {currentStep?.id !== 'intro' && currentStep?.id !== 'done' && (
+        <div style={{ width: '100%', maxWidth: 520, marginBottom: 16 }}>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #2563EB, #7C3AED)', borderRadius: 2, transition: 'width 0.4s ease' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Question {qNum} of {totalQ}</span>
+            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{Math.round(progress)}%</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ ...cardStyle, opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'all 0.26s ease', animation: 'fadeSlideIn 0.3s ease' }}>
+
+        {/* Intro */}
+        {currentStep?.id === 'intro' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 56, marginBottom: 14 }}>🗺️</div>
+            <h1 style={{ color: '#EFF6FF', fontSize: 24, fontWeight: 900, margin: '0 0 10px' }}>Help Us Build North Star</h1>
+            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.7, margin: '0 0 20px' }}>
+              2 minutes. 7 questions. No spam.<br />
+              We're building a platform for people figuring out their path — your answers directly shape what we build next.
+            </p>
+            <div style={{ background: '#091525', borderRadius: 12, padding: '14px 16px', marginBottom: 24, textAlign: 'left' }}>
+              {["🎯 What stage you're at", "🧱 Your biggest challenge", "🤝 What kind of support helps most", "📍 Where you're based"].map(t => (
+                <div key={t} style={{ color: '#94A3B8', fontSize: 13, padding: '4px 0' }}>{t}</div>
+              ))}
+            </div>
+            <button onClick={() => { advance(); }} style={{ background: 'linear-gradient(135deg, #2563EB, #7C3AED)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%' }}>
+              Start Survey →
+            </button>
+            <button onClick={() => setShowQuiz(true)} style={{ display: 'block', width: '100%', marginTop: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50, padding: '12px 0', color: '#94A3B8', fontSize: 14, cursor: 'pointer', fontWeight: 600 }}>
+              ✨ Or take the fun personality quiz first
+            </button>
+          </div>
+        )}
+
+        {/* Choice question */}
+        {currentStep?.type === 'choice' && (
+          <div>
+            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
+            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.45 }}>{currentStep.q}</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {currentStep.opts.map((opt, i) => (
+                <button key={i} onClick={() => handleChoice(opt)}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.09)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.18)'; e.currentTarget.style.borderColor = '#2563EB'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Scale question */}
+        {currentStep?.type === 'scale' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>{currentStep.emoji}</div>
+            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, margin: '0 0 24px', lineHeight: 1.45 }}>{currentStep.q}</h2>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {currentStep.labels.map((label, i) => (
+                <button key={i} onClick={() => handleScale(label)}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.09)', borderRadius: 12, padding: '14px 18px', color: '#EFF6FF', fontSize: 13, fontWeight: 600, cursor: 'pointer', flex: '1 1 120px', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,99,235,0.18)'; e.currentTarget.style.borderColor = '#2563EB'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Text question */}
+        {currentStep?.type === 'text' && (
+          <div>
+            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
+            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.45 }}>{currentStep.q}</h2>
+            <input value={textVal} onChange={e => setTextVal(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleText()}
+              placeholder={currentStep.placeholder}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+            <button onClick={handleText} disabled={!textVal.trim()}
+              style={{ background: textVal.trim() ? 'linear-gradient(135deg, #2563EB, #7C3AED)' : 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: 50, padding: '13px 0', fontSize: 15, fontWeight: 700, cursor: textVal.trim() ? 'pointer' : 'default', width: '100%' }}>
+              Continue →
+            </button>
+          </div>
+        )}
+
+        {/* Name + Email step */}
+        {currentStep?.id === 'name_email' && (
+          <div>
+            <div style={{ fontSize: 32, marginBottom: 10, textAlign: 'center' }}>{currentStep.emoji}</div>
+            <h2 style={{ color: '#EFF6FF', fontSize: 18, fontWeight: 800, textAlign: 'center', margin: '0 0 6px' }}>{currentStep.q}</h2>
+            <p style={{ color: '#64748B', fontSize: 13, textAlign: 'center', margin: '0 0 20px' }}>So we can send you early access when North Star launches.</p>
+            <input value={nameVal} onChange={e => setNameVal(e.target.value)} placeholder="Your name"
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }} />
+            <input value={emailVal} onChange={e => setEmailVal(e.target.value)} placeholder="Your email" type="email"
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '13px 16px', color: '#EFF6FF', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+            {archetype && (
+              <div style={{ background: `${ARCHETYPES[archetype]?.color}18`, border: `1px solid ${ARCHETYPES[archetype]?.color}44`, borderRadius: 12, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 22 }}>{ARCHETYPES[archetype]?.emoji}</span>
+                <div>
+                  <div style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{ARCHETYPES[archetype]?.name}</div>
+                  <div style={{ color: '#64748B', fontSize: 11 }}>Your path archetype — we'll personalise your experience</div>
+                </div>
+              </div>
+            )}
+            <button onClick={handleSubmit} disabled={submitting || !nameVal.trim() || !emailVal.trim()}
+              style={{ background: nameVal.trim() && emailVal.trim() ? 'linear-gradient(135deg, #2563EB, #7C3AED)' : 'rgba(255,255,255,0.08)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', width: '100%' }}>
+              {submitting ? 'Submitting...' : 'Submit & Get Early Access 🚀'}
+            </button>
+            <p style={{ color: '#334155', fontSize: 11, textAlign: 'center', margin: '10px 0 0' }}>No spam. Ever. Unsubscribe anytime.</p>
+          </div>
+        )}
+
+        {/* Done */}
+        {currentStep?.id === 'done' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 64, marginBottom: 14 }}>🎉</div>
+            <h2 style={{ color: '#EFF6FF', fontSize: 22, fontWeight: 900, margin: '0 0 10px' }}>Thank you, {nameVal || 'Explorer'}!</h2>
+            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.7, margin: '0 0 24px' }}>
+              Your answers will help us build North Star around real people's needs.<br />
+              We'll reach out when early access opens.
+            </p>
+            <button onClick={() => setShowQuiz(true)} style={{ background: 'linear-gradient(135deg, #7C3AED, #2563EB)', color: '#fff', border: 'none', borderRadius: 50, padding: '14px 0', fontSize: 15, fontWeight: 700, cursor: 'pointer', width: '100%', marginBottom: 10 }}>
+              ✨ Discover Your Path Archetype
+            </button>
+            <a href="/" style={{ display: 'block', color: '#64748B', fontSize: 13, textDecoration: 'none', padding: '10px 0' }}>← Go to North Star App</a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function NavTour({ user, onDone }) {
   const firstName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer').split(' ')[0];
 
@@ -4285,6 +4795,7 @@ function MainApp({ user, onSignOut }) {
   const [mentors, setMentors] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [showNavTour, setShowNavTour] = useState(() => !localStorage.getItem('vh_tour_done'));
+  const [showQuiz, setShowQuiz] = useState(() => !localStorage.getItem('vh_archetype') && !!localStorage.getItem('vh_tour_done'));
 
   // ── Tutor state lifted here so files + timer survive tab switches ──────────
   const [tutorFiles, setTutorFiles] = useState([]);
@@ -4479,7 +4990,7 @@ function MainApp({ user, onSignOut }) {
     reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
     connect:       <ConnectTab canvas={canvas} user={user} feed={feed} />,
-    settings:      <SettingsTab user={user} onSignOut={onSignOut} onTour={() => { localStorage.removeItem('vh_tour_done'); setShowNavTour(true); }} />,
+    settings:      <SettingsTab user={user} onSignOut={onSignOut} onTour={() => { localStorage.removeItem('vh_tour_done'); setShowNavTour(true); }} onQuiz={() => { localStorage.removeItem('vh_archetype'); setShowQuiz(true); }} />,
   };
 
   const MOBILE_NAV = [
@@ -4594,7 +5105,26 @@ function MainApp({ user, onSignOut }) {
         <NavTour user={user} onDone={() => {
           localStorage.setItem('vh_tour_done', '1');
           setShowNavTour(false);
+          if (!localStorage.getItem('vh_archetype')) setShowQuiz(true);
         }} />
+      )}
+
+      {/* Personality quiz — shown after tour for new users */}
+      {!showNavTour && showQuiz && (
+        <PersonalityQuiz
+          user={user}
+          onComplete={(type, arch) => {
+            localStorage.setItem('vh_archetype', type);
+            localStorage.setItem('vh_archetype_name', arch.name);
+            localStorage.setItem('vh_archetype_emoji', arch.emoji);
+            syncToSupabase({ archetype: type });
+            setShowQuiz(false);
+          }}
+          onSkip={() => {
+            localStorage.setItem('vh_archetype', 'skip');
+            setShowQuiz(false);
+          }}
+        />
       )}
     </div>
   );
@@ -4602,6 +5132,9 @@ function MainApp({ user, onSignOut }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  // Standalone survey page — no auth required
+  if (window.location.pathname === '/survey') return <SurveyPage />;
+
   // session: undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState(undefined);
   const [entered, setEntered] = useState(() => !!localStorage.getItem('vh_entered'));

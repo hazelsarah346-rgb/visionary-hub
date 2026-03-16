@@ -177,6 +177,16 @@ export async function saveUserData(userId, payload) {
   }
 }
 
+// ─── SURVEY ───────────────────────────────────────────────────────────────────
+export async function submitSurveyResponse(payload) {
+  if (!supabase) return;
+  try {
+    await supabase.from('survey_responses').insert([{ ...payload, submitted_at: new Date().toISOString() }]);
+  } catch (e) {
+    console.error('submitSurveyResponse:', e.message);
+  }
+}
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function normalizePost(p) {
   return {
