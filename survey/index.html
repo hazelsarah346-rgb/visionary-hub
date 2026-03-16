@@ -158,6 +158,17 @@
     }
     .choice-btn:hover  { background: rgba(37,99,235,.15); border-color: var(--blue); }
     .choice-btn.picked { background: rgba(37,99,235,.2); border-color: var(--blue); color: #fff; }
+    .choice-btn.other-btn { border-style: dashed; color: var(--muted); }
+    .choice-btn.other-btn.picked { color: #fff; border-style: solid; }
+    .other-input {
+      margin-top: 10px; width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,.06); border: 1.5px solid var(--blue);
+      border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none;
+    }
+    .other-input::placeholder { color: var(--muted); }
+    .select-hint { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .multi-hint { font-size: 12px; color: var(--blue2); font-weight: 600; margin-bottom: 10px; }
 
     .scale-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
     .scale-btn {
@@ -467,23 +478,29 @@
 
     <div class="card" id="survey-q1">
       <h2>📍 What best describes where you are right now?</h2>
+      <p class="select-hint">👆 Select one</p>
       <div class="choice-list" data-q="situation">
         <button class="choice-btn">🎓 Student, still in school or just finished</button>
         <button class="choice-btn">🔄 Career switcher, pivoting to something new</button>
         <button class="choice-btn">🚀 Recent grad looking for my first real role</button>
         <button class="choice-btn">💼 Working but want something more meaningful</button>
         <button class="choice-btn">🌱 Just figuring it out, no clear direction yet</button>
+        <button class="choice-btn other-btn">✏️ Other — tell us</button>
+        <input class="other-input" type="text" placeholder="Describe your situation..." style="display:none">
       </div>
     </div>
 
     <div class="card">
       <h2>🧱 What's your #1 challenge right now?</h2>
+      <p class="select-hint">👆 Select one</p>
       <div class="choice-list" data-q="challenge">
         <button class="choice-btn">💭 I don't know what direction to go</button>
         <button class="choice-btn">🗺️ I have a goal but no clear path to it</button>
         <button class="choice-btn">🤝 I lack the right connections or mentors</button>
         <button class="choice-btn">📉 I start things but struggle to follow through</button>
         <button class="choice-btn">😶 I feel behind everyone else and don't know why</button>
+        <button class="choice-btn other-btn">✏️ Other — tell us</button>
+        <input class="other-input" type="text" placeholder="What's your real challenge?" style="display:none">
       </div>
     </div>
 
@@ -501,17 +518,21 @@
 
     <div class="card">
       <h2>🤝 What kind of mentorship would help you most?</h2>
+      <p class="select-hint">👆 Select one</p>
       <div class="choice-list" data-q="mentorship_format">
         <button class="choice-btn">📞 1-on-1 calls with someone in my field</button>
         <button class="choice-btn">💬 Ongoing chat / messaging access</button>
         <button class="choice-btn">📚 A structured programme with milestones</button>
         <button class="choice-btn">👥 Group sessions with peers + a mentor</button>
         <button class="choice-btn">🔍 Help finding the right opportunities</button>
+        <button class="choice-btn other-btn">✏️ Other — tell us</button>
+        <input class="other-input" type="text" placeholder="What would work best for you?" style="display:none">
       </div>
     </div>
 
     <div class="card">
       <h2>👥 Would connecting with peers at your exact stage help?</h2>
+      <p class="select-hint">👆 Select one</p>
       <div class="choice-list" data-q="peer_connect">
         <button class="choice-btn">💯 Absolutely, that would change things for me</button>
         <button class="choice-btn">🤔 Maybe, I'm not sure yet</button>
@@ -524,12 +545,15 @@
 
     <div class="card">
       <h2>🛠️ How do you currently manage your goals and plans?</h2>
+      <p class="select-hint">👆 Select one</p>
       <div class="choice-list" data-q="tools">
         <button class="choice-btn">📝 Notes app or journal</button>
         <button class="choice-btn">📊 Spreadsheet or task manager</button>
         <button class="choice-btn">🧠 Mostly in my head</button>
         <button class="choice-btn">📱 A goal-tracking or productivity app</button>
         <button class="choice-btn">❌ I don't really track them</button>
+        <button class="choice-btn other-btn">✏️ Other — tell us</button>
+        <input class="other-input" type="text" placeholder="How do you manage your goals?" style="display:none">
       </div>
     </div>
 
@@ -543,7 +567,7 @@
 
     <div class="card">
       <h2>✨ What would you most want North Star to do for you?</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Pick as many as you want. Be greedy.</p>
+      <p class="multi-hint">👆 Click all that apply — the more you pick, the better we understand you</p>
       <div class="multi-list" data-q="wanted_features">
         <button class="multi-btn">🤝 Match me with a mentor in my field</button>
         <button class="multi-btn">🗺️ Build me a personal career roadmap</button>
@@ -650,15 +674,29 @@ async function saveSurvey(data) {
 const surveyAnswers = {};
 let surveyArchetype = null;
 
-// Wire choice buttons (single-select)
+// Wire choice buttons (single-select) + Other
 document.querySelectorAll('.choice-list').forEach(list => {
+  const otherInput = list.querySelector('.other-input');
   list.querySelectorAll('.choice-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       list.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('picked'));
       btn.classList.add('picked');
-      surveyAnswers[list.dataset.q] = btn.textContent.trim();
+      if (btn.classList.contains('other-btn')) {
+        // Show the text input, clear answer until they type
+        if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); surveyAnswers[list.dataset.q] = ''; }
+      } else {
+        // Hide other input, store button text
+        if (otherInput) otherInput.style.display = 'none';
+        surveyAnswers[list.dataset.q] = btn.textContent.replace('✏️ Other — tell us','').trim();
+      }
     });
   });
+  // When user types in the Other box, store their text
+  if (otherInput) {
+    otherInput.addEventListener('input', () => {
+      surveyAnswers[list.dataset.q] = 'Other: ' + otherInput.value.trim();
+    });
+  }
 });
 
 // Wire multi-select buttons
