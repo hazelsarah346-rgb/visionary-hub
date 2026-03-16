@@ -46,7 +46,7 @@ const QUIZ_QUESTIONS = [
     q: "A friend calls at midnight with a wild startup idea. You say...",
     opts: [
       { emoji: '🚀', text: '"When can we start? I\'m in."', type: 'D' },
-      { emoji: '📊', text: '"Tell me more — what problem does it solve?"', type: 'A' },
+      { emoji: '📊', text: '"Tell me more, what problem does it solve?"', type: 'A' },
       { emoji: '✨', text: '"Here\'s how I see it growing in 5 years..."', type: 'V' },
       { emoji: '👥', text: '"I know exactly who we need to talk to."', type: 'C' },
     ],
@@ -54,10 +54,10 @@ const QUIZ_QUESTIONS = [
   {
     q: "What's your honest relationship with rules?",
     opts: [
-      { emoji: '⚡', text: "Rules are starting points — I upgrade them", type: 'D' },
+      { emoji: '⚡', text: "Rules are starting points, I upgrade them", type: 'D' },
       { emoji: '📐', text: "I follow them once I understand why they exist", type: 'A' },
-      { emoji: '🏗️', text: "I like structure — it helps me build faster", type: 'B' },
-      { emoji: '🌍', text: "Depends — I go where curiosity leads", type: 'E' },
+      { emoji: '🏗️', text: "I like structure, it helps me build faster", type: 'B' },
+      { emoji: '🌍', text: "Depends, I go where curiosity leads", type: 'E' },
     ],
   },
   {
@@ -65,15 +65,15 @@ const QUIZ_QUESTIONS = [
     opts: [
       { emoji: '🌟', text: "Paint a vivid, detailed picture of your vision", type: 'V' },
       { emoji: '📋', text: "Pull out your actual plan (yes, you have one)", type: 'B' },
-      { emoji: '🤷', text: '"Not sure yet — still discovering what\'s possible"', type: 'E' },
+      { emoji: '🤷', text: '"Not sure yet, still discovering what\'s possible"', type: 'E' },
       { emoji: '💛', text: "Talk about the impact you want on people's lives", type: 'C' },
     ],
   },
   {
     q: "How do you make a big decision?",
     opts: [
-      { emoji: '📈', text: "Data, research, pros/cons list — then decide", type: 'A' },
-      { emoji: '🎯', text: "Gut + vision — I can feel the right path", type: 'V' },
+      { emoji: '📈', text: "Data, research, pros/cons list, then decide", type: 'A' },
+      { emoji: '🎯', text: "Gut + vision, I can feel the right path", type: 'V' },
       { emoji: '🧪', text: "Try a small version first, then scale up", type: 'B' },
       { emoji: '💬', text: "Talk it through with people I trust", type: 'C' },
     ],
@@ -101,27 +101,27 @@ const QUIZ_QUESTIONS = [
 const ARCHETYPES = {
   V: { name: 'The Visionary',  emoji: '🌟', color: '#7C3AED', color2: '#5B21B6',
     tagline: "You see the future others can't yet.",
-    desc: "You think in possibilities. While others see problems, you see potential. Your superpower is painting a picture of what could be — and making people believe in it. You're built for big ideas, creative leadership, and paths that don't exist yet.",
+    desc: "You think in possibilities. While others see problems, you see potential. Your superpower is painting a picture of what could be, and making people believe in it. You're built for big ideas, creative leadership, and paths that don't exist yet.",
     strengths: ['Big-picture thinking', 'Creative leadership', 'Inspiring others', 'Long-term vision'],
     focus: ['Vision Canvas', 'North Star AI', 'Mentorship'] },
   B: { name: 'The Builder',    emoji: '🔨', color: '#2563EB', color2: '#1D4ED8',
     tagline: "You turn ideas into real things.",
-    desc: "You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and deliverables. Your superpower is execution — and you don't stop until something works.",
+    desc: "You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and deliverables. Your superpower is execution, and you don't stop until something works.",
     strengths: ['Execution', 'Problem-solving', 'Systems thinking', 'Reliability'],
     focus: ['Roadmap', 'Vision Canvas', 'Daily challenges'] },
   E: { name: 'The Explorer',   emoji: '🗺️', color: '#059669', color2: '#047857',
     tagline: "You learn by going.",
-    desc: "You're drawn to what's new and unexplored. You don't have one passion — you have many, and that's your advantage. Your journey is wider than most, and that breadth becomes your unique edge. You discover who you are by trying.",
+    desc: "You're drawn to what's new and unexplored. You don't have one passion, you have many, and that's your advantage. Your journey is wider than most, and that breadth becomes your unique edge. You discover who you are by trying.",
     strengths: ['Adaptability', 'Curiosity', 'Diverse thinking', 'Open-mindedness'],
     focus: ['Opportunities', 'Mentorship', 'Peer community'] },
   C: { name: 'The Connector',  emoji: '🤝', color: '#D97706', color2: '#B45309',
     tagline: "Your network is your net worth.",
-    desc: "People gravitate toward you — and you make things happen through relationships. You understand that most big things in life are built with others, not alone. Your superpower is community, empathy, and bringing the right people together.",
+    desc: "People gravitate toward you, and you make things happen through relationships. You understand that most big things in life are built with others, not alone. Your superpower is community, empathy, and bringing the right people together.",
     strengths: ['Relationship building', 'Empathy', 'Collaboration', 'Community'],
     focus: ['Connect', 'Peer Groups', 'Mentorship'] },
   A: { name: 'The Analyst',    emoji: '🔍', color: '#0891B2', color2: '#0E7490',
     tagline: "You understand what others overlook.",
-    desc: "You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what actually matters. Depth is your advantage.",
+    desc: "You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity, you cut through noise and find what actually matters. Depth is your advantage.",
     strengths: ['Critical thinking', 'Research', 'Pattern recognition', 'Precision'],
     focus: ['Vision Canvas', 'Roadmap', 'North Star AI'] },
   D: { name: 'The Disruptor',  emoji: '⚡', color: '#DC2626', color2: '#B91C1C',
@@ -159,7 +159,7 @@ const CHALLENGE_POOL = [
   { type: 'Limiting Story',       emoji: '📖', color: '#EC4899', prompt: "What's the story you keep telling yourself about why you CAN'T? Rewrite it: same facts, but a completely different: and empowering: interpretation.", insight: 'narrative therapy', xp: 40 },
   { type: 'Energy Audit',         emoji: '🔋', color: '#10B981', prompt: "List 3 things that drain your energy and 3 things that fill it up. What would your life look like if you did MORE of the filling things this week?", insight: 'energy management theory', xp: 25 },
   { type: 'Decision Matrix',      emoji: '⚖️', color: '#06B6D4', prompt: "You're facing a decision you keep postponing. Apply the 10/10/10 rule: How will you feel about this in 10 minutes, 10 months, 10 years?", insight: 'temporal discounting', xp: 35 },
-  { type: 'Opportunity Hunter',   emoji: '🌱', color: '#F59E0B', prompt: "Name ONE opportunity in your field you've been putting off — an internship, a course, a person to message, or a project to start. Write exactly what the first step is and when you'll do it today.", insight: 'action bias & opportunity cost', xp: 25 },
+  { type: 'Opportunity Hunter',   emoji: '🌱', color: '#F59E0B', prompt: "Name ONE opportunity in your field you've been putting off, an internship, a course, a person to message, or a project to start. Write exactly what the first step is and when you'll do it today.", insight: 'action bias & opportunity cost', xp: 25 },
   { type: 'Curiosity Spark',      emoji: '🔭', color: '#2563EB', prompt: "What's something in your field that genuinely fascinates you and you still don't fully understand? Write 3 questions you'd love to find answers to.", insight: 'intrinsic motivation', xp: 25 },
   { type: 'Courage Inventory',    emoji: '🦁', color: '#EF4444', prompt: "Think of the last time you were truly brave. What did you do? What would it look like to be THAT version of yourself in your current situation?", insight: 'self-efficacy theory', xp: 35 },
   { type: 'Systems Check',        emoji: '⚙️', color: '#8B5CF6', prompt: "You don't rise to your goals: you fall to your systems. Name one daily habit that, if done consistently, would change everything for you.", insight: 'systems thinking', xp: 30 },
@@ -392,7 +392,7 @@ const NAV = [
 ];
 // Reflect & Roadmap are accessed from Vision Canvas shortcut cards
 
-// Secondary tabs — accessible via mobile More drawer
+// Secondary tabs, accessible via mobile More drawer
 const NAV_SECONDARY = [
   { id: 'reflect', icon: PenLine, label: 'Reflect', sub: 'Track your growth' },
 ];
@@ -493,8 +493,8 @@ function AICoachPanel({ canvas, onClose }) {
 
   useEffect(() => {
     const intro = contextSummary
-      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm North Star — your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal — and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
-      : `Hey 👋 I'm North Star — built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything — I won't give you generic answers.`;
+      ? `Hey${canvas?.name ? ` ${canvas.name.split(' ')[0]}` : ''} 👋 I'm North Star, your personal guide for figuring out your path.\n\nI can see you're working toward: "${canvas?.bigVision || canvas?.goal12Month}". That's a real goal, and I'm here to help you make actual progress on it, not just feel good about having it.\n\nWhat's the one thing you're most stuck on right now?`
+      : `Hey 👋 I'm North Star, built specifically for students and career switchers who are figuring out their path.\n\nI help with things like:\n• Which opportunities or programs to go after\n• How to build your skills and portfolio from scratch\n• How to get internships, mentors, or your first role\n• What to focus on when everything feels overwhelming\n\nFill in your Vision Canvas first so I can give you advice that's actually specific to you. Or ask me anything, I won't give you generic answers.`;
     setMessages([{ role: 'ai', content: intro }]);
   }, []);
 
@@ -508,9 +508,9 @@ function AICoachPanel({ canvas, onClose }) {
       const apiMsgs = newMsgs.slice(-10).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
       const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMsgs, mode: 'vision', canvas, fileContent: '' }) });
       const d = await r.json();
-      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Tell me more — what specifically is blocking you right now?" }]);
+      setMessages(prev => [...prev, { role: 'ai', content: d.reply || "Tell me more, what specifically is blocking you right now?" }]);
     } catch (_) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. While you wait — write down the ONE thing you most need clarity on right now." }]);
+      setMessages(prev => [...prev, { role: 'ai', content: "Connection issue. While you wait, write down the ONE thing you most need clarity on right now." }]);
     }
     setLoading(false);
   };
@@ -519,7 +519,7 @@ function AICoachPanel({ canvas, onClose }) {
     '🔍 Find opportunities in my field',
     '📄 Help me improve my resume/CV',
     '📅 What events should I attend?',
-    '🚀 I feel stuck — where do I start?',
+    '🚀 I feel stuck, where do I start?',
     '🤝 How do I find a mentor?',
     '💼 How do I land my first internship?',
   ];
@@ -669,11 +669,11 @@ function OnboardingWizard({ user, onComplete }) {
         You don't have to figure this out alone anymore.
       </p>
       <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.75, margin: '0 0 10px', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-        Most students and career switchers feel overwhelmed — no clear path, no one who gets their stage, no structure.<br/><br/>
+        Most students and career switchers feel overwhelmed, no clear path, no one who gets their stage, no structure.<br/><br/>
         North Star gives you a <strong style={{ color: C.blueLight }}>vision and roadmap</strong>, AI and mentors tuned to your goals, and peers on the same journey.
       </p>
       <p style={{ fontSize: 13, color: C.blueLight, fontWeight: 700, margin: '0 0 24px' }}>
-        Let's take <strong>60 seconds</strong> to build your Vision Canvas — everything personalises from here.
+        Let's take <strong>60 seconds</strong> to build your Vision Canvas, everything personalises from here.
       </p>
       <Btn size="lg" onClick={() => setStep(1)} style={{ marginBottom: 14 }}>Build my Vision Canvas →</Btn>
       <br/>
@@ -707,7 +707,7 @@ function OnboardingWizard({ user, onComplete }) {
     <div key={2}>
       <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Step 2 of 2</div>
       <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 4px', color: C.text }}>What are you trying to achieve?</h2>
-      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>Be honest, be bold. This becomes the centre of your personal roadmap — everything we build points back to it.</p>
+      <p style={{ color: C.muted, fontSize: 12, margin: '0 0 14px', lineHeight: 1.65 }}>Be honest, be bold. This becomes the centre of your personal roadmap, everything we build points back to it.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
         {[
           'Become a CEO and build a company that impacts millions',
@@ -929,7 +929,7 @@ function AuthPage() {
           <p style={{ margin: '0 0 26px', fontSize: 13, color: C.muted, textAlign: 'center', lineHeight: 1.6 }}>
             {mode === 'signin'
               ? 'Sign in to pick up where you left off.'
-              : 'For undergrads, career switchers & anyone figuring it out — get a clear roadmap, AI tuned to your goals, and peers at your stage. No more going it alone.'}
+              : 'For undergrads, career switchers & anyone figuring it out, get a clear roadmap, AI tuned to your goals, and peers at your stage. No more going it alone.'}
           </p>
 
           {/* Google OAuth */}
@@ -1415,7 +1415,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         )}
       </div>
 
-      {/* Media: full-width — skip blob: URLs (they expire and show as black broken images) */}
+      {/* Media: full-width, skip blob: URLs (they expire and show as black broken images) */}
       {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'image' && (
         <div style={{ background: '#000' }}>
           <img src={p.mediaUrl} alt="post" style={{ width: '100%', maxHeight: 480, objectFit: 'cover', display: 'block' }} onError={e => { e.target.parentElement.style.display = 'none'; }} />
@@ -1522,7 +1522,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       setUploadProgress('Uploading media…');
       hostedUrl = await uploadMedia(mediaFile);
       if (!hostedUrl) {
-        // Upload failed — don't save a blob URL (it expires immediately)
+        // Upload failed, don't save a blob URL (it expires immediately)
         setUploadProgress('');
         alert('Media upload failed. Please make sure the "media" storage bucket exists in Supabase (Dashboard → Storage → New bucket → name: "media" → Public ✓). Try again after creating it.');
         setSubmitting(false);
@@ -1569,7 +1569,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
             {canvas?.name ? `${canvas.name.split(' ')[0]}'s Feed` : 'Community Feed'}
           </h1>
-          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Your peer community — share milestones, stay inspired, never go it alone</p>
+          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Your peer community, share milestones, stay inspired, never go it alone</p>
         </div>
         <button onClick={() => setShowPeerGroups(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.purple}14`, border: `1px solid ${C.purple}30`, borderRadius: 10, padding: '7px 13px', cursor: 'pointer', color: C.purple, fontSize: 12, fontFamily: 'inherit', fontWeight: 700 }}>
@@ -1582,14 +1582,14 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: `${C.blue}0C`, border: `1px solid ${C.blue}22`, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
           <Lightbulb size={18} color={C.blue} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Set your Vision Canvas — it changes everything</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Set your Vision Canvas, it changes everything</div>
             <div style={{ fontSize: 11, color: C.muted }}>Your goal becomes the centre: AI, roadmap & mentors all tune to it so nothing feels random again</div>
           </div>
           <Btn size="sm" onClick={() => setTab('canvas')}>Start →</Btn>
         </div>
       )}
 
-      {/* ── COMPOSE BOX — compact bar ──── */}
+      {/* ── COMPOSE BOX, compact bar ──── */}
       <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.blue + '60' : C.border}`, borderRadius: 14, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
         onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
         onDragLeave={() => setMediaDragging(false)}
@@ -1672,7 +1672,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
                 const totalInspired = feed.reduce((s, p) => s + (p.inspired || 0), 0);
                 const mediaCount = feed.filter(p => p.mediaUrl).length;
                 const names = [...new Set(feed.map(p => p.authorName?.split(' ')[0]).filter(Boolean))].slice(0, 3);
-                if (totalReactions > 10) return `${totalReactions} reactions shared in this community — 🔥 inspired, 💪 encouraged, 📚 learned, 🌱 reflected. The energy here is real.`;
+                if (totalReactions > 10) return `${totalReactions} reactions shared in this community, 🔥 inspired, 💪 encouraged, 📚 learned, 🌱 reflected. The energy here is real.`;
                 if (totalInspired > 5) return `${totalInspired} 🔥 inspiration reactions flowing in this feed. Keep building.`;
                 if (mediaCount > 2) return `${mediaCount} posts with photos and videos. This community shows, not just tells.`;
                 if (names.length > 1) return `${names.join(', ')} and others are building in public. Join them.`;
@@ -1686,7 +1686,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       {/* ── DAILY BRAIN CHALLENGE ────────────────────────────────────── */}
       <DailyChallengeCard canvas={canvas} user={user} />
 
-      {/* Active community + visual showcase removed — feed speaks for itself */}
+      {/* Active community + visual showcase removed, feed speaks for itself */}
 
       {/* ── FEED HEADER ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -1729,7 +1729,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
           <div style={{ textAlign: 'center', padding: '56px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
             <MessageCircle size={32} color={C.border} style={{ marginBottom: 12 }} />
             <div style={{ color: C.muted, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Be the first to share</div>
-            <div style={{ color: '#334155', fontSize: 12 }}>Share a win, a challenge, or where you're at — your community is here so you don't have to figure it out alone.</div>
+            <div style={{ color: '#334155', fontSize: 12 }}>Share a win, a challenge, or where you're at, your community is here so you don't have to figure it out alone.</div>
           </div>
         )}
       </div>
@@ -2255,7 +2255,7 @@ function RoadmapTab({ canvas, setTab }) {
           <div>
             <div style={{ fontSize: 10, color: C.purple, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 }}>AI Activity Analysis</div>
             <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.65 }}>{rm.activityInsight}</p>
-            {totalDone > 0 && <div style={{ marginTop: 8, fontSize: 12, color: C.green, fontWeight: 600 }}>✓ {totalDone} milestone{totalDone !== 1 ? 's' : ''} completed — keep going.</div>}
+            {totalDone > 0 && <div style={{ marginTop: 8, fontSize: 12, color: C.green, fontWeight: 600 }}>✓ {totalDone} milestone{totalDone !== 1 ? 's' : ''} completed, keep going.</div>}
           </div>
         </div>
       )}
@@ -2369,7 +2369,7 @@ function RoadmapTab({ canvas, setTab }) {
           <Bot size={15} color={C.purple} /> Ask about your journey
         </div>
         <p style={{ fontSize: 12, color: C.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
-          Ask anything specific — "How do I get an internship in {canvas?.major || 'my field'}?", "What should I do this week?", "How do I build a portfolio?"
+          Ask anything specific, "How do I get an internship in {canvas?.major || 'my field'}?", "What should I do this week?", "How do I build a portfolio?"
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: chatA ? 14 : 0 }}>
           <input value={chatQ} onChange={e => setChatQ(e.target.value)}
@@ -2547,7 +2547,7 @@ function TutorTab({ canvas, files: filesProp, setFiles: setFilesProp,
               const pageText = tc.items.map(item => item.str).join(' ').replace(/\s+/g, ' ').trim();
               if (pageText) text += `--- Page ${pg} ---\n${pageText}\n\n`;
             }
-            content = text.trim().slice(0, 50000) || `[PDF: ${f.name} — no extractable text found]`;
+            content = text.trim().slice(0, 50000) || `[PDF: ${f.name}, no extractable text found]`;
           } catch (err) {
             console.warn('PDF extraction error:', err);
             content = `[PDF: ${f.name}]`;
@@ -3395,7 +3395,7 @@ function ApplyButton({ url, institution, homepage: homepageProp }) {
         onClick={() => { if (url) { window.open(url, '_blank'); setShowFallback(true); } }}>
         <ArrowRight size={12} /> Apply Now
       </Btn>
-      {/* Homepage — always shown as "Stay Updated" */}
+      {/* Homepage, always shown as "Stay Updated" */}
       {homepageDisplay && (
         <button onClick={() => window.open(homepage, '_blank')}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${C.blue}08`, border: `1px solid ${C.blue}25`, borderRadius: 8, padding: '6px 10px', color: C.blueLight, fontSize: 10, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 600, width: '100%' }}>
@@ -3451,7 +3451,7 @@ function OpportunitiesTab({ canvas }) {
               .limit(50);
             if (!error) { setPostedOpps(data || []); }
           }
-        } catch (_) { /* table may not exist yet — show empty state */ }
+        } catch (_) { /* table may not exist yet, show empty state */ }
         setPostedLoading(false);
       })();
     }
@@ -3671,7 +3671,7 @@ function OpportunitiesTab({ canvas }) {
         <span style={{ fontSize: 11, color: C.muted }}>📍 Your location:</span>
         <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Jamaica"
           style={{ padding: '4px 12px', borderRadius: 99, border: `1px solid ${C.blue}44`, background: `${C.blue}0A`, color: C.blueLight, fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 130 }} />
-        <span style={{ fontSize: 11, color: C.muted }}>— searches local + international programs</span>
+        <span style={{ fontSize: 11, color: C.muted }}> searches local + international programs</span>
       </div>
 
       {/* Search */}
@@ -3881,7 +3881,7 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
 
-    // Step 1: show base64 preview instantly — always works on this device
+    // Step 1: show base64 preview instantly, always works on this device
     const dataUrl = await new Promise(res => {
       const r = new FileReader();
       r.onload = ev => res(ev.target.result);
@@ -3898,13 +3898,13 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `avatars/${user.id}.${ext}`;
 
-      // Check upload success explicitly — getPublicUrl() returns a URL even if upload failed
+      // Check upload success explicitly, getPublicUrl() returns a URL even if upload failed
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(path, file, { upsert: true, cacheControl: '3600' });
 
       if (uploadError) {
-        // Keep base64 in localStorage — shows on this device only
+        // Keep base64 in localStorage, shows on this device only
         setAvatarStatus('local');
         setAvatarUploading(false);
         return;
@@ -3991,17 +3991,17 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
             )}
             {!avatarUploading && avatarStatus === 'synced' && (
               <div style={{ fontSize: 12, color: C.green, marginBottom: 6, fontWeight: 700 }}>
-                ✓ Photo synced — shows on all your devices
+                ✓ Photo synced, shows on all your devices
               </div>
             )}
             {!avatarUploading && avatarStatus === 'local' && (
               <div style={{ fontSize: 12, color: C.yellow, marginBottom: 6, fontWeight: 700 }}>
-                ⚠️ Photo saved on this device only — create an "avatars" bucket in Supabase Storage to sync everywhere
+                ⚠️ Photo saved on this device only, create an "avatars" bucket in Supabase Storage to sync everywhere
               </div>
             )}
             {!avatarUploading && !avatarStatus && (
               <div style={{ fontSize: 12, color: avatarLocal ? C.green : C.muted, marginBottom: 6, fontWeight: avatarLocal ? 700 : 400 }}>
-                {avatarLocal ? '✓ Photo is set — tap pencil to change it' : '📷 Tap the pencil icon to upload your photo'}
+                {avatarLocal ? '✓ Photo is set, tap pencil to change it' : '📷 Tap the pencil icon to upload your photo'}
               </div>
             )}
             <div style={{ fontSize: 12, color: '#334155' }}>
@@ -4089,7 +4089,7 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                     <span style={{ fontSize: 16 }}>{arch.emoji}</span>
                     <span style={{ fontSize: 12, color: arch.color, fontWeight: 700 }}>{arch.name}</span>
-                    <span style={{ fontSize: 11, color: C.muted }}>— {arch.tagline}</span>
+                    <span style={{ fontSize: 11, color: C.muted }}> {arch.tagline}</span>
                   </div>
                 ) : (
                   <div style={{ fontSize: 11, color: C.muted }}>Discover which of 6 archetypes you are</div>
@@ -4490,12 +4490,12 @@ function NavTour({ user, onDone }) {
   const firstName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Explorer').split(' ')[0];
 
   const FEATURES = [
-    { icon: Home,          color: C.blue,    label: 'Flow',          desc: 'Your peer feed — share progress, see what others are building, and stay motivated together.' },
+    { icon: Home,          color: C.blue,    label: 'Flow',          desc: 'Your peer feed, share progress, see what others are building, and stay motivated together.' },
     { icon: Lightbulb,     color: C.yellow,  label: 'Vision Canvas', desc: 'Define your big goal and get an AI-built roadmap. Everything in North Star personalises around this.' },
     { icon: Compass,       color: C.teal,    label: 'Explore',       desc: 'Scholarships, internships, fellowships and programs matched to your field and goals.' },
-    { icon: MessageCircle, color: C.green,   label: 'Connect',       desc: 'Peer group chats — find people at your exact stage and build real connections.' },
+    { icon: MessageCircle, color: C.green,   label: 'Connect',       desc: 'Peer group chats, find people at your exact stage and build real connections.' },
     { icon: Users,         color: C.purple,  label: 'Mentorship',    desc: 'Connect with mentors who have walked your path. Get real guidance, not just advice.' },
-    { icon: Bot,           color: '#EC4899', label: 'North Star AI', desc: 'Your personal AI coach — ask anything about your vision, roadmap, opportunities or growth.' },
+    { icon: Bot,           color: '#EC4899', label: 'North Star AI', desc: 'Your personal AI coach, ask anything about your vision, roadmap, opportunities or growth.' },
   ];
 
   return (
@@ -4505,10 +4505,10 @@ function NavTour({ user, onDone }) {
         <div style={{ textAlign: 'center', marginBottom: 26 }}>
           <div style={{ fontSize: 44, marginBottom: 10 }}>🌟</div>
           <h2 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 8px', color: C.text }}>You're in, {firstName}!</h2>
-          <p style={{ fontSize: 14, color: C.muted, margin: 0, lineHeight: 1.65 }}>Here's a quick map of your 6 spaces — each one is built to move you forward.</p>
+          <p style={{ fontSize: 14, color: C.muted, margin: 0, lineHeight: 1.65 }}>Here's a quick map of your 6 spaces, each one is built to move you forward.</p>
         </div>
 
-        {/* Feature cards — 2 col grid */}
+        {/* Feature cards, 2 col grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 22 }}>
           {FEATURES.map((f, i) => (
             <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '13px 13px', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
@@ -4623,7 +4623,7 @@ function MainApp({ user, onSignOut }) {
   // ── Cross-device sync ──────────────────────────────────────────────────────
   const syncTimerRef = useRef(null);
 
-  // Load from Supabase on login — hydrates all user data (remote wins if present)
+  // Load from Supabase on login, hydrates all user data (remote wins if present)
   useEffect(() => {
     if (!user?.id) return;
     loadUserData(user.id).then(remote => {
@@ -4636,7 +4636,7 @@ function MainApp({ user, onSignOut }) {
       if (remote.streak != null) localStorage.setItem('vh_streak', String(remote.streak));
       if (remote.tutor_notes)   localStorage.setItem('vh_tutor_notes', remote.tutor_notes);
       if (remote.vb_goals)      localStorage.setItem('vh_vb', JSON.stringify(remote.vb_goals));
-      // Restore profile fields — avatar, name, bio, field etc.
+      // Restore profile fields, avatar, name, bio, field etc.
       const p = remote.profile || {};
       if (p.avatarUrl)  localStorage.setItem('vh_profile_avatar',   p.avatarUrl);
       if (p.name)       localStorage.setItem('vh_profile_name',     p.name);
@@ -4647,11 +4647,11 @@ function MainApp({ user, onSignOut }) {
     });
   }, [user?.id]);
 
-  // Always points to the current user id — avoids stale closure inside debounce
+  // Always points to the current user id, avoids stale closure inside debounce
   const userIdRef = useRef(user?.id);
   useEffect(() => { userIdRef.current = user?.id; }, [user?.id]);
 
-  // Debounced helper — writes to both localStorage + Supabase (2 s delay)
+  // Debounced helper, writes to both localStorage + Supabase (2 s delay)
   const syncToSupabase = (patch) => {
     clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
@@ -4688,7 +4688,7 @@ function MainApp({ user, onSignOut }) {
     syncToSupabase({ canvas: c });
   };
 
-  // Periodic sync (30 s) + sync-on-hide — catches all child-component localStorage writes
+  // Periodic sync (30 s) + sync-on-hide, catches all child-component localStorage writes
   // (journal saves, roadmap generates, milestone toggles, XP gains, notes, vision board)
   useEffect(() => {
     const fullSync = () => {
@@ -4823,7 +4823,7 @@ function MainApp({ user, onSignOut }) {
         {views[tab]}
       </main>
 
-      {/* Mobile bottom nav — 5 tabs: 4 main + North Star */}
+      {/* Mobile bottom nav, 5 tabs: 4 main + North Star */}
       <nav className="vh-mobile-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: C.surface, borderTop: `1px solid ${C.border}`, zIndex: 800, paddingBottom: 'env(safe-area-inset-bottom)', justifyContent: 'space-around', alignItems: 'center' }}>
         {MOBILE_NAV.map(item => {
           const active = tab === item.id;
@@ -4835,7 +4835,7 @@ function MainApp({ user, onSignOut }) {
             </button>
           );
         })}
-        {/* North Star tab — purple, prominent */}
+        {/* North Star tab, purple, prominent */}
         <button onClick={() => { setShowCoach(s => !s); setShowMobileMenu(false); }}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 6px 6px', fontFamily: 'inherit', flex: 1 }}>
           <div style={{ width: 32, height: 32, borderRadius: 10, background: showCoach ? `${C.purple}` : `${C.purple}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 1 }}>
@@ -4845,7 +4845,7 @@ function MainApp({ user, onSignOut }) {
         </button>
       </nav>
 
-      {/* Mobile account/settings quick bar — shows on Canvas tab at top */}
+      {/* Mobile account/settings quick bar, shows on Canvas tab at top */}
 
       {showCoach && <AICoachPanel canvas={canvas} onClose={() => setShowCoach(false)} />}
       {showWellbeing && <WellbeingModal onClose={() => setShowWellbeing(false)} />}
@@ -4859,7 +4859,7 @@ function MainApp({ user, onSignOut }) {
         }} />
       )}
 
-      {/* Personality quiz — shown after tour for new users */}
+      {/* Personality quiz, shown after tour for new users */}
       {!showNavTour && showQuiz && (
         <PersonalityQuiz
           user={user}
@@ -4882,7 +4882,7 @@ function MainApp({ user, onSignOut }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  // Standalone survey page — no auth required
+  // Standalone survey page, no auth required
 
   // session: undefined = loading, null = logged out, object = logged in
   const [session, setSession] = useState(undefined);
@@ -4949,7 +4949,7 @@ export default function App() {
     setAppReady(false);
   };
 
-  // Loading spinner — shown while session resolves OR while checking remote data
+  // Loading spinner, shown while session resolves OR while checking remote data
   if (session === undefined || (supabase && session?.user?.id && !appReady)) {
     return (
       <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', system-ui, sans-serif" }}>
