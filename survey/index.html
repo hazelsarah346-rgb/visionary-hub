@@ -518,16 +518,16 @@
 
     <div class="card">
       <h2>🤝 What kind of mentorship would help you most?</h2>
-      <p class="select-hint">👆 Select one</p>
-      <div class="choice-list" data-q="mentorship_format">
-        <button class="choice-btn">📞 1-on-1 calls with someone in my field</button>
-        <button class="choice-btn">💬 Ongoing chat / messaging access</button>
-        <button class="choice-btn">📚 A structured programme with milestones</button>
-        <button class="choice-btn">👥 Group sessions with peers + a mentor</button>
-        <button class="choice-btn">🔍 Help finding the right opportunities</button>
-        <button class="choice-btn other-btn">✏️ Other — tell us</button>
-        <input class="other-input" type="text" placeholder="What would work best for you?" style="display:none">
+      <p class="multi-hint">👆 Click all that apply</p>
+      <div class="multi-list" data-q="mentorship_format">
+        <button class="multi-btn">📞 1-on-1 calls with someone in my field</button>
+        <button class="multi-btn">💬 Ongoing chat / messaging access</button>
+        <button class="multi-btn">📚 A structured programme with milestones</button>
+        <button class="multi-btn">👥 Group sessions with peers + a mentor</button>
+        <button class="multi-btn">🔍 Help finding the right opportunities</button>
+        <button class="multi-btn">✏️ Other — type below</button>
       </div>
+      <input class="other-input" id="mentorship-other" type="text" placeholder="What would work best for you?" style="display:none;margin-top:10px">
     </div>
 
     <div class="card">
@@ -545,16 +545,16 @@
 
     <div class="card">
       <h2>🛠️ How do you currently manage your goals and plans?</h2>
-      <p class="select-hint">👆 Select one</p>
-      <div class="choice-list" data-q="tools">
-        <button class="choice-btn">📝 Notes app or journal</button>
-        <button class="choice-btn">📊 Spreadsheet or task manager</button>
-        <button class="choice-btn">🧠 Mostly in my head</button>
-        <button class="choice-btn">📱 A goal-tracking or productivity app</button>
-        <button class="choice-btn">❌ I don't really track them</button>
-        <button class="choice-btn other-btn">✏️ Other — tell us</button>
-        <input class="other-input" type="text" placeholder="How do you manage your goals?" style="display:none">
+      <p class="multi-hint">👆 Click all that apply</p>
+      <div class="multi-list" data-q="tools">
+        <button class="multi-btn">📝 Notes app or journal</button>
+        <button class="multi-btn">📊 Spreadsheet or task manager</button>
+        <button class="multi-btn">🧠 Mostly in my head</button>
+        <button class="multi-btn">📱 A goal-tracking or productivity app</button>
+        <button class="multi-btn">❌ I don't really track them</button>
+        <button class="multi-btn">✏️ Other — type below</button>
       </div>
+      <input class="other-input" id="tools-other" type="text" placeholder="What do you use?" style="display:none;margin-top:10px">
     </div>
 
     <div class="card">
@@ -699,15 +699,39 @@ document.querySelectorAll('.choice-list').forEach(list => {
   }
 });
 
-// Wire multi-select buttons
+// Wire multi-select buttons (with "Other — type below" support)
 document.querySelectorAll('.multi-list').forEach(list => {
+  // Find sibling other-input (right after the list)
+  const otherInput = list.nextElementSibling && list.nextElementSibling.classList.contains('other-input')
+    ? list.nextElementSibling : null;
+
+  function updateAnswer() {
+    const picked = [...list.querySelectorAll('.multi-btn.picked')]
+      .map(b => b.textContent.replace(/^✓ /,'').trim())
+      .filter(t => t !== '✏️ Other — type below');
+    const otherVal = otherInput && otherInput.style.display !== 'none' && otherInput.value.trim()
+      ? 'Other: ' + otherInput.value.trim() : '';
+    const all = [...picked, ...(otherVal ? [otherVal] : [])];
+    surveyAnswers[list.dataset.q] = all.join(' | ');
+  }
+
   list.querySelectorAll('.multi-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       btn.classList.toggle('picked');
-      const picked = [...list.querySelectorAll('.multi-btn.picked')].map(b => b.textContent.replace(/^✓ /,'').trim());
-      surveyAnswers[list.dataset.q] = picked.join(' | ');
+      // Show/hide Other input
+      if (otherInput) {
+        const otherPicked = [...list.querySelectorAll('.multi-btn.picked')]
+          .some(b => b.textContent.includes('Other'));
+        otherInput.style.display = otherPicked ? 'block' : 'none';
+        if (otherPicked) otherInput.focus();
+      }
+      updateAnswer();
     });
   });
+
+  if (otherInput) {
+    otherInput.addEventListener('input', updateAnswer);
+  }
 });
 document.querySelectorAll('.scale-wrap').forEach(wrap => {
   wrap.querySelectorAll('.scale-btn').forEach(btn => {
@@ -788,11 +812,11 @@ const QUIZ_QS = [
 ];
 
 const ARCHETYPES = {
-  V:{name:'The Visionary',emoji:'🌟',color:'#7C3AED',tagline:"You see the future others can't yet.",desc:"You think in possibilities. While others see problems, you see potential. Your superpower is painting what could be, and making people believe it. You're built for big ideas and paths that don't exist yet.",strengths:['Big-picture thinking','Creative leadership','Inspiring others','Long-term vision']},
-  B:{name:'The Builder',emoji:'🔨',color:'#2563EB',tagline:"You turn ideas into real things.",desc:"You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and deliverables. Your superpower is execution, you don't stop until it works.",strengths:['Execution','Problem-solving','Systems thinking','Reliability']},
-  E:{name:'The Explorer',emoji:'🗺️',color:'#059669',tagline:"You learn by going.",desc:"You're drawn to what's new and unexplored. You don't have one passion, you have many, and that's your advantage. Your breadth becomes your unique edge. You discover who you are by trying.",strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness']},
-  C:{name:'The Connector',emoji:'🤝',color:'#D97706',tagline:"Your network is your net worth.",desc:"People gravitate toward you, and you make things happen through relationships. You know that most big things are built with others, not alone. Your superpower is community and bringing the right people together.",strengths:['Relationship building','Empathy','Collaboration','Community']},
-  A:{name:'The Analyst',emoji:'🔍',color:'#0891B2',tagline:"You understand what others overlook.",desc:"You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity, you cut through noise and find what matters.",strengths:['Critical thinking','Research','Pattern recognition','Precision']},
+  V:{name:'The Dreamer',emoji:'🌟',color:'#7C3AED',tagline:"You see the future others can't yet.",desc:"You think in possibilities. While others see problems, you see potential. Your superpower is painting what could be, and making people believe it. You're built for big ideas and paths that don't exist yet.",strengths:['Big-picture thinking','Creative leadership','Inspiring others','Long-term vision']},
+  B:{name:'The Go-Getter',emoji:'🔥',color:'#2563EB',tagline:"You turn ideas into real things.",desc:"You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and results. Your superpower is execution — you don't stop until it works.",strengths:['Execution','Problem-solving','Systems thinking','Reliability']},
+  E:{name:'The Explorer',emoji:'🧭',color:'#059669',tagline:"You learn by going.",desc:"You're drawn to what's new and unexplored. You don't have one passion, you have many, and that's your advantage. Your breadth becomes your unique edge. You discover who you are by trying.",strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness']},
+  C:{name:'The Networker',emoji:'🤝',color:'#D97706',tagline:"Your people are your superpower.",desc:"People gravitate toward you, and you make things happen through relationships. You know that most big things are built with others, not alone. Your superpower is community — bringing the right people together.",strengths:['Relationship building','Empathy','Collaboration','Community']},
+  A:{name:'The Strategist',emoji:'🎯',color:'#0891B2',tagline:"You understand what others overlook.",desc:"You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what matters.",strengths:['Critical thinking','Research','Pattern recognition','Precision']},
   D:{name:'The Disruptor',emoji:'⚡',color:'#DC2626',tagline:"You challenge what everyone else accepts.",desc:"You're allergic to 'that's just how it works.' You see broken systems and feel compelled to fix them. Bold, unconventional, and a little wild. Your superpower is seeing what's wrong and having the nerve to act.",strengths:['Bold thinking','Risk-taking','Innovation','Resilience']},
 };
 
