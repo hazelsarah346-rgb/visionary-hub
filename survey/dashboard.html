@@ -162,9 +162,9 @@
         <div class="stat-label">Email Signups</div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">🌍</div>
-        <div class="stat-num" id="stat-locations">—</div>
-        <div class="stat-label">Unique Locations</div>
+        <div class="stat-icon">🎮</div>
+        <div class="stat-num" id="stat-quiz">—</div>
+        <div class="stat-label">Quiz Signups</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🏆</div>
@@ -235,6 +235,7 @@
             <th>Email</th>
             <th>Location</th>
             <th>Archetype</th>
+            <th>Source</th>
             <th>Submitted</th>
           </tr>
         </thead>
@@ -287,10 +288,10 @@ function render() {
   // Stats
   set('stat-total', n);
   set('stat-emails', d.filter(r=>r.email).length);
-  set('stat-locations', new Set(d.map(r=>r.location).filter(Boolean)).size);
+  set('stat-quiz', d.filter(r=>r.source==='quiz').length);
   const arcCounts = count(d,'archetype');
   const topArc = Object.entries(arcCounts).sort((a,b)=>b[1]-a[1])[0];
-  set('stat-top-archetype', topArc ? (ARC_NAMES[topArc[0]]||topArc[0]).replace(/[🔮🏗🧭🌐📊⚡] /,'') : '—');
+  set('stat-top-archetype', topArc ? (ARC_NAMES[topArc[0]]||topArc[0]).replace(/\p{Emoji}/gu,'').trim() : '—');
 
   // Bar charts
   renderBar('chart-situation',  count(d,'situation'),          n);
@@ -325,14 +326,18 @@ function render() {
     const arc = r.archetype ? ARC_NAMES[r.archetype]||r.archetype : '—';
     const col = r.archetype ? ARC_COLORS[r.archetype]||'#7c3aed' : '#64748b';
     const dt  = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '—';
+    const src = r.source === 'quiz'
+      ? `<span class="badge" style="background:#7c3aed22;color:#a78bfa">🎮 Quiz</span>`
+      : `<span class="badge" style="background:#10b98122;color:#34d399">📋 Survey</span>`;
     return `<tr>
       <td style="color:#fff;font-weight:600">${r.name||'—'}</td>
       <td style="color:#60a5fa">${r.email}</td>
       <td style="color:#94a3b8">${r.location||'—'}</td>
       <td><span class="badge" style="background:${col}22;color:${col}">${arc}</span></td>
+      <td>${src}</td>
       <td style="color:#64748b">${dt}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" style="text-align:center;padding:32px;color:#64748b">No email signups yet</td></tr>`;
+  }).join('') : `<tr><td colspan="6" style="text-align:center;padding:32px;color:#64748b">No email signups yet</td></tr>`;
 }
 
 function count(data, field) {

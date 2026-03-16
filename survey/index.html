@@ -852,7 +852,7 @@ const ARCHETYPES = {
   B:{name:'The Go-Getter',emoji:'🔥',color:'#2563EB',tagline:"You turn ideas into real things.",desc:"You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and results. Your superpower is execution — you don't stop until it works.",strengths:['Execution','Problem-solving','Systems thinking','Reliability']},
   E:{name:'The Explorer',emoji:'🧭',color:'#059669',tagline:"You learn by going.",desc:"You're drawn to what's new and unexplored. You don't have one passion, you have many, and that's your advantage. Your breadth becomes your unique edge. You discover who you are by trying.",strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness']},
   C:{name:'The Networker',emoji:'🤝',color:'#D97706',tagline:"Your people are your superpower.",desc:"People gravitate toward you, and you make things happen through relationships. You know that most big things are built with others, not alone. Your superpower is community — bringing the right people together.",strengths:['Relationship building','Empathy','Collaboration','Community']},
-  A:{name:'The Strategist',emoji:'🎯',color:'#0891B2',tagline:"You understand what others overlook.",desc:"You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what matters.",strengths:['Critical thinking','Research','Pattern recognition','Precision']},
+  A:{name:'The Strategist',emoji:'🎯',color:'#0891B2',tagline:"You understand what others overlook.",desc:"You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what actually matters.",strengths:['Critical thinking','Research','Pattern recognition','Precision']},
   D:{name:'The Disruptor',emoji:'⚡',color:'#DC2626',tagline:"You challenge what everyone else accepts.",desc:"You're allergic to 'that's just how it works.' You see broken systems and feel compelled to fix them. Bold, unconventional, and a little wild. Your superpower is seeing what's wrong and having the nerve to act.",strengths:['Bold thinking','Risk-taking','Innovation','Resilience']},
 };
 
@@ -978,15 +978,48 @@ function showArchetypeResult() {
       </div>
       <div class="game-survey-cta">
         <h3>🏆 ${gameState.xp} XP earned — you're a natural!</h3>
-        <p>Now help us build North Star for people exactly like you.<br>2 minutes. Your answers shape what we build first.</p>
-        <button class="btn-game-primary" style="background:linear-gradient(135deg,${arch.color},#2563EB);box-shadow:0 8px 28px ${arch.color}55" onclick="goToSurveyContact()">
-          Take the Full Survey →
-        </button>
-        <button class="btn-game-secondary" onclick="restartGame()">↺ Retake quiz</button>
+        <p style="margin-bottom:20px">Be the first to know when North Star launches for <strong style="color:${arch.color}">${arch.name}s</strong> like you.</p>
+
+        <div id="quiz-signup-form">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <input id="quiz-name" type="text" placeholder="Your name" style="flex:1;min-width:120px;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
+            <input id="quiz-email" type="email" placeholder="Your email" style="flex:2;min-width:160px;padding:12px 14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none">
+          </div>
+          <button id="quiz-signup-btn" onclick="submitQuizSignup('${key}','${arch.color}')" style="width:100%;padding:14px 0;border:none;border-radius:50px;background:linear-gradient(135deg,${arch.color},#2563EB);box-shadow:0 8px 28px ${arch.color}55;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px">
+            🚀 Sign me up for early access
+          </button>
+          <p style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:14px">No spam. Just your early access invite when we launch.</p>
+        </div>
+
+        <div id="quiz-signup-done" style="display:none;text-align:center;padding:16px 0">
+          <div style="font-size:32px;margin-bottom:8px">🎉</div>
+          <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">You're on the list!</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.5)">We'll reach out when North Star is ready for you.</div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-direction:column">
+          <button class="btn-game-secondary" onclick="goToSurveyContact()">📋 Take the full survey (2 min) →</button>
+          <button class="btn-game-secondary" onclick="restartGame()">↺ Retake quiz</button>
+        </div>
       </div>
     </div>
   `;
   addXP(0, null); // refresh display
+}
+
+async function submitQuizSignup(archetypeKey, color) {
+  const name  = document.getElementById('quiz-name').value.trim();
+  const email = document.getElementById('quiz-email').value.trim();
+  if (!email) {
+    document.getElementById('quiz-email').style.borderColor = '#ef4444';
+    document.getElementById('quiz-email').focus();
+    return;
+  }
+  const btn = document.getElementById('quiz-signup-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await saveSurvey({ name, email, archetype: archetypeKey, source: 'quiz' });
+  document.getElementById('quiz-signup-form').style.display = 'none';
+  document.getElementById('quiz-signup-done').style.display = 'block';
 }
 
 function goToSurveyContact() {
