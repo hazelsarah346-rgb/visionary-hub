@@ -35,58 +35,99 @@
 
     /* Hero */
     .hero {
-      width: 100%; background: linear-gradient(180deg, #0a1628 0%, var(--bg) 100%);
-      padding: 48px 20px 60px; text-align: center; position: relative; overflow: hidden;
+      width: 100%;
+      background: linear-gradient(160deg, #060f20 0%, #0c1a35 40%, #0a1225 100%);
+      padding: 52px 20px 64px; text-align: center; position: relative; overflow: hidden;
     }
     .hero::before {
       content:''; position:absolute; inset:0;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,.15) 0%, transparent 70%);
+      background:
+        radial-gradient(ellipse 90% 50% at 50% -10%, rgba(124,58,237,.22) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(37,99,235,.12) 0%, transparent 60%);
     }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(37,99,235,.12); border: 1px solid rgba(37,99,235,.3);
-      border-radius: 50px; padding: 6px 16px; font-size: 12px; font-weight: 700;
-      color: var(--blue2); letter-spacing: .5px; margin-bottom: 20px;
+    /* grid dot pattern */
+    .hero::after {
+      content:''; position:absolute; inset:0; pointer-events:none;
+      background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 75%);
     }
-    .hero-logo {
-      display: inline-flex; align-items: center; gap: 12px;
-      margin-bottom: 28px;
+
+    /* North Star brand row */
+    .hero-brand {
+      position: relative; z-index: 1;
+      display: inline-flex; align-items: center; gap: 14px;
+      margin-bottom: 36px;
     }
     .hero-logo-icon {
-      width: 52px; height: 52px;
+      width: 60px; height: 60px;
       background: linear-gradient(135deg, var(--blue), var(--purple));
-      border-radius: 16px; display: flex; align-items: center; justify-content: center;
-      font-size: 26px; box-shadow: 0 8px 32px rgba(37,99,235,.4);
+      border-radius: 18px; display: flex; align-items: center; justify-content: center;
+      font-size: 30px; box-shadow: 0 8px 40px rgba(124,58,237,.5), 0 0 0 1px rgba(255,255,255,.08);
       animation: glow 3s ease-in-out infinite;
     }
-    .hero-logo-text { text-align: left; }
-    .hero-logo-name { font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
-    .hero-logo-tag  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .hero-brand-text { text-align: left; }
+    .hero-brand-name { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -.3px; }
+    .hero-brand-tag  { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .3px; }
+
+    /* Pain cards scroll strip */
+    .pain-strip {
+      position: relative; z-index: 1;
+      display: flex; gap: 10px; overflow-x: auto; overflow-y: visible;
+      padding: 4px 20px 16px; margin: 0 -20px 32px;
+      scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+    }
+    .pain-strip::-webkit-scrollbar { display: none; }
+    .pain-card {
+      flex-shrink: 0; background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 14px;
+      padding: 14px 18px; text-align: left; max-width: 210px;
+    }
+    .pain-card-quote { font-size: 13px; color: #CBD5E1; line-height: 1.55; font-style: italic; margin-bottom: 8px; }
+    .pain-card-who   { font-size: 11px; color: var(--muted); font-weight: 600; }
+
     .hero h1 {
-      font-size: clamp(26px, 6vw, 40px); font-weight: 900; line-height: 1.25;
-      margin-bottom: 16px; color: var(--text); position: relative;
+      font-size: clamp(28px, 7vw, 46px); font-weight: 900; line-height: 1.18;
+      margin-bottom: 18px; color: var(--text); position: relative; z-index: 1;
+      letter-spacing: -.5px;
     }
-    .hero h1 span { background: linear-gradient(135deg, var(--blue2), var(--purple2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero h1 em { font-style: normal; background: linear-gradient(135deg, var(--blue2), var(--purple2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .hero-sub {
-      font-size: 16px; color: #94A3B8; line-height: 1.7; max-width: 480px;
-      margin: 0 auto 32px; position: relative;
+      font-size: 16px; color: #94A3B8; line-height: 1.7; max-width: 440px;
+      margin: 0 auto 28px; position: relative; z-index: 1;
     }
-    .hero-stats {
-      display: flex; gap: 28px; justify-content: center; flex-wrap: wrap;
-      margin-bottom: 36px; position: relative;
+
+    /* Benefits list */
+    .hero-benefits {
+      display: inline-flex; flex-direction: column; gap: 10px;
+      text-align: left; margin-bottom: 32px; position: relative; z-index: 1;
     }
-    .hero-stat { text-align: center; }
-    .hero-stat-num { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; }
-    .hero-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .hero-benefit {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 600; color: #CBD5E1;
+    }
+    .hero-benefit-icon {
+      width: 28px; height: 28px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    }
+
     .hero-cta {
       display: inline-flex; align-items: center; gap: 10px;
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-      color: #fff; border: none; border-radius: 50px; padding: 16px 40px;
-      font-size: 17px; font-weight: 800; cursor: pointer; font-family: inherit;
-      box-shadow: 0 8px 32px rgba(37,99,235,.45); transition: transform .15s, box-shadow .15s;
-      position: relative;
+      background: linear-gradient(135deg, #3B82F6, #7C3AED);
+      color: #fff; border: none; border-radius: 50px; padding: 18px 44px;
+      font-size: 18px; font-weight: 800; cursor: pointer; font-family: inherit;
+      box-shadow: 0 8px 36px rgba(124,58,237,.5); transition: transform .15s, box-shadow .15s;
+      position: relative; z-index: 1;
     }
-    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(37,99,235,.55); }
+    .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 14px 44px rgba(124,58,237,.6); }
+    .hero-proof {
+      margin-top: 14px; font-size: 12px; color: var(--muted);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      position: relative; z-index: 1;
+    }
+    .hero-proof-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 2s ease-in-out infinite; }
     .hero-time { font-size: 12px; color: var(--muted); margin-top: 12px; position: relative; }
 
     /* Sections */
@@ -324,25 +365,65 @@
 
   <!-- Hero -->
   <div class="hero">
-    <div class="hero-badge">💡 Early Research · Confidential</div>
-    <div class="hero-logo">
+
+    <!-- Brand -->
+    <div class="hero-brand">
       <div class="hero-logo-icon">💡</div>
-      <div class="hero-logo-text">
-        <div class="hero-logo-name">North Star</div>
-        <div class="hero-logo-tag">Your vision. Your path. Your people.</div>
+      <div class="hero-brand-text">
+        <div class="hero-brand-name">North Star</div>
+        <div class="hero-brand-tag">Mentorship · Clarity · Direction</div>
       </div>
     </div>
-    <h1>You don't have it all figured out yet.<br><span>That's exactly who we built this for.</span></h1>
-    <p class="hero-sub">We're building a platform for students, career switchers, and anyone figuring out their next move. 2 minutes of your honesty helps us build something that actually works.</p>
-    <div class="hero-stats">
-      <div class="hero-stat"><div class="hero-stat-num">2 min</div><div class="hero-stat-lbl">That's all it takes</div></div>
-      <div class="hero-stat"><div class="hero-stat-num">8</div><div class="hero-stat-lbl">Quick questions</div></div>
-      <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-lbl">Anonymous if you want</div></div>
+
+    <!-- Headline -->
+    <h1>Students and early careers<br>deserve a <em>real mentor.</em><br>Not just Google.</h1>
+    <p class="hero-sub">We're building the platform that gives every student and career starter the guidance, roadmap, and community they need — and we want your honest input first.</p>
+
+    <!-- Pain point cards -->
+    <div class="pain-strip">
+      <div class="pain-card">
+        <div class="pain-card-quote">"I don't even know what career path I actually want."</div>
+        <div class="pain-card-who">🎓 Final year student</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-quote">"I wish I had someone to just tell me what my next step should be."</div>
+        <div class="pain-card-who">💼 Recent graduate</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-quote">"I'm switching careers and I feel completely lost."</div>
+        <div class="pain-card-who">🔄 Career switcher</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-card-quote">"Everyone around me seems to have a plan. I don't."</div>
+        <div class="pain-card-who">🌱 Early career</div>
+      </div>
     </div>
+
+    <!-- Benefits -->
+    <div class="hero-benefits">
+      <div class="hero-benefit">
+        <div class="hero-benefit-icon" style="background:rgba(124,58,237,.2)">🤝</div>
+        Real mentors who've walked your path
+      </div>
+      <div class="hero-benefit">
+        <div class="hero-benefit-icon" style="background:rgba(37,99,235,.2)">🗺️</div>
+        A roadmap built for your exact situation
+      </div>
+      <div class="hero-benefit">
+        <div class="hero-benefit-icon" style="background:rgba(16,185,129,.2)">👥</div>
+        Peers who are figuring it out too
+      </div>
+    </div>
+
+    <!-- CTA -->
     <button class="hero-cta" onclick="document.getElementById('survey-q1').scrollIntoView({behavior:'smooth'})">
-      Start the Survey →
+      Share Your Experience →
     </button>
-    <div class="hero-time">No account needed. No spam. Ever.</div>
+    <div class="hero-proof">
+      <span class="hero-proof-dot"></span>
+      2 min &nbsp;·&nbsp; 8 questions &nbsp;·&nbsp; 100% anonymous &nbsp;·&nbsp; No account needed
+    </div>
+
   </div>
 
   <!-- Survey body -->
