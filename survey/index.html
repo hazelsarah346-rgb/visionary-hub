@@ -3,619 +3,750 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>North Star — Market Research Survey</title>
+  <title>North Star — Your Vision Starts Here</title>
+  <meta name="description" content="North Star helps students, career switchers, and anyone figuring it out get clarity, a real roadmap, and the mentorship they deserve." />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #050F1E; --card: #0C1D30; --border: #162A42;
-      --blue: #2563EB; --purple: #7C3AED; --text: #EFF6FF;
-      --muted: #64748B; --green: #10B981;
+      --bg: #050F1E; --surface: #091525; --card: #0C1D30; --border: #162A42;
+      --blue: #2563EB; --blue2: #3B82F6; --purple: #7C3AED; --purple2: #A78BFA;
+      --text: #EFF6FF; --muted: #64748B; --green: #10B981; --yellow: #F59E0B;
     }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg); color: var(--text);
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: flex-start;
-      padding: 20px 16px 60px;
+      min-height: 100vh;
     }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.2);opacity:1} }
-    @keyframes floatUp { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-120vh);opacity:0} }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+    @keyframes floatUp  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-110vh) rotate(360deg);opacity:0} }
+    @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes glow     { 0%,100%{box-shadow:0 0 20px rgba(37,99,235,.3)} 50%{box-shadow:0 0 40px rgba(124,58,237,.5)} }
+    @keyframes slideIn  { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes xpPop    { 0%{transform:scale(0) translateY(0);opacity:1} 80%{transform:scale(1.2) translateY(-30px);opacity:1} 100%{transform:scale(1) translateY(-50px);opacity:0} }
+    @keyframes shake    { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
-    .logo { display:flex; align-items:center; gap:10px; margin-bottom:28px; margin-top:8px; }
-    .logo-icon { width:42px; height:42px; background:linear-gradient(135deg,var(--blue),var(--purple)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
-    .logo-text { font-size:18px; font-weight:800; color:var(--text); }
-    .logo-sub { font-size:11px; color:var(--muted); font-weight:500; }
+    /* ── SURVEY WRAPPER ── */
+    #survey-mode {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0; min-height: 100vh;
+    }
+
+    /* Hero */
+    .hero {
+      width: 100%; background: linear-gradient(180deg, #0a1628 0%, var(--bg) 100%);
+      padding: 48px 20px 60px; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,.15) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(37,99,235,.12); border: 1px solid rgba(37,99,235,.3);
+      border-radius: 50px; padding: 6px 16px; font-size: 12px; font-weight: 700;
+      color: var(--blue2); letter-spacing: .5px; margin-bottom: 20px;
+    }
+    .hero-logo {
+      display: inline-flex; align-items: center; gap: 12px;
+      margin-bottom: 28px;
+    }
+    .hero-logo-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; box-shadow: 0 8px 32px rgba(37,99,235,.4);
+      animation: glow 3s ease-in-out infinite;
+    }
+    .hero-logo-text { text-align: left; }
+    .hero-logo-name { font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
+    .hero-logo-tag  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .hero h1 {
+      font-size: clamp(26px, 6vw, 40px); font-weight: 900; line-height: 1.25;
+      margin-bottom: 16px; color: var(--text); position: relative;
+    }
+    .hero h1 span { background: linear-gradient(135deg, var(--blue2), var(--purple2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub {
+      font-size: 16px; color: #94A3B8; line-height: 1.7; max-width: 480px;
+      margin: 0 auto 32px; position: relative;
+    }
+    .hero-stats {
+      display: flex; gap: 28px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 36px; position: relative;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; }
+    .hero-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff; border: none; border-radius: 50px; padding: 16px 40px;
+      font-size: 17px; font-weight: 800; cursor: pointer; font-family: inherit;
+      box-shadow: 0 8px 32px rgba(37,99,235,.45); transition: transform .15s, box-shadow .15s;
+      position: relative;
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(37,99,235,.55); }
+    .hero-time { font-size: 12px; color: var(--muted); margin-top: 12px; position: relative; }
+
+    /* Sections */
+    .survey-body { width: 100%; max-width: 560px; padding: 0 16px 80px; margin: 0 auto; }
+
+    .section-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 32px 0 20px; font-size: 11px; font-weight: 700;
+      color: var(--muted); letter-spacing: 1.2px; text-transform: uppercase;
+    }
+    .section-divider::before, .section-divider::after {
+      content:''; flex:1; height:1px; background:var(--border);
+    }
 
     .card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 20px; padding: 28px 24px;
-      width: 100%; max-width: 520px;
-      animation: fadeUp 0.3s ease;
+      border-radius: 18px; padding: 24px 22px; margin-bottom: 12px;
+      animation: fadeUp .3s ease;
     }
-    .progress-wrap { width:100%; max-width:520px; margin-bottom:14px; }
-    .progress-bar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
-    .progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--purple)); border-radius:2px; transition:width 0.4s ease; }
-    .progress-label { display:flex; justify-content:space-between; margin-top:5px; font-size:11px; color:var(--muted); }
-    .dots { display:flex; gap:4px; margin-top:8px; }
-    .dot { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); transition:background 0.3s; }
-    .dot.done { background:var(--purple); }
+    .card h2 { font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--text); line-height: 1.4; }
 
-    h1 { font-size:22px; font-weight:900; margin-bottom:10px; line-height:1.3; }
-    h2 { font-size:18px; font-weight:800; margin-bottom:20px; line-height:1.4; text-align:center; }
-    p { color:var(--muted); font-size:14px; line-height:1.7; }
-    .emoji-big { font-size:48px; text-align:center; margin-bottom:12px; display:block; }
-
-    .btn-primary {
-      width:100%; padding:14px 0; border:none; border-radius:50px;
-      background:linear-gradient(135deg,var(--blue),var(--purple));
-      color:#fff; font-size:16px; font-weight:700; cursor:pointer;
-      font-family:inherit; transition:opacity 0.15s;
-      box-shadow: 0 4px 20px rgba(37,99,235,0.35);
-    }
-    .btn-primary:hover { opacity:0.9; }
-    .btn-primary:disabled { background:var(--border); box-shadow:none; cursor:default; opacity:0.6; }
-    .btn-secondary {
-      width:100%; padding:12px 0; border:1px solid var(--border);
-      border-radius:50px; background:rgba(255,255,255,0.03);
-      color:var(--muted); font-size:14px; font-weight:600; cursor:pointer;
-      font-family:inherit; margin-top:10px; transition:all 0.15s;
-    }
-    .btn-secondary:hover { border-color:var(--blue); color:var(--text); }
-
-    .choice-list { display:flex; flex-direction:column; gap:9px; }
+    .choice-list { display: flex; flex-direction: column; gap: 8px; }
     .choice-btn {
-      background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.09);
-      border-radius:12px; padding:13px 16px; color:var(--text);
-      font-size:14px; font-weight:500; cursor:pointer; text-align:left;
-      transition:all 0.15s; font-family:inherit; line-height:1.4;
+      background: rgba(255,255,255,.04); border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 13px 16px; color: var(--text);
+      font-size: 14px; font-weight: 500; cursor: pointer; text-align: left;
+      transition: all .15s; font-family: inherit; line-height: 1.4; width: 100%;
     }
-    .choice-btn:hover { background:rgba(37,99,235,0.15); border-color:var(--blue); }
+    .choice-btn:hover  { background: rgba(37,99,235,.15); border-color: var(--blue); }
+    .choice-btn.picked { background: rgba(37,99,235,.2); border-color: var(--blue); color: #fff; }
 
-    .scale-wrap { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .scale-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
     .scale-btn {
-      flex:1 1 110px; padding:14px 10px; border:1.5px solid rgba(255,255,255,0.09);
-      border-radius:12px; background:rgba(255,255,255,0.04);
-      color:var(--text); font-size:13px; font-weight:600; cursor:pointer;
-      text-align:center; font-family:inherit; transition:all 0.15s;
+      flex: 1 1 110px; padding: 13px 8px; border: 1.5px solid rgba(255,255,255,.08);
+      border-radius: 12px; background: rgba(255,255,255,.04);
+      color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: center; font-family: inherit; transition: all .15s;
     }
-    .scale-btn:hover { background:rgba(37,99,235,0.15); border-color:var(--blue); }
+    .scale-btn:hover  { background: rgba(37,99,235,.15); border-color: var(--blue); }
+    .scale-btn.picked { background: rgba(37,99,235,.2); border-color: var(--blue); }
 
     input, textarea {
-      width:100%; background:rgba(255,255,255,0.04);
-      border:1.5px solid rgba(255,255,255,0.1);
-      border-radius:12px; padding:13px 16px;
-      color:var(--text); font-size:14px; outline:none;
-      font-family:inherit; transition:border-color 0.15s;
+      width: 100%; background: rgba(255,255,255,.04);
+      border: 1.5px solid rgba(255,255,255,.1); border-radius: 12px;
+      padding: 13px 16px; color: var(--text); font-size: 14px; outline: none;
+      font-family: inherit; transition: border-color .15s; margin-bottom: 10px;
     }
-    input:focus, textarea:focus { border-color:var(--blue); }
-    input::placeholder, textarea::placeholder { color:var(--muted); }
-    textarea { resize:vertical; min-height:80px; }
+    input:focus, textarea:focus { border-color: var(--blue); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: vertical; min-height: 90px; }
 
-    .tag-grid { display:flex; flex-wrap:wrap; gap:8px; }
-    .tag-btn {
-      background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.09);
-      border-radius:20px; padding:7px 14px; color:var(--text);
-      font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
-      transition:all 0.15s;
+    .btn-primary {
+      width: 100%; padding: 14px 0; border: none; border-radius: 50px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: opacity .15s;
+      box-shadow: 0 4px 20px rgba(37,99,235,.3); margin-top: 4px;
     }
-    .tag-btn:hover, .tag-btn.selected { background:rgba(124,58,237,0.2); border-color:var(--purple); color:#fff; }
+    .btn-primary:hover    { opacity: .9; }
+    .btn-primary:disabled { background: var(--border); box-shadow: none; opacity: .6; cursor: default; }
 
-    .archetype-badge {
-      border-radius:14px; padding:14px 16px; margin-bottom:14px;
-      display:flex; align-items:center; gap:12px;
+    /* Contact card */
+    .contact-card {
+      background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(124,58,237,.1));
+      border: 1px solid rgba(37,99,235,.25); border-radius: 18px; padding: 24px 22px;
+      margin-bottom: 12px;
     }
-    .archetype-emoji { font-size:28px; }
-    .archetype-name { font-size:15px; font-weight:800; color:#fff; }
-    .archetype-tag { font-size:12px; color:var(--muted); margin-top:2px; }
-    .strengths-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-    .strength-chip { border-radius:20px; padding:4px 12px; font-size:12px; }
+    .contact-card h2 { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+    .contact-card p  { font-size: 13px; color: #94A3B8; margin-bottom: 18px; line-height: 1.6; }
 
-    .info-rows > div { display:flex; align-items:center; gap:8px; color:#94A3B8; font-size:13px; padding:5px 0; }
-    .confetti-piece { position:fixed; pointer-events:none; border-radius:2px; }
-
-    .quiz-progress { display:flex; gap:4px; margin-bottom:16px; }
-    .quiz-dot { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,0.08); transition:background 0.3s; }
-    .quiz-dot.done { background:var(--purple); }
-
-    .quiz-opt {
-      background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.1);
-      border-radius:14px; padding:16px 18px; color:var(--text);
-      font-size:14px; font-weight:500; cursor:pointer; text-align:left;
-      display:flex; align-items:center; gap:14px; transition:all 0.15s; width:100%;
-      font-family:inherit; margin-bottom:9px;
+    /* Archetype mini badge */
+    .arch-mini {
+      display: flex; align-items: center; gap: 10px;
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
     }
-    .quiz-opt:hover { background:rgba(124,58,237,0.2); border-color:var(--purple); }
-    .quiz-opt.selected { background:rgba(124,58,237,0.35); border-color:var(--purple); transform:scale(1.02); }
-    .opt-emoji { font-size:24px; flex-shrink:0; }
 
-    .section-label { font-size:11px; font-weight:700; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
-    .small-note { font-size:11px; color:#334155; text-align:center; margin-top:8px; }
+    /* Trust bar */
+    .trust-bar {
+      display: flex; justify-content: center; align-items: center; gap: 20px;
+      flex-wrap: wrap; padding: 20px 0; margin-bottom: 8px;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .trust-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+
+    /* Done */
+    .done-hero {
+      text-align: center; padding: 40px 22px 24px;
+    }
+    .done-emoji { font-size: 72px; margin-bottom: 14px; display: block; }
+    .done-hero h1 { font-size: 26px; font-weight: 900; margin-bottom: 10px; }
+    .done-hero p  { font-size: 14px; color: #94A3B8; line-height: 1.7; margin-bottom: 24px; }
+
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .feature-cell {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 14px 14px; font-size: 13px; color: #94A3B8; line-height: 1.5;
+    }
+    .feature-cell strong { display: block; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+
+    .share-btn {
+      width: 100%; padding: 13px 0; border: 1.5px solid var(--border);
+      border-radius: 50px; background: transparent; color: var(--text);
+      font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: all .15s; margin-top: 10px;
+    }
+    .share-btn:hover { border-color: var(--blue); background: rgba(37,99,235,.08); }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex; gap: 8px; width: 100%; max-width: 560px;
+      padding: 16px 16px 0; margin: 0 auto;
+    }
+    .mode-tab {
+      flex: 1; padding: 10px 0; border-radius: 12px; border: 1.5px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all .2s;
+    }
+    .mode-tab.active { background: var(--card); border-color: var(--blue); color: var(--text); }
+
+    /* ── GAME MODE ── */
+    #game-mode {
+      display: none; min-height: 100vh;
+      background: linear-gradient(160deg, #0f0c29 0%, #1a0a2e 50%, #050F1E 100%);
+      flex-direction: column; align-items: center; padding: 0 16px 80px;
+    }
+    #game-mode.active { display: flex; }
+    #survey-mode.hidden { display: none; }
+
+    .game-header {
+      width: 100%; max-width: 560px; padding: 20px 0 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .xp-bar-wrap { flex: 1; margin: 0 12px; }
+    .xp-label { font-size: 10px; font-weight: 700; color: var(--purple2); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .xp-track { height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+    .xp-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #EC4899); border-radius: 3px; transition: width .6s cubic-bezier(.34,1.56,.64,1); }
+    .xp-badge { background: rgba(124,58,237,.2); border: 1px solid var(--purple); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 800; color: var(--purple2); white-space: nowrap; }
+
+    .game-card {
+      width: 100%; max-width: 560px; margin-top: 20px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px; padding: 28px 22px;
+      animation: slideIn .3s ease;
+    }
+
+    .game-q-num { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+    .game-q { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.4; margin-bottom: 24px; text-align: center; }
+
+    .game-opts { display: flex; flex-direction: column; gap: 10px; }
+    .game-opt {
+      background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.1);
+      border-radius: 14px; padding: 16px 18px; color: #fff;
+      font-size: 14px; font-weight: 500; cursor: pointer; text-align: left;
+      display: flex; align-items: center; gap: 14px;
+      transition: all .15s; font-family: inherit; width: 100%;
+    }
+    .game-opt:hover   { background: rgba(124,58,237,.2); border-color: var(--purple); }
+    .game-opt.correct { background: rgba(16,185,129,.2); border-color: var(--green); animation: none; }
+    .game-opt.selected { background: rgba(124,58,237,.35); border-color: var(--purple); transform: scale(1.02); }
+    .opt-icon { font-size: 24px; flex-shrink: 0; }
+
+    .xp-popup {
+      position: fixed; font-size: 16px; font-weight: 900; color: #F59E0B;
+      pointer-events: none; animation: xpPop 1.2s ease forwards;
+      z-index: 9999; text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    }
+
+    .game-result {
+      width: 100%; max-width: 560px; margin-top: 20px; text-align: center;
+      animation: fadeUp .4s ease;
+    }
+    .arch-card {
+      border-radius: 22px; padding: 28px 22px; margin-bottom: 16px;
+      position: relative; overflow: hidden;
+    }
+    .arch-card::before {
+      content:''; position:absolute; inset:0; opacity:.1;
+      background: radial-gradient(circle at 30% 50%, white, transparent 60%);
+    }
+    .arch-emoji-big { font-size: 80px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 20px rgba(255,255,255,.3)); }
+    .arch-type-tag  { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 12px; }
+    .arch-name      { font-size: 30px; font-weight: 900; color: #fff; margin-bottom: 6px; }
+    .arch-tagline   { font-size: 16px; font-weight: 600; color: rgba(255,255,255,.8); font-style: italic; margin-bottom: 16px; }
+    .arch-desc      { font-size: 14px; color: rgba(255,255,255,.7); line-height: 1.7; margin-bottom: 18px; }
+    .strength-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+    .strength-chip  { border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); color: #fff; }
+
+    .game-survey-cta {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px; padding: 22px; margin-bottom: 14px; text-align: center;
+    }
+    .game-survey-cta h3 { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .game-survey-cta p  { font-size: 13px; color: rgba(255,255,255,.5); margin-bottom: 16px; line-height: 1.6; }
+
+    .btn-game-primary {
+      width: 100%; padding: 15px 0; border: none; border-radius: 50px;
+      font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit;
+      transition: all .15s; color: #fff;
+    }
+    .btn-game-secondary {
+      width: 100%; padding: 13px 0; border: 1.5px solid rgba(255,255,255,.15);
+      border-radius: 50px; background: transparent; color: rgba(255,255,255,.6);
+      font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all .15s; margin-top: 8px;
+    }
+    .btn-game-secondary:hover { border-color: var(--purple); color: #fff; }
+
+    .stars-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+    .star { font-size: 28px; opacity: .2; transition: all .3s; }
+    .star.lit { opacity: 1; animation: glow 1.5s ease-in-out infinite; }
+
+    .confetti-piece { position: fixed; pointer-events: none; border-radius: 2px; z-index: 9998; }
 
     @media (max-width: 480px) {
-      .card { padding:22px 18px; }
-      h1 { font-size:20px; }
-      h2 { font-size:16px; }
+      .hero h1 { font-size: 24px; }
+      .hero-stats { gap: 18px; }
+      .hero-stat-num { font-size: 22px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .game-q { font-size: 17px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Logo -->
-<div class="logo">
-  <div class="logo-icon">💡</div>
-  <div>
-    <div class="logo-text">North Star</div>
-    <div class="logo-sub">Market Research · Confidential</div>
-  </div>
+<!-- Mode toggle -->
+<div class="mode-toggle" id="modeToggle">
+  <button class="mode-tab active" id="tabSurvey" onclick="switchMode('survey')">📋 Survey</button>
+  <button class="mode-tab"        id="tabGame"   onclick="switchMode('game')">🎮 Quiz Game</button>
 </div>
 
-<div id="app"></div>
+<!-- ═══════════════════════════════════════════════════════════════
+     SURVEY MODE
+═══════════════════════════════════════════════════════════════ -->
+<div id="survey-mode">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">💡 Early Research · Confidential</div>
+    <div class="hero-logo">
+      <div class="hero-logo-icon">💡</div>
+      <div class="hero-logo-text">
+        <div class="hero-logo-name">North Star</div>
+        <div class="hero-logo-tag">Your vision. Your path. Your people.</div>
+      </div>
+    </div>
+    <h1>You don't have it all figured out yet.<br><span>That's exactly who we built this for.</span></h1>
+    <p class="hero-sub">We're building a platform for students, career switchers, and anyone figuring out their next move. 2 minutes of your honesty helps us build something that actually works.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">2 min</div><div class="hero-stat-lbl">That's all it takes</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">8</div><div class="hero-stat-lbl">Quick questions</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-lbl">Anonymous if you want</div></div>
+    </div>
+    <button class="hero-cta" onclick="document.getElementById('survey-q1').scrollIntoView({behavior:'smooth'})">
+      Start the Survey →
+    </button>
+    <div class="hero-time">No account needed. No spam. Ever.</div>
+  </div>
+
+  <!-- Survey body -->
+  <div class="survey-body">
+
+    <div class="trust-bar">
+      <div class="trust-item">🔒 Your answers are private</div>
+      <div class="trust-item">📊 Used only for research</div>
+      <div class="trust-item">✉️ Early access if you want it</div>
+    </div>
+
+    <div class="section-divider">About You</div>
+
+    <div class="card" id="survey-q1">
+      <h2>📍 What best describes where you are right now?</h2>
+      <div class="choice-list" data-q="situation">
+        <button class="choice-btn">🎓 Student — still in school or just finished</button>
+        <button class="choice-btn">🔄 Career switcher — pivoting to something new</button>
+        <button class="choice-btn">🚀 Recent grad looking for my first real role</button>
+        <button class="choice-btn">💼 Working but want something more meaningful</button>
+        <button class="choice-btn">🌱 Just figuring it out — no clear direction yet</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🧱 What's your #1 challenge right now?</h2>
+      <div class="choice-list" data-q="challenge">
+        <button class="choice-btn">💭 I don't know what direction to go</button>
+        <button class="choice-btn">🗺️ I have a goal but no clear path to it</button>
+        <button class="choice-btn">🤝 I lack the right connections or mentors</button>
+        <button class="choice-btn">📉 I start things but struggle to follow through</button>
+        <button class="choice-btn">😶 I feel behind everyone else and don't know why</button>
+      </div>
+    </div>
+
+    <div class="section-divider">Mentorship & Support</div>
+
+    <div class="card">
+      <h2>✨ How valuable would having a mentor in your field be?</h2>
+      <div class="scale-wrap" data-q="mentor_value">
+        <button class="scale-btn">Not really</button>
+        <button class="scale-btn">Somewhat useful</button>
+        <button class="scale-btn">Very valuable</button>
+        <button class="scale-btn">🔥 Game-changing</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🤝 What kind of mentorship would help you most?</h2>
+      <div class="choice-list" data-q="mentorship_format">
+        <button class="choice-btn">📞 1-on-1 calls with someone in my field</button>
+        <button class="choice-btn">💬 Ongoing chat / messaging access</button>
+        <button class="choice-btn">📚 A structured programme with milestones</button>
+        <button class="choice-btn">👥 Group sessions with peers + a mentor</button>
+        <button class="choice-btn">🔍 Help finding the right opportunities</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👥 Would connecting with peers at your exact stage help?</h2>
+      <div class="choice-list" data-q="peer_connect">
+        <button class="choice-btn">💯 Absolutely — that would change things for me</button>
+        <button class="choice-btn">🤔 Maybe, I'm not sure yet</button>
+        <button class="choice-btn">😊 Nice to have, not essential</button>
+        <button class="choice-btn">🙅 I prefer to work alone</button>
+      </div>
+    </div>
+
+    <div class="section-divider">Your Situation</div>
+
+    <div class="card">
+      <h2>🛠️ How do you currently manage your goals and plans?</h2>
+      <div class="choice-list" data-q="tools">
+        <button class="choice-btn">📝 Notes app or journal</button>
+        <button class="choice-btn">📊 Spreadsheet or task manager</button>
+        <button class="choice-btn">🧠 Mostly in my head</button>
+        <button class="choice-btn">📱 A goal-tracking or productivity app</button>
+        <button class="choice-btn">❌ I don't really track them</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💬 In your own words — what would actually change things for you right now?</h2>
+      <textarea id="open-answer" placeholder="Be honest. What's really missing? No wrong answers." rows="4"></textarea>
+      <p style="font-size:12px;color:var(--muted)">This is the most important question. Even one sentence helps.</p>
+    </div>
+
+    <div class="section-divider">Almost There</div>
+
+    <div class="contact-card" id="contact-section">
+      <h2>👋 Who are you?</h2>
+      <p>Leave your info to get early access when North Star launches. Completely optional — but we'd love to build this with you.</p>
+      <input type="text"  id="s-name"     placeholder="Your first name" />
+      <input type="email" id="s-email"    placeholder="Email address" />
+      <input type="text"  id="s-location" placeholder="City, Country  (e.g. Accra, Ghana)" />
+      <div id="arch-mini-container"></div>
+      <button class="btn-primary" id="submit-btn" onclick="submitSurvey()">Submit & Join the Waitlist 🚀</button>
+      <p style="font-size:11px;color:#334155;text-align:center;margin-top:10px">No spam. Unsubscribe anytime. Your data is never sold.</p>
+    </div>
+
+  </div><!-- /survey-body -->
+</div><!-- /survey-mode -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     GAME MODE
+═══════════════════════════════════════════════════════════════ -->
+<div id="game-mode">
+  <div class="game-header">
+    <div class="hero-logo" style="margin:0">
+      <div class="hero-logo-icon" style="width:36px;height:36px;font-size:18px;border-radius:10px">💡</div>
+      <div class="hero-logo-text">
+        <div class="hero-logo-name" style="font-size:16px">North Star</div>
+      </div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-label"><span>⚡ XP</span><span id="xp-count">0 / 200</span></div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+    <div class="xp-badge" id="xp-badge">0 XP</div>
+  </div>
+
+  <div id="game-container"></div>
+</div>
+
 
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-// Replace with your Supabase credentials
 const SUPABASE_URL = 'https://hazhdsxngovturtysfby.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhemhkc3huZ292dHVydHlzZmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5OTM3ODYsImV4cCI6MjA1NzU2OTc4Nn0.k5JvBJRqTWS-z6T1K-L20JEdKa8ULSy97n-nWOEJD40';
 
 async function saveSurvey(data) {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/survey_responses`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/survey_responses`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal',
-      },
+      headers: { 'Content-Type':'application/json', 'apikey':SUPABASE_KEY, 'Authorization':`Bearer ${SUPABASE_KEY}`, 'Prefer':'return=minimal' },
       body: JSON.stringify(data),
     });
-    return res.ok;
-  } catch (e) {
-    console.error('Save failed:', e);
-    return false;
+  } catch(e) { console.error(e); }
+}
+
+// ─── SURVEY MODE LOGIC ───────────────────────────────────────────────────────
+const surveyAnswers = {};
+let surveyArchetype = null;
+
+// Wire choice buttons
+document.querySelectorAll('.choice-list').forEach(list => {
+  list.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      list.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('picked'));
+      btn.classList.add('picked');
+      surveyAnswers[list.dataset.q] = btn.textContent.trim();
+    });
+  });
+});
+document.querySelectorAll('.scale-wrap').forEach(wrap => {
+  wrap.querySelectorAll('.scale-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('picked'));
+      btn.classList.add('picked');
+      surveyAnswers[wrap.dataset.q] = btn.textContent.trim();
+    });
+  });
+});
+
+async function submitSurvey() {
+  const name     = document.getElementById('s-name').value.trim();
+  const email    = document.getElementById('s-email').value.trim();
+  const location = document.getElementById('s-location').value.trim();
+  const openAns  = document.getElementById('open-answer').value.trim();
+  const btn      = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await saveSurvey({ ...surveyAnswers, name, email, location, challenge_open: openAns, archetype: surveyArchetype });
+  showSurveyDone(name);
+}
+
+function showSurveyDone(name) {
+  document.querySelector('.survey-body').innerHTML = `
+    <div class="done-hero">
+      <span class="done-emoji">🎉</span>
+      <h1>Thank you${name ? ', '+name : ''}!</h1>
+      <p>Your answers will directly shape what we build.<br>We'll be in touch when North Star launches.</p>
+    </div>
+    <div class="feature-grid" style="margin:0 0 20px">
+      <div class="feature-cell"><strong>🧭 Vision Canvas</strong>Your goal, made concrete in 60 seconds</div>
+      <div class="feature-cell"><strong>🗺️ AI Roadmap</strong>Built for your exact field and stage</div>
+      <div class="feature-cell"><strong>🤝 Mentorship</strong>People who've walked your path</div>
+      <div class="feature-cell"><strong>👥 Community</strong>Peers figuring it out with you</div>
+    </div>
+    <button class="btn-primary" onclick="switchMode('game')" style="margin-bottom:10px">🎮 Play the Archetype Quiz →</button>
+    <button class="share-btn" onclick="copyLink()">🔗 Share this survey</button>
+    <p style="font-size:11px;color:#334155;text-align:center;margin-top:16px">Help us reach more people by sharing</p>
+  `;
+  spawnConfetti();
+}
+
+// ─── MODE SWITCH ─────────────────────────────────────────────────────────────
+function switchMode(mode) {
+  const survey = document.getElementById('survey-mode');
+  const game   = document.getElementById('game-mode');
+  const tS = document.getElementById('tabSurvey');
+  const tG = document.getElementById('tabGame');
+  if (mode === 'game') {
+    survey.classList.add('hidden'); game.classList.add('active');
+    tS.classList.remove('active'); tG.classList.add('active');
+    if (!gameState.started) startGame();
+  } else {
+    game.classList.remove('active'); survey.classList.remove('hidden');
+    tG.classList.remove('active'); tS.classList.add('active');
   }
 }
 
-// ─── QUIZ DATA ────────────────────────────────────────────────────────────────
-const QUIZ_QUESTIONS = [
-  { q: "It's Saturday morning, no plans. What actually happens?",
-    opts: [
-      { e:'💡', t:"I start sketching a big idea that's been brewing", type:'V' },
-      { e:'🔨', t:"I tackle a project I've been putting off", type:'B' },
-      { e:'🗺️', t:"I go somewhere new or try something different", type:'E' },
-      { e:'📱', t:"I reach out to people I've been meaning to call", type:'C' },
-    ]},
-  { q: "You're completely stuck on a hard problem. Your move?",
-    opts: [
-      { e:'🔍', t:"Research everything until I fully understand it", type:'A' },
-      { e:'🛠️', t:"Break it into pieces and start doing something", type:'B' },
-      { e:'🌌', t:"Zoom out and think about the bigger picture", type:'V' },
-      { e:'🤝', t:"Find someone who's already solved it", type:'C' },
-    ]},
-  { q: "A friend calls at midnight with a wild startup idea. You say...",
-    opts: [
-      { e:'🚀', t:'"When can we start? I\'m in."', type:'D' },
-      { e:'📊', t:'"Tell me more — what problem does it solve?"', type:'A' },
-      { e:'✨', t:'"Here\'s how I see it growing in 5 years..."', type:'V' },
-      { e:'👥', t:'"I know exactly who we need to talk to."', type:'C' },
-    ]},
-  { q: "What's your honest relationship with rules?",
-    opts: [
-      { e:'⚡', t:"Rules are starting points — I upgrade them", type:'D' },
-      { e:'📐', t:"I follow them once I understand why they exist", type:'A' },
-      { e:'🏗️', t:"I like structure — it helps me build faster", type:'B' },
-      { e:'🌍', t:"Depends — I go where curiosity leads", type:'E' },
-    ]},
-  { q: "Someone asks where you see yourself in 5 years. You...",
-    opts: [
-      { e:'🌟', t:"Paint a vivid, detailed picture of your vision", type:'V' },
-      { e:'📋', t:"Pull out your actual plan (yes, you have one)", type:'B' },
-      { e:'🤷', t:'"Not sure yet — still discovering what\'s possible"', type:'E' },
-      { e:'💛', t:"Talk about the impact you want on people's lives", type:'C' },
-    ]},
-  { q: "How do you make a big decision?",
-    opts: [
-      { e:'📈', t:"Data, research, pros/cons — then decide", type:'A' },
-      { e:'🎯', t:"Gut + vision — I can feel the right path", type:'V' },
-      { e:'🧪', t:"Try a small version first, then scale up", type:'B' },
-      { e:'💬', t:"Talk it through with people I trust", type:'C' },
-    ]},
-  { q: "Pick the energy that matches you most:",
-    opts: [
-      { e:'🔥', t:'"I want to disrupt. The old way doesn\'t work."', type:'D' },
-      { e:'🌱', t:'"I want to explore. I haven\'t found my thing yet."', type:'E' },
-      { e:'⚙️', t:'"I want to build. Give me a problem to solve."', type:'B' },
-      { e:'🔭', t:'"I want to understand. Why does this work this way?"', type:'A' },
-    ]},
-  { q: "What do you want people to say about you in 10 years?",
-    opts: [
-      { e:'🌍', t:'"They changed how we do things."', type:'D' },
-      { e:'🏆', t:'"They built something real that lasts."', type:'B' },
-      { e:'🫂', t:'"They brought people together."', type:'C' },
-      { e:'💡', t:'"They saw it before anyone else did."', type:'V' },
-    ]},
+// ─── QUIZ / GAME DATA ─────────────────────────────────────────────────────────
+const QUIZ_QS = [
+  { q:"It's Saturday morning, zero plans. What actually happens?", xp:20,
+    opts:[{e:'💡',t:"I start sketching a big idea that's been in my head",type:'V'},{e:'🔨',t:"I tackle that project I've been putting off",type:'B'},{e:'🗺️',t:"I go somewhere new or try something different",type:'E'},{e:'📱',t:"I reach out to people I've been meaning to call",type:'C'}]},
+  { q:"You're completely stuck on a problem. Your move?", xp:20,
+    opts:[{e:'🔍',t:"Research everything until I fully understand it",type:'A'},{e:'🛠️',t:"Break it into pieces and start building",type:'B'},{e:'🌌',t:"Zoom out and look at the bigger picture",type:'V'},{e:'🤝',t:"Find someone who's already solved it",type:'C'}]},
+  { q:"A friend calls at midnight with a wild startup idea. You say...", xp:25,
+    opts:[{e:'🚀',t:'"When can we start? I\'m in."',type:'D'},{e:'📊',t:'"Tell me more — what problem does it solve?"',type:'A'},{e:'✨',t:'"Here\'s how I see it growing in 5 years..."',type:'V'},{e:'👥',t:'"I know exactly who we need to talk to."',type:'C'}]},
+  { q:"What's your honest relationship with rules?", xp:20,
+    opts:[{e:'⚡',t:"Rules are starting points — I upgrade them",type:'D'},{e:'📐',t:"I follow them once I understand why",type:'A'},{e:'🏗️',t:"I like structure — it helps me build faster",type:'B'},{e:'🌍',t:"Depends — I go where curiosity leads",type:'E'}]},
+  { q:"Someone asks where you see yourself in 5 years. You...", xp:20,
+    opts:[{e:'🌟',t:"Paint a vivid, detailed picture of your vision",type:'V'},{e:'📋',t:"Pull out your actual plan (yes, you have one)",type:'B'},{e:'🤷',t:'"Not sure yet — still discovering"',type:'E'},{e:'💛',t:"Talk about the impact you want to have",type:'C'}]},
+  { q:"How do you make a big decision?", xp:25,
+    opts:[{e:'📈',t:"Data, research, pros/cons — then decide",type:'A'},{e:'🎯',t:"Gut + vision — I feel the right path",type:'V'},{e:'🧪',t:"Try a small version first, then scale",type:'B'},{e:'💬',t:"Talk it through with people I trust",type:'C'}]},
+  { q:"Pick the energy that matches you most right now:", xp:20,
+    opts:[{e:'🔥',t:'"I want to disrupt. The old way doesn\'t work."',type:'D'},{e:'🌱',t:'"I want to explore. I haven\'t found my thing yet."',type:'E'},{e:'⚙️',t:'"I want to build. Give me a problem."',type:'B'},{e:'🔭',t:'"I want to understand. Why does this work?"',type:'A'}]},
+  { q:"What do you want people to say about you in 10 years?", xp:30,
+    opts:[{e:'🌍',t:'"They changed how we do things."',type:'D'},{e:'🏆',t:'"They built something real that lasts."',type:'B'},{e:'🫂',t:'"They brought people together."',type:'C'},{e:'💡',t:'"They saw it before anyone else did."',type:'V'}]},
 ];
 
 const ARCHETYPES = {
-  V:{ name:'The Visionary',  emoji:'🌟', color:'#7C3AED', tagline:"You see the future others can't yet.",    strengths:['Big-picture thinking','Creative leadership','Inspiring others','Long-term vision'] },
-  B:{ name:'The Builder',    emoji:'🔨', color:'#2563EB', tagline:"You turn ideas into real things.",         strengths:['Execution','Problem-solving','Systems thinking','Reliability'] },
-  E:{ name:'The Explorer',   emoji:'🗺️', color:'#059669', tagline:"You learn by going.",                     strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness'] },
-  C:{ name:'The Connector',  emoji:'🤝', color:'#D97706', tagline:"Your network is your net worth.",         strengths:['Relationship building','Empathy','Collaboration','Community'] },
-  A:{ name:'The Analyst',    emoji:'🔍', color:'#0891B2', tagline:"You understand what others overlook.",    strengths:['Critical thinking','Research','Pattern recognition','Precision'] },
-  D:{ name:'The Disruptor',  emoji:'⚡', color:'#DC2626', tagline:"You challenge what everyone else accepts.", strengths:['Bold thinking','Risk-taking','Innovation','Resilience'] },
+  V:{name:'The Visionary',emoji:'🌟',color:'#7C3AED',tagline:"You see the future others can't yet.",desc:"You think in possibilities. While others see problems, you see potential. Your superpower is painting what could be — and making people believe it. You're built for big ideas and paths that don't exist yet.",strengths:['Big-picture thinking','Creative leadership','Inspiring others','Long-term vision']},
+  B:{name:'The Builder',emoji:'🔨',color:'#2563EB',tagline:"You turn ideas into real things.",desc:"You're the person who actually gets it done. While others brainstorm, you're already building. You think in systems, steps, and deliverables. Your superpower is execution — you don't stop until it works.",strengths:['Execution','Problem-solving','Systems thinking','Reliability']},
+  E:{name:'The Explorer',emoji:'🗺️',color:'#059669',tagline:"You learn by going.",desc:"You're drawn to what's new and unexplored. You don't have one passion — you have many, and that's your advantage. Your breadth becomes your unique edge. You discover who you are by trying.",strengths:['Adaptability','Curiosity','Diverse thinking','Open-mindedness']},
+  C:{name:'The Connector',emoji:'🤝',color:'#D97706',tagline:"Your network is your net worth.",desc:"People gravitate toward you — and you make things happen through relationships. You know that most big things are built with others, not alone. Your superpower is community and bringing the right people together.",strengths:['Relationship building','Empathy','Collaboration','Community']},
+  A:{name:'The Analyst',emoji:'🔍',color:'#0891B2',tagline:"You understand what others overlook.",desc:"You don't move until you understand. You think in frameworks, patterns, and evidence. While others guess, you know. Your superpower is clarity — you cut through noise and find what matters.",strengths:['Critical thinking','Research','Pattern recognition','Precision']},
+  D:{name:'The Disruptor',emoji:'⚡',color:'#DC2626',tagline:"You challenge what everyone else accepts.",desc:"You're allergic to 'that's just how it works.' You see broken systems and feel compelled to fix them. Bold, unconventional, and a little wild. Your superpower is seeing what's wrong and having the nerve to act.",strengths:['Bold thinking','Risk-taking','Innovation','Resilience']},
 };
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let state = {
-  phase: 'intro',   // intro | survey | quiz-intro | quiz | quiz-result | done
-  surveyStep: 0,
-  answers: {},
-  quizAnswers: {},
-  quizStep: 0,
-  archetype: null,
-  name: '', email: '', location: '', challenge_open: '',
-  selectedTags: [],
-  animating: false,
-};
+// ─── GAME STATE ───────────────────────────────────────────────────────────────
+const gameState = { started:false, step:0, answers:{}, xp:0, maxXp:180, archetype:null, name:'', email:'' };
 
-const SURVEY_STEPS = [
-  { id:'situation', emoji:'📍', q:"What best describes where you are right now?",
-    type:'choice', opts:['🎓  Student / still in school','🔄  Career switcher / pivoting','🚀  Recent grad looking for my first role','💼  Working but want something more','🌱  Just figuring it out — no clear direction'] },
-  { id:'challenge', emoji:'🧱', q:"What's your #1 challenge right now?",
-    type:'choice', opts:["💭  I don't know what direction to go","🗺️  I have a goal but no clear path to it","🤝  I lack the right connections or mentors","📉  I start things but struggle to follow through","😶  I feel behind everyone else and don't know why"] },
-  { id:'mentor_value', emoji:'✨', q:"How valuable would access to a mentor in your field be?",
-    type:'scale', opts:['Not at all','Somewhat useful','Very valuable','Honestly game-changing'] },
-  { id:'peer_connect', emoji:'🤝', q:"Would connecting with peers at your exact stage help you?",
-    type:'choice', opts:['💯  Absolutely — that would change things for me',"🤔  Maybe, I'm not sure yet",'😊  Nice to have but not essential',"🙅  I prefer to work alone"] },
-  { id:'mentorship_format', emoji:'🎯', q:"What kind of mentorship would help you most?",
-    type:'choice', opts:['📞  1-on-1 calls with someone in my field','💬  Ongoing chat / messaging access','📚  Structured programmes with clear milestones','👥  Group sessions with peers + a mentor','🔍  Help finding opportunities and next steps'] },
-  { id:'tools', emoji:'🛠️', q:"How do you currently manage your goals and vision?",
-    type:'choice', opts:['📝  Notes app or journal','📊  Spreadsheet or task manager','🧠  Mostly in my head','📱  I use a goal-tracking app',"❌  I don't really track them"] },
-  { id:'location', emoji:'🌍', q:"Where are you based?", type:'text', placeholder:'City, Country  (e.g. London, UK)' },
-  { id:'challenge_open', emoji:'💬', q:"In your own words — what would change everything for you right now?", type:'textarea', placeholder:'Be honest. No wrong answers.' },
-  { id:'name_email', emoji:'👋', q:"Last step — a little about you", type:'name_email' },
-];
-
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function render() {
-  const app = document.getElementById('app');
-  app.innerHTML = '';
-
-  if (state.phase === 'intro')        app.appendChild(renderIntro());
-  else if (state.phase === 'survey')  app.appendChild(renderSurvey());
-  else if (state.phase === 'quiz-intro') app.appendChild(renderQuizIntro());
-  else if (state.phase === 'quiz')    app.appendChild(renderQuiz());
-  else if (state.phase === 'quiz-result') app.appendChild(renderQuizResult());
-  else if (state.phase === 'done')    app.appendChild(renderDone());
+function startGame() {
+  gameState.started = true;
+  renderGameIntro();
 }
 
-function el(tag, attrs, ...children) {
-  const e = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs || {})) {
-    if (k === 'class') e.className = v;
-    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
-    else e.setAttribute(k, v);
-  }
-  for (const c of children.flat()) {
-    if (c == null) continue;
-    if (typeof c === 'string') e.appendChild(document.createTextNode(c));
-    else e.appendChild(c);
-  }
-  return e;
+function renderGameIntro() {
+  const c = document.getElementById('game-container');
+  const archTags = Object.values(ARCHETYPES).map(a =>
+    `<span style="background:${a.color}1a;border:1px solid ${a.color}44;border-radius:20px;padding:5px 13px;color:#fff;font-size:12px;font-weight:600">${a.emoji} ${a.name.replace('The ','')}</span>`
+  ).join('');
+  c.innerHTML = `
+    <div class="game-card" style="text-align:center">
+      <div style="font-size:64px;margin-bottom:14px">🧭</div>
+      <h2 style="font-size:22px;font-weight:900;color:#fff;margin-bottom:10px">What's Your Path Archetype?</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:14px;line-height:1.7;margin-bottom:22px">
+        8 quick questions. No wrong answers.<br>Earn XP as you go. Discover which of 6 archetypes you are.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:28px">${archTags}</div>
+      <div class="stars-row" id="stars-row">
+        ${'<span class="star">⭐</span>'.repeat(8)}
+      </div>
+      <button class="btn-game-primary" style="background:linear-gradient(135deg,#7C3AED,#2563EB);box-shadow:0 8px 28px rgba(124,58,237,.4)" onclick="renderGameQ(0)">
+        Start Quiz ✨
+      </button>
+    </div>
+  `;
 }
 
-function renderIntro() {
-  return el('div', { class:'card', style:'animation:fadeUp 0.35s ease' },
-    el('span', { class:'emoji-big' }, '🗺️'),
-    el('h1', { style:'text-align:center;margin-bottom:12px' }, 'Help Shape North Star'),
-    el('p', { style:'text-align:center;margin-bottom:22px' },
-      '2 minutes · 8 questions · No spam. Your honest answers help us build the right product for people like you.'),
-    el('div', { class:'info-rows', style:'background:#091525;border-radius:12px;padding:14px 16px;margin-bottom:24px' },
-      el('div',{},'📍 Where you are right now'),
-      el('div',{},'🧱 Your biggest challenge'),
-      el('div',{},'🤝 What kind of support would help'),
-      el('div',{},'💡 Your personality type (fun quiz!)'),
-    ),
-    el('button', { class:'btn-primary', onClick: () => { state.phase='survey'; state.surveyStep=0; render(); } }, 'Start Survey →'),
-    el('button', { class:'btn-secondary', onClick: () => { state.phase='quiz-intro'; render(); } }, '✨ Or take the personality quiz first'),
-  );
+function renderGameQ(idx) {
+  if (idx >= QUIZ_QS.length) { showArchetypeResult(); return; }
+  const q = QUIZ_QS[idx];
+  const pct = Math.round((idx / QUIZ_QS.length) * 100);
+  const c = document.getElementById('game-container');
+  c.innerHTML = `
+    <div class="game-card">
+      <div class="game-q-num">Question ${idx+1} of ${QUIZ_QS.length} · +${q.xp} XP</div>
+      <div class="game-q">${q.q}</div>
+      <div class="game-opts">
+        ${q.opts.map((o,i) => `
+          <button class="game-opt" onclick="pickGameOpt(this,${idx},'${o.type}',${q.xp})">
+            <span class="opt-icon">${o.e}</span>
+            <span>${o.t}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
-function renderSurvey() {
-  const step = SURVEY_STEPS[state.surveyStep];
-  const total = SURVEY_STEPS.length;
-  const pct = Math.round((state.surveyStep / total) * 100);
-
-  const wrap = el('div', {});
-
-  // Progress
-  const dotsHtml = SURVEY_STEPS.map((_,i) =>
-    el('div', { class: 'dot' + (i < state.surveyStep ? ' done' : ''), style: i < state.surveyStep ? 'background:var(--purple)' : '' })
-  );
-  wrap.appendChild(
-    el('div', { class:'progress-wrap' },
-      el('div', { class:'progress-bar' },
-        el('div', { class:'progress-fill', style:`width:${pct}%` })
-      ),
-      el('div', { class:'progress-label' },
-        el('span',{}, `Question ${state.surveyStep+1} of ${total}`),
-        el('span',{}, `${pct}%`)
-      ),
-      el('div', { class:'dots' }, ...dotsHtml),
-    )
-  );
-
-  const card = el('div', { class:'card' });
-  card.appendChild(el('span', { class:'emoji-big' }, step.emoji));
-  card.appendChild(el('h2', {}, step.q));
-
-  if (step.type === 'choice') {
-    const list = el('div', { class:'choice-list' });
-    step.opts.forEach(opt => {
-      const btn = el('button', { class:'choice-btn' }, opt);
-      btn.addEventListener('click', () => {
-        state.answers[step.id] = opt;
-        advanceSurvey();
-      });
-      list.appendChild(btn);
-    });
-    card.appendChild(list);
-  }
-
-  if (step.type === 'scale') {
-    const row = el('div', { class:'scale-wrap' });
-    step.opts.forEach(opt => {
-      const btn = el('button', { class:'scale-btn' }, opt);
-      btn.addEventListener('click', () => {
-        state.answers[step.id] = opt;
-        advanceSurvey();
-      });
-      row.appendChild(btn);
-    });
-    card.appendChild(row);
-  }
-
-  if (step.type === 'text') {
-    const inp = el('input', { type:'text', placeholder:step.placeholder, value:state.answers[step.id]||'' });
-    inp.addEventListener('input', e => state.answers[step.id] = e.target.value);
-    inp.addEventListener('keydown', e => { if (e.key==='Enter' && state.answers[step.id]?.trim()) advanceSurvey(); });
-    card.appendChild(inp);
-    setTimeout(() => inp.focus(), 100);
-    const btn = el('button', { class:'btn-primary', style:'margin-top:14px' }, 'Continue →');
-    btn.addEventListener('click', () => { if (state.answers[step.id]?.trim()) advanceSurvey(); });
-    card.appendChild(btn);
-  }
-
-  if (step.type === 'textarea') {
-    const ta = el('textarea', { placeholder:step.placeholder });
-    ta.value = state.answers[step.id] || '';
-    ta.addEventListener('input', e => state.answers[step.id] = e.target.value);
-    card.appendChild(ta);
-    setTimeout(() => ta.focus(), 100);
-    const btn = el('button', { class:'btn-primary', style:'margin-top:14px' }, 'Continue →');
-    btn.addEventListener('click', () => { if ((state.answers[step.id]||'').trim()) advanceSurvey(); else advanceSurvey(); });
-    card.appendChild(btn);
-    const skip = el('button', { class:'btn-secondary' }, 'Skip this one');
-    skip.addEventListener('click', advanceSurvey);
-    card.appendChild(skip);
-  }
-
-  if (step.type === 'name_email') {
-    const nameInp = el('input', { type:'text', placeholder:'Your first name', style:'margin-bottom:10px' });
-    nameInp.value = state.name;
-    nameInp.addEventListener('input', e => state.name = e.target.value);
-
-    const emailInp = el('input', { type:'email', placeholder:'Your email address', style:'margin-bottom:10px' });
-    emailInp.value = state.email;
-    emailInp.addEventListener('input', e => state.email = e.target.value);
-
-    const locInp = el('input', { type:'text', placeholder:'City, Country  (e.g. Toronto, Canada)', style:'margin-bottom:12px' });
-    locInp.value = state.location;
-    locInp.addEventListener('input', e => state.location = e.target.value);
-
-    card.appendChild(el('p', { style:'text-align:center;margin-bottom:16px;font-size:13px' }, "We'll send you updates on North Star's launch."));
-
-    if (state.archetype) {
-      const arch = ARCHETYPES[state.archetype];
-      const badge = el('div', { class:'archetype-badge', style:`background:${arch.color}18;border:1px solid ${arch.color}44;margin-bottom:14px` },
-        el('span', { class:'archetype-emoji' }, arch.emoji),
-        el('div', {},
-          el('div', { class:'archetype-name' }, arch.name),
-          el('div', { class:'archetype-tag', style:`color:${arch.color}` }, arch.tagline),
-        )
-      );
-      card.appendChild(badge);
-    }
-
-    card.appendChild(nameInp);
-    card.appendChild(emailInp);
-    card.appendChild(locInp);
-
-    const submitBtn = el('button', { class:'btn-primary' }, 'Submit →');
-    submitBtn.addEventListener('click', async () => {
-      if (!state.name.trim() || !state.email.trim()) return;
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Saving...';
-      await submitSurveyData();
-      state.phase = 'done';
-      render();
-    });
-    card.appendChild(submitBtn);
-    card.appendChild(el('p', { class:'small-note' }, 'No spam. Ever. Unsubscribe anytime.'));
-    setTimeout(() => nameInp.focus(), 100);
-  }
-
-  wrap.appendChild(card);
-  return wrap;
+function pickGameOpt(btn, idx, type, xp) {
+  document.querySelectorAll('.game-opt').forEach(b => b.disabled = true);
+  btn.classList.add('selected');
+  gameState.answers[idx] = type;
+  addXP(xp, btn);
+  // Highlight star
+  const stars = document.querySelectorAll('.star');
+  // Update stars row in intro - not visible during q, skip
+  setTimeout(() => renderGameQ(idx + 1), 420);
 }
 
-function advanceSurvey() {
-  if (state.surveyStep < SURVEY_STEPS.length - 1) {
-    state.surveyStep++;
-    render();
+function addXP(amount, anchorEl) {
+  gameState.xp = Math.min(gameState.xp + amount, gameState.maxXp);
+  document.getElementById('xp-count').textContent = `${gameState.xp} / ${gameState.maxXp}`;
+  document.getElementById('xp-badge').textContent = `${gameState.xp} XP`;
+  document.getElementById('xp-fill').style.width = `${(gameState.xp / gameState.maxXp)*100}%`;
+  if (anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    const pop = document.createElement('div');
+    pop.className = 'xp-popup';
+    pop.textContent = `+${amount} XP`;
+    pop.style.left = `${rect.left + rect.width/2 - 20}px`;
+    pop.style.top  = `${rect.top + window.scrollY}px`;
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 1300);
   }
-}
-
-async function submitSurveyData() {
-  const payload = {
-    name: state.name,
-    email: state.email,
-    location: state.location,
-    situation: state.answers.situation || null,
-    challenge: state.answers.challenge || null,
-    mentor_value: state.answers.mentor_value || null,
-    peer_connect: state.answers.peer_connect || null,
-    mentorship_format: state.answers.mentorship_format || null,
-    tools: state.answers.tools || null,
-    challenge_open: state.answers.challenge_open || null,
-    archetype: state.archetype || null,
-    submitted_at: new Date().toISOString(),
-  };
-  await saveSurvey(payload);
-}
-
-// ─── QUIZ ─────────────────────────────────────────────────────────────────────
-function renderQuizIntro() {
-  const archLabels = Object.values(ARCHETYPES).map(a =>
-    el('span', { style:`background:${a.color}1a;border:1px solid ${a.color}44;border-radius:20px;padding:5px 13px;color:#fff;font-size:12px;font-weight:600` }, `${a.emoji} ${a.name.replace('The ','')}`)
-  );
-  const tagsWrap = el('div', { style:'display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:26px' }, ...archLabels);
-
-  const card = el('div', { class:'card', style:'text-align:center' },
-    el('span', { class:'emoji-big' }, '🧭'),
-    el('h1', { style:'margin-bottom:10px' }, 'What\'s Your Path Archetype?'),
-    el('p', { style:'margin-bottom:22px' }, '8 quick questions. No wrong answers.\nDiscover which of 6 archetypes drives how you think, decide, and grow.'),
-    tagsWrap,
-    el('button', { class:'btn-primary', onClick: () => { state.phase='quiz'; state.quizStep=0; state.quizAnswers={}; render(); } }, "Let's Find Out ✨"),
-    el('button', { class:'btn-secondary', onClick: () => { state.phase= state.answers.situation ? 'survey' : 'intro'; render(); } }, '← Back'),
-  );
-  return card;
-}
-
-function renderQuiz() {
-  const q = QUIZ_QUESTIONS[state.quizStep];
-  const total = QUIZ_QUESTIONS.length;
-  const pct = Math.round((state.quizStep / total) * 100);
-
-  const wrap = el('div', {});
-
-  // Progress
-  const qdots = QUIZ_QUESTIONS.map((_,i) => el('div', { class:'quiz-dot'+(i<state.quizStep?' done':''), style:i<state.quizStep?'background:var(--purple)':'' }));
-  wrap.appendChild(
-    el('div', { class:'progress-wrap' },
-      el('div', { class:'progress-bar' }, el('div', { class:'progress-fill', style:`width:${pct}%` })),
-      el('div', { class:'progress-label' }, el('span',{},`Question ${state.quizStep+1} of ${total}`), el('span',{},`${pct}%`)),
-      el('div', { class:'dots' }, ...qdots),
-    )
-  );
-
-  const card = el('div', { class:'card' });
-  card.appendChild(el('h2', {}, q.q));
-
-  q.opts.forEach(opt => {
-    const btn = el('button', { class:'quiz-opt' },
-      el('span', { class:'opt-emoji' }, opt.e),
-      el('span', {}, opt.t),
-    );
-    btn.addEventListener('click', () => {
-      btn.classList.add('selected');
-      setTimeout(() => {
-        state.quizAnswers[state.quizStep] = opt.type;
-        if (state.quizStep >= QUIZ_QUESTIONS.length - 1) {
-          state.archetype = calcArchetype();
-          state.phase = 'quiz-result';
-        } else {
-          state.quizStep++;
-        }
-        render();
-      }, 380);
-    });
-    card.appendChild(btn);
-  });
-
-  wrap.appendChild(card);
-  return wrap;
 }
 
 function calcArchetype() {
   const s = { V:0,B:0,E:0,C:0,A:0,D:0 };
-  Object.values(state.quizAnswers).forEach(t => { if (s[t]!==undefined) s[t]++; });
+  Object.values(gameState.answers).forEach(t => { if(s[t]!==undefined) s[t]++; });
   return Object.entries(s).sort((a,b)=>b[1]-a[1])[0][0];
 }
 
-function renderQuizResult() {
-  const arch = ARCHETYPES[state.archetype];
+function showArchetypeResult() {
+  const key  = calcArchetype();
+  const arch = ARCHETYPES[key];
+  gameState.archetype = key;
+  surveyArchetype = key; // share with survey mode
   spawnConfetti();
-
-  const strengthChips = arch.strengths.map(s =>
-    el('span', { class:'strength-chip', style:`background:${arch.color}1a;border:1px solid ${arch.color}44;color:#fff` }, s)
-  );
-
-  const card = el('div', { class:'card', style:'text-align:center' },
-    el('div', { style:'font-size:72px;margin-bottom:10px;filter:drop-shadow(0 0 20px rgba(255,255,255,0.2))' }, arch.emoji),
-    el('div', { style:`display:inline-block;background:linear-gradient(135deg,${arch.color},${arch.color}aa);border-radius:50px;padding:4px 16px;color:#fff;font-size:11px;font-weight:800;letter-spacing:1.4px;margin-bottom:14px` }, 'YOUR ARCHETYPE'),
-    el('h1', { style:'margin-bottom:6px' }, arch.name),
-    el('p', { style:`color:${arch.color};font-size:16px;font-weight:700;font-style:italic;margin-bottom:18px` }, arch.tagline),
-    el('div', { style:`background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px 18px;margin-bottom:20px;text-align:left` },
-      el('div', { class:'section-label' }, 'YOUR STRENGTHS'),
-      el('div', { class:'strengths-row' }, ...strengthChips),
-    ),
-    el('button', { class:'btn-primary',
-      style:`background:linear-gradient(135deg,${arch.color},${arch.color}aa);box-shadow:0 8px 28px ${arch.color}55`,
-      onClick: () => {
-        if (!state.answers.situation) { state.phase='survey'; state.surveyStep=0; render(); }
-        else { state.phase='survey'; state.surveyStep=SURVEY_STEPS.findIndex(s=>s.id==='name_email'); render(); }
-      }
-    }, state.answers.situation ? 'Continue to Final Step →' : 'Continue to Survey →'),
-    el('button', { class:'btn-secondary', onClick: () => { state.quizAnswers={}; state.quizStep=0; state.archetype=null; state.phase='quiz'; render(); } }, '↺ Retake quiz'),
-  );
-  return card;
+  const chips = arch.strengths.map(s => `<span class="strength-chip">${s}</span>`).join('');
+  const c = document.getElementById('game-container');
+  c.innerHTML = `
+    <div class="game-result">
+      <div class="arch-card" style="background:linear-gradient(135deg,${arch.color}33,${arch.color}11);border:1px solid ${arch.color}55">
+        <span class="arch-emoji-big">${arch.emoji}</span>
+        <div class="arch-type-tag">YOUR PATH ARCHETYPE</div>
+        <div class="arch-name">${arch.name}</div>
+        <div class="arch-tagline">${arch.tagline}</div>
+        <div class="arch-desc">${arch.desc}</div>
+        <div class="strength-chips">${chips}</div>
+      </div>
+      <div class="stars-row">
+        ${'<span class="star lit" style="filter:drop-shadow(0 0 6px gold)">⭐</span>'.repeat(8)}
+      </div>
+      <div class="game-survey-cta">
+        <h3>You earned ${gameState.xp} XP 🏆</h3>
+        <p>Help us build North Star for people like you.<br>Takes 2 minutes — your answers shape the product.</p>
+        <button class="btn-game-primary" style="background:linear-gradient(135deg,${arch.color},#2563EB);box-shadow:0 8px 28px ${arch.color}55" onclick="goToSurveyContact()">
+          Take the Full Survey →
+        </button>
+        <button class="btn-game-secondary" onclick="restartGame()">↺ Retake quiz</button>
+      </div>
+    </div>
+  `;
+  addXP(0, null); // refresh display
 }
 
-function renderDone() {
-  const arch = state.archetype ? ARCHETYPES[state.archetype] : null;
-  spawnConfetti();
+function goToSurveyContact() {
+  switchMode('survey');
+  // Pre-fill archetype badge in contact section
+  const arch = ARCHETYPES[gameState.archetype];
+  const container = document.getElementById('arch-mini-container');
+  if (container && arch) {
+    container.innerHTML = `
+      <div class="arch-mini" style="background:${arch.color}18;border:1px solid ${arch.color}44;margin-bottom:14px">
+        <span style="font-size:28px">${arch.emoji}</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#fff">${arch.name}</div>
+          <div style="font-size:12px;color:${arch.color}">${arch.tagline}</div>
+        </div>
+      </div>`;
+  }
+  setTimeout(() => document.getElementById('contact-section').scrollIntoView({behavior:'smooth'}), 200);
+}
 
-  return el('div', { class:'card', style:'text-align:center' },
-    el('div', { style:'font-size:64px;margin-bottom:14px' }, '🎉'),
-    el('h1', { style:'margin-bottom:10px' }, `Thank you, ${state.name || 'Explorer'}!`),
-    el('p', { style:'margin-bottom:20px' }, "Your answers will directly shape what we build.\nWe'll reach out when North Star launches — you're on the list."),
-    arch ? el('div', { class:'archetype-badge', style:`background:${arch.color}18;border:1px solid ${arch.color}44;margin-bottom:20px;justify-content:center` },
-      el('span', { class:'archetype-emoji' }, arch.emoji),
-      el('div', {},
-        el('div', { class:'archetype-name' }, arch.name),
-        el('div', { class:'archetype-tag', style:`color:${arch.color}` }, arch.tagline),
-      )
-    ) : null,
-    el('div', { style:'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;text-align:left;margin-bottom:20px' },
-      el('div', { class:'section-label' }, 'WHAT NORTH STAR IS BUILDING'),
-      ['🧭 Vision Canvas — your goal, made concrete', '🗺️ AI-built roadmap for your exact stage', '🤝 Mentors who have actually walked your path', '👥 Community of peers figuring it out together'].map(t =>
-        el('div', { style:'color:#94A3B8;font-size:13px;padding:4px 0' }, t)
-      ),
-    ),
-    el('p', { class:'small-note' }, 'Share this with someone who needs it 👇'),
-    el('button', { class:'btn-secondary', onClick: () => {
-      navigator.clipboard?.writeText(window.location.href).then(() => { alert('Link copied!'); });
-    }}, '🔗 Copy survey link'),
-  );
+function restartGame() {
+  gameState.step=0; gameState.answers={}; gameState.xp=0; gameState.archetype=null;
+  document.getElementById('xp-fill').style.width='0%';
+  document.getElementById('xp-count').textContent='0 / 200';
+  document.getElementById('xp-badge').textContent='0 XP';
+  renderGameIntro();
 }
 
 function spawnConfetti() {
-  const colors = ['#7C3AED','#2563EB','#059669','#D97706','#DC2626','#0891B2'];
-  for (let i = 0; i < 28; i++) {
-    const c = document.createElement('div');
-    c.className = 'confetti-piece';
-    const size = Math.random()*8+5;
-    c.style.cssText = `width:${size}px;height:${size}px;background:${colors[i%6]};left:${Math.random()*100}%;top:80%;animation:floatUp ${1.8+Math.random()*0.8}s ${Math.random()*0.5}s ease-in forwards;`;
-    document.body.appendChild(c);
-    setTimeout(() => c.remove(), 3000);
+  const colors=['#7C3AED','#2563EB','#059669','#D97706','#DC2626','#0891B2','#F59E0B'];
+  for(let i=0;i<32;i++){
+    const d=document.createElement('div');
+    d.className='confetti-piece';
+    const sz=Math.random()*9+5;
+    d.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[i%7]};left:${Math.random()*100}%;top:75%;animation:floatUp ${1.8+Math.random()*1}s ${Math.random()*0.6}s ease-in forwards;`;
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),3500);
   }
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-render();
+function copyLink() {
+  navigator.clipboard?.writeText(window.location.href)
+    .then(()=>alert('Link copied! Share it with someone who needs this.'))
+    .catch(()=>alert('Copy this link: '+window.location.href));
+}
 </script>
 </body>
 </html>
