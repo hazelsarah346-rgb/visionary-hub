@@ -243,6 +243,12 @@
       </table>
     </div>
 
+    <!-- Individual full responses -->
+    <div class="card" style="margin-top:24px">
+      <div class="card-title">📝 Full Survey Responses — Every Answer</div>
+      <div id="full-responses"></div>
+    </div>
+
   </div>
 </div>
 
@@ -338,10 +344,61 @@ function render() {
       <td style="color:#64748b">${dt}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="6" style="text-align:center;padding:32px;color:#64748b">No email signups yet</td></tr>`;
+
+  // Full individual responses
+  const fullEl = document.getElementById('full-responses');
+  const fullSurveys = d.filter(r => r.situation || r.challenge || r.wanted_features);
+  const FIELD_LABELS = {
+    situation:         '📍 Current situation',
+    challenge:         '🧱 Biggest challenge',
+    mentor_value:      '🤝 Mentor value',
+    mentorship_format: '📞 Mentorship format',
+    peer_connect:      '🌐 Peer connection',
+    tools:             '🛠 Tools used',
+    wanted_features:   '✨ Features wanted',
+    likelihood:        '📊 Likelihood to use',
+    challenge_open:    '💬 Open — challenge',
+    dream_feature:     '💡 Dream feature',
+  };
+  fullEl.innerHTML = fullSurveys.length ? fullSurveys.map(r => {
+    const arc = r.archetype ? ARC_NAMES[r.archetype]||r.archetype : null;
+    const col = r.archetype ? ARC_COLORS[r.archetype]||'#7c3aed' : '#7c3aed';
+    const dt  = r.submitted_at ? new Date(r.submitted_at).toLocaleString() : '';
+    const fields = Object.entries(FIELD_LABELS).filter(([k]) => r[k]).map(([k,label]) =>
+      `<div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${label}</div>
+        <div style="font-size:14px;color:#e2e8f0;line-height:1.6">${r[k].split(' | ').map(v=>`<span style="display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;margin:2px 3px 2px 0;font-size:13px">${v.trim()}</span>`).join('')}</div>
+      </div>`
+    ).join('');
+    return `<div style="background:#1a1a2e;border:1px solid #2d2d4e;border-radius:14px;padding:20px 22px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:16px">${arc ? arc.split(' ')[0] : '👤'}</div>
+          <div>
+            <div style="font-weight:700;color:#fff;font-size:15px">${r.name||'Anonymous'}</div>
+            <div style="font-size:12px;color:#64748b">${r.email||''} ${r.location?'· '+r.location:''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${arc?`<span class="badge" style="background:${col}22;color:${col}">${arc}</span>`:''}
+          <span style="font-size:12px;color:#475569">${dt}</span>
+        </div>
+      </div>
+      ${fields || '<div style="color:#64748b;font-style:italic;font-size:13px">Quiz signup only — no survey answers</div>'}
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:40px;color:#64748b">No full survey responses yet</div>`;
 }
 
 function count(data, field) {
-  return data.reduce((acc,r)=>{ const v=r[field]; if(v){ acc[v]=(acc[v]||0)+1; } return acc; }, {});
+  // Split multi-select answers separated by " | " so each option is counted individually
+  return data.reduce((acc,r)=>{
+    const v = r[field];
+    if (v) {
+      const parts = v.split(' | ');
+      parts.forEach(p => { const t = p.trim(); if(t) acc[t] = (acc[t]||0)+1; });
+    }
+    return acc;
+  }, {});
 }
 
 function renderBar(elId, counts, total) {
