@@ -154,7 +154,8 @@
       <div class="stat-card">
         <div class="stat-icon">📋</div>
         <div class="stat-num" id="stat-total">—</div>
-        <div class="stat-label">Total Responses</div>
+        <div class="stat-label">Total Signups</div>
+        <div style="font-size:11px;color:#475569;margin-top:4px" id="stat-breakdown">— full · — quiz</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">✉️</div>
@@ -164,7 +165,7 @@
       <div class="stat-card">
         <div class="stat-icon">🎮</div>
         <div class="stat-num" id="stat-quiz">—</div>
-        <div class="stat-label">Quiz Signups</div>
+        <div class="stat-label">Quiz Only</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🏆</div>
@@ -291,21 +292,28 @@ function render() {
   const d = allData;
   const n = d.length;
 
+  // Separate full survey vs quiz-only
+  const fullSurvey = d.filter(r => r.situation || r.challenge || r.wanted_features);
+  const quizOnly   = d.filter(r => r.source === 'quiz' && !r.situation && !r.challenge);
+  const nFull      = fullSurvey.length;
+
   // Stats
   set('stat-total', n);
   set('stat-emails', d.filter(r=>r.email).length);
-  set('stat-quiz', d.filter(r=>r.source==='quiz').length);
+  set('stat-quiz', quizOnly.length);
   const arcCounts = count(d,'archetype');
   const topArc = Object.entries(arcCounts).sort((a,b)=>b[1]-a[1])[0];
   set('stat-top-archetype', topArc ? (ARC_NAMES[topArc[0]]||topArc[0]).replace(/\p{Emoji}/gu,'').trim() : '—');
+  const bkEl = document.getElementById('stat-breakdown');
+  if (bkEl) bkEl.textContent = `${nFull} full survey · ${quizOnly.length} quiz only`;
 
-  // Bar charts
-  renderBar('chart-situation',  count(d,'situation'),          n);
-  renderBar('chart-challenge',  count(d,'challenge'),          n);
-  renderBar('chart-mentor',     count(d,'mentor_value'),       n);
-  renderBar('chart-format',     count(d,'mentorship_format'),  n);
-  renderBar('chart-peer',       count(d,'peer_connect'),       n);
-  renderBar('chart-tools',      count(d,'tools'),              n);
+  // Bar charts — use only full survey responses so % are accurate
+  renderBar('chart-situation',  count(fullSurvey,'situation'),         nFull);
+  renderBar('chart-challenge',  count(fullSurvey,'challenge'),         nFull);
+  renderBar('chart-mentor',     count(fullSurvey,'mentor_value'),      nFull);
+  renderBar('chart-format',     count(fullSurvey,'mentorship_format'), nFull);
+  renderBar('chart-peer',       count(fullSurvey,'peer_connect'),      nFull);
+  renderBar('chart-tools',      count(fullSurvey,'tools'),             nFull);
 
   // Archetype bar
   const el = document.getElementById('chart-archetype');
