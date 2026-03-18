@@ -4545,7 +4545,6 @@ function MainApp({ user, onSignOut }) {
   const [mentors, setMentors] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [showNavTour, setShowNavTour] = useState(() => !localStorage.getItem('vh_tour_done'));
-  const [showQuiz, setShowQuiz] = useState(() => !localStorage.getItem('vh_archetype') && !!localStorage.getItem('vh_tour_done'));
 
   // ── Tutor state lifted here so files + timer survive tab switches ──────────
   const [tutorFiles, setTutorFiles] = useState([]);
@@ -4855,27 +4854,10 @@ function MainApp({ user, onSignOut }) {
         <NavTour user={user} onDone={() => {
           localStorage.setItem('vh_tour_done', '1');
           setShowNavTour(false);
-          if (!localStorage.getItem('vh_archetype')) setShowQuiz(true);
         }} />
       )}
 
-      {/* Personality quiz, shown after tour for new users */}
-      {!showNavTour && showQuiz && (
-        <PersonalityQuiz
-          user={user}
-          onComplete={(type, arch) => {
-            localStorage.setItem('vh_archetype', type);
-            localStorage.setItem('vh_archetype_name', arch.name);
-            localStorage.setItem('vh_archetype_emoji', arch.emoji);
-            syncToSupabase({ archetype: type });
-            setShowQuiz(false);
-          }}
-          onSkip={() => {
-            localStorage.setItem('vh_archetype', 'skip');
-            setShowQuiz(false);
-          }}
-        />
-      )}
+{/* Personality quiz removed from onboarding — accessible via Settings */}
     </div>
   );
 }
