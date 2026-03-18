@@ -19,7 +19,7 @@ export async function fetchPosts() {
   return (data || []).map(normalizePost);
 }
 
-export async function insertPost({ authorName, authorImg, content, imageUrl, mediaType, userId }) {
+export async function insertPost({ authorName, authorImg, content, imageUrl, mediaType, userId, postType }) {
   if (!supabase) return null;
   try {
     const { data, error } = await supabase
@@ -31,6 +31,7 @@ export async function insertPost({ authorName, authorImg, content, imageUrl, med
         image_url: imageUrl || null,
         media_type: mediaType || null,
         author_id: userId || null,
+        post_type: postType || 'thought',
       }])
       .select()
       .single();
@@ -202,6 +203,7 @@ function normalizePost(p) {
     learned: p.learned || 0,
     reflect: p.reflect || 0,
     time: p.created_at ? timeAgo(p.created_at) : 'Just now',
+    post_type: p.post_type || 'thought',
   };
 }
 

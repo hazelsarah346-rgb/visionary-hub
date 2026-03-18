@@ -131,6 +131,23 @@ const ARCHETYPES = {
     focus: ['Opportunities', 'Mentorship', 'Vision Canvas'] },
 };
 
+
+const POST_TYPES = [
+  { id: 'achievement', label: '🏆 Achievement', color: '#D97706' },
+  { id: 'project',     label: '💡 Project',     color: '#7C3AED' },
+  { id: 'skill',       label: '📚 New Skill',   color: '#2563EB' },
+  { id: 'milestone',   label: '🎯 Milestone',   color: '#059669' },
+  { id: 'thought',     label: '💬 Thought',     color: '#64748B' },
+];
+const POST_TYPE_LABELS = { achievement:'🏆 Achievement', project:'💡 Project', skill:'📚 New Skill', milestone:'🎯 Milestone', thought:'💬 Thought' };
+const POST_TYPE_COLORS = {
+  achievement: { bg:'#FEF3C7', text:'#D97706' },
+  project:     { bg:'#EDE9FE', text:'#7C3AED' },
+  skill:       { bg:'#DBEAFE', text:'#2563EB' },
+  milestone:   { bg:'#D1FAE5', text:'#059669' },
+  thought:     { bg:'#F1F5F9', text:'#64748B' },
+};
+
 const DAILY_PROMPTS = [
   'What challenged me today, and what did it teach me?',
   'What am I most grateful for right now?',
@@ -384,11 +401,11 @@ function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = f
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const NAV = [
-  { id: 'flow',          icon: Home,            label: 'Flow',            sub: 'Peers at your stage' },
-  { id: 'canvas',        icon: Lightbulb,       label: 'Vision Canvas',   sub: 'Your vision & roadmap' },
-  { id: 'opportunities', icon: Compass,         label: 'Opportunities',   sub: 'Programs that match your goal' },
-  { id: 'mentorship',    icon: Users,           label: 'Mentorship',      sub: 'Guided support for your stage' },
-  { id: 'connect',       icon: MessageCircle,   label: 'Connect',         sub: 'Chat with your peers' },
+  { id: 'home',          icon: Home,            label: 'Home',            sub: 'Your goal & daily action' },
+  { id: 'showcase',      icon: Compass,         label: 'Showcase',        sub: 'Your portfolio & wins' },
+  { id: 'path',          icon: Lightbulb,       label: 'My Path',         sub: 'Vision, roadmap & goals' },
+  { id: 'connect',       icon: Users,           label: 'Connect',         sub: 'Mentors & like-minded peers' },
+  { id: 'opportunities', icon: MessageCircle,   label: 'Opportunities',   sub: 'Programs that match your goal' },
 ];
 // Reflect & Roadmap are accessed from Vision Canvas shortcut cards
 
@@ -1097,6 +1114,10 @@ function PeerGroupsModal({ onClose, canvas, user, feed }) {
   const [groupMsgs, setGroupMsgs] = useState({});
   const [chatInput, setChatInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [chatMentorLocal, setChatMentorLocal] = useState(null);
+  const [mentorMessages, setMentorMessages] = useState([]);
+  const [mentorInput, setMentorInput] = useState('');
+  const [mentorLoading, setMentorLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
@@ -1385,6 +1406,9 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
             {isVerifiedMentor && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
             )}
+            {p.post_type && p.post_type !== 'thought' && POST_TYPE_LABELS[p.post_type] && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', background: POST_TYPE_COLORS[p.post_type]?.bg || '#f1f5f9', color: POST_TYPE_COLORS[p.post_type]?.text || '#64748b', borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{POST_TYPE_LABELS[p.post_type]}</span>
+            )}
           </div>
           <div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div>
         </div>
@@ -1480,8 +1504,199 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
   );
 }
 
-// ─── FLOW TAB ─────────────────────────────────────────────────────────────────
-function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [] }) {
+
+// ─── HOME TAB ─────────────────────────────────────────────────────────────────
+function HomeTab({ canvas, feed, mentors, user, setTab }) {
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
+  const firstName   = displayName.split(' ')[0];
+  const avatarUrl   = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || null;
+  const xp          = parseInt(localStorage.getItem('vh_xp') || '0');
+  const streak      = parseInt(localStorage.getItem('vh_streak') || '0');
+
+  // Pull roadmap for today's action
+  const roadmap   = (() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } })();
+  const rmDone    = (() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } })();
+  const peers     = (() => { try { return JSON.parse(localStorage.getItem('vh_peers') || '[]'); } catch { return []; } })();
+
+  // Find next incomplete milestone across all phases
+  const todayAction = (() => {
+    if (!roadmap?.phases) return null;
+    for (const phase of roadmap.phases) {
+      for (const task of (phase.tasks || [])) {
+        const key = `${phase.phase}-${task}`;
+        if (!rmDone[key]) return { task, phase: phase.phase };
+      }
+    }
+    return null;
+  })();
+
+  const totalMilestones = roadmap?.phases?.reduce((a, p) => a + (p.tasks?.length || 0), 0) || 0;
+  const doneMilestones  = Object.keys(rmDone).length;
+  const phaseDone       = roadmap?.phases ? roadmap.phases.filter(p => (p.tasks||[]).every(t => rmDone[`${p.phase}-${t}`])).length : 0;
+  const totalPhases     = roadmap?.phases?.length || 4;
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  const recentPosts = [...(feed || [])].slice(0, 3);
+
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto', paddingBottom: 40 }}>
+
+      {/* ── GREETING HEADER ─────────────────────────────────────── */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          {avatarUrl
+            ? <img src={avatarUrl} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${C.accent}` }} />
+            : <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff' }}>{firstName[0]}</div>
+          }
+          <div>
+            <div style={{ fontSize: 14, color: C.muted }}>{greeting} 👋</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: C.text }}>{firstName}</div>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+            {streak > 0 && <div style={{ background: '#FFF7ED', border: '1px solid #FDE68A', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: '#D97706' }}>🔥 {streak} day streak</div>}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: C.accent }}>⚡ {xp} XP</div>
+          </div>
+        </div>
+
+        {/* North Star Goal */}
+        {canvas?.bigVision && (
+          <div style={{ background: `linear-gradient(135deg, ${C.accent}18, ${C.accent2}12)`, border: `1px solid ${C.accent}30`, borderRadius: 16, padding: '18px 20px', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: C.accent, marginBottom: 6 }}>⭐ Your North Star</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{canvas.bigVision}</div>
+            {canvas.goal12Month && <div style={{ fontSize: 13, color: C.muted, marginTop: 6 }}>🎯 12-month goal: {canvas.goal12Month}</div>}
+          </div>
+        )}
+        {!canvas?.bigVision && (
+          <div onClick={() => setTab('path')} style={{ background: C.card, border: `2px dashed ${C.accent}50`, borderRadius: 16, padding: '18px 20px', cursor: 'pointer', textAlign: 'center' }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>⭐</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Set your North Star</div>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>Define your goal and get a personalised roadmap →</div>
+          </div>
+        )}
+      </div>
+
+      {/* ── TWO COLUMN GRID ─────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
+
+        {/* Today's Action */}
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: C.muted, marginBottom: 12 }}>⚡ Today's Action</div>
+          {todayAction ? (
+            <>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.6, marginBottom: 12 }}>{todayAction.task}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 14 }}>From: {todayAction.phase}</div>
+              <button onClick={() => setTab('path')} style={{ width: '100%', padding: '10px 0', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>View My Roadmap →</button>
+            </>
+          ) : roadmap ? (
+            <div style={{ textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>All milestones complete!</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Time to set a new goal</div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>Generate your roadmap to get daily actions</div>
+              <button onClick={() => setTab('path')} style={{ padding: '10px 20px', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Build My Roadmap →</button>
+            </div>
+          )}
+        </div>
+
+        {/* Roadmap Progress */}
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: C.muted, marginBottom: 12 }}>🗺️ Roadmap Progress</div>
+          {roadmap ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: C.text }}>Phase {phaseDone + 1} of {totalPhases}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{totalMilestones ? Math.round(doneMilestones / totalMilestones * 100) : 0}%</span>
+              </div>
+              <div style={{ background: C.border, borderRadius: 8, height: 8, marginBottom: 12 }}>
+                <div style={{ height: 8, borderRadius: 8, background: `linear-gradient(90deg, ${C.accent}, ${C.accent2})`, width: `${totalMilestones ? Math.round(doneMilestones / totalMilestones * 100) : 0}%`, transition: 'width .5s' }} />
+              </div>
+              <div style={{ fontSize: 12, color: C.muted }}>{doneMilestones} of {totalMilestones} milestones complete</div>
+              {roadmap.phases?.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 10 }}>{(p.tasks||[]).every(t => rmDone[`${p.phase}-${t}`]) ? '✅' : i === phaseDone ? '🔵' : '⚪'}</span>
+                  <span style={{ fontSize: 12, color: i === phaseDone ? C.text : C.muted, fontWeight: i === phaseDone ? 700 : 400 }}>{p.phase}</span>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: 13, color: C.muted }}>No roadmap yet — build yours in My Path</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── MENTOR QUICK LAUNCH ─────────────────────────────────── */}
+      {mentors.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>🤝 Your Mentors</div>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+            {mentors.slice(0, 4).map(m => (
+              <div key={m.id} onClick={() => setTab('connect')} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', minWidth: 180, cursor: 'pointer', flexShrink: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>{m.name}</div>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 10 }}>{m.title}</div>
+                <div style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>Chat →</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── PEERS ON YOUR PATH ──────────────────────────────────── */}
+      {peers.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>⚡ People on your path</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {peers.slice(0, 3).map((p, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', flex: '1 1 180px' }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>{p.avatar || '👤'}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{p.name}</div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{p.goal || p.field || ''}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── RECENT SHOWCASE ─────────────────────────────────────── */}
+      {recentPosts.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>💼 Recent Showcase</div>
+            <button onClick={() => setTab('showcase')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>See all →</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {recentPosts.map(p => (
+              <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  {p.authorImg
+                    ? <img src={p.authorImg} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                    : <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700 }}>{(p.authorName||'?')[0]}</div>
+                  }
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.authorName}</span>
+                  {p.post_type && p.post_type !== 'thought' && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: POST_TYPE_COLORS[p.post_type]?.bg || C.border, color: POST_TYPE_COLORS[p.post_type]?.text || C.muted }}>
+                      {POST_TYPE_LABELS[p.post_type] || p.post_type}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{(p.content||'').slice(0, 120)}{(p.content||'').length > 120 ? '…' : ''}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SHOWCASE TAB ───────────────────────────────────────────────────────────────
+function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [] }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
@@ -1492,6 +1707,9 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [mediaDragging, setMediaDragging] = useState(false);
+  const [postType, setPostType] = useState('thought');
+  const [filterType, setFilterType] = useState('all');
+  const [myPortfolio, setMyPortfolio] = useState(false);
   const mediaInputRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
@@ -1542,6 +1760,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       imageUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
       userId: user?.id || null,
+      postType,
     });
 
     // 3. Always add to feed immediately (saved post uses DB id; fallback uses temp id)
@@ -1552,11 +1771,12 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       content: content.trim(),
       mediaUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
+      post_type: postType,
       inspired: 0, encouraged: 0, learned: 0, reflect: 0, time: 'Just now',
     };
     setFeed(prev => prev.find(p => p.id === newPost.id) ? prev : [newPost, ...prev]);
 
-    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false);
+    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false); setPostType('thought');
   };
 
 
@@ -1567,14 +1787,30 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
-            {canvas?.name ? `${canvas.name.split(' ')[0]}'s Feed` : 'Community Feed'}
+            💼 Showcase
           </h1>
-          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Your peer community, share milestones, stay inspired, never go it alone</p>
+          <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Share your wins, projects & growth — build your portfolio</p>
         </div>
-        <button onClick={() => setShowPeerGroups(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.purple}14`, border: `1px solid ${C.purple}30`, borderRadius: 10, padding: '7px 13px', cursor: 'pointer', color: C.purple, fontSize: 12, fontFamily: 'inherit', fontWeight: 700 }}>
-          <Users size={13} /> Peer Groups
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setMyPortfolio(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: myPortfolio ? C.accent : C.card, border: `1px solid ${myPortfolio ? C.accent : C.border}`, borderRadius: 10, padding: '7px 13px', cursor: 'pointer', color: myPortfolio ? '#fff' : C.text, fontSize: 12, fontFamily: 'inherit', fontWeight: 700 }}>
+            👤 My Portfolio
+          </button>
+          <button onClick={() => setShowPeerGroups(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: `${C.purple}14`, border: `1px solid ${C.purple}30`, borderRadius: 10, padding: '7px 13px', cursor: 'pointer', color: C.purple, fontSize: 12, fontFamily: 'inherit', fontWeight: 700 }}>
+            <Users size={13} /> Groups
+          </button>
+        </div>
+      </div>
+
+      {/* ── FILTER BAR ──────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}].map(f => (
+          <button key={f.id} onClick={() => setFilterType(f.id)}
+            style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filterType === f.id ? C.accent : C.border}`, background: filterType === f.id ? C.accent : C.card, color: filterType === f.id ? '#fff' : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {/* ── CANVAS NUDGE (compact, only if no canvas) ───────────────── */}
@@ -1585,7 +1821,7 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
             <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Set your Vision Canvas, it changes everything</div>
             <div style={{ fontSize: 11, color: C.muted }}>Your goal becomes the centre: AI, roadmap & mentors all tune to it so nothing feels random again</div>
           </div>
-          <Btn size="sm" onClick={() => setTab('canvas')}>Start →</Btn>
+          <Btn size="sm" onClick={() => setTab('path')}>Start →</Btn>
         </div>
       )}
 
@@ -1595,12 +1831,21 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         onDragLeave={() => setMediaDragging(false)}
         onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
 
+        {/* Post type selector */}
+        <div style={{ display: 'flex', gap: 6, padding: '10px 14px 0', overflowX: 'auto' }}>
+          {POST_TYPES.map(t => (
+            <button key={t.id} onClick={() => setPostType(t.id)}
+              style={{ flexShrink: 0, padding: '4px 12px', borderRadius: 20, border: `1px solid ${postType === t.id ? t.color : C.border}`, background: postType === t.id ? t.color + '22' : 'transparent', color: postType === t.id ? t.color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
         {/* Compact input row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
           <Avatar src={avatarUrl} name={displayName} size={30} />
           <input value={content} onChange={e => setContent(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !submitting && (content.trim() || mediaFile) && post()}
-            placeholder="Share a milestone, win or thought…"
+            placeholder={postType === 'achievement' ? 'Share a win or achievement…' : postType === 'project' ? 'Tell us about your project…' : postType === 'skill' ? 'What skill did you just learn?…' : postType === 'milestone' ? 'What milestone did you hit?…' : 'Share a thought with the community…'}
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
           {/* Photo / Video icon buttons */}
           <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
@@ -1713,7 +1958,10 @@ function FlowTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors = [
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {feed.map((p, i) => {
+        {feed
+          .filter(p => myPortfolio ? (user?.id && p.authorId === user.id) : true)
+          .filter(p => filterType === 'all' ? true : (p.post_type || 'thought') === filterType)
+          .map((p, i) => {
           const isVerifiedMentor = mentors.some(m => m.verified && m.name === p.authorName);
           const isOwn = user?.id && p.authorId === user.id;
           return (
@@ -1768,7 +2016,7 @@ const CANVAS_STEPS = [
   { key: 'goal12Month', label: '12-Month North Star', icon: '🚀', multi: true, placeholder: 'One specific, measurable, meaningful goal for the next 12 months', coach: 'Not a wish: a commitment. What will you point back to as proof you moved?', example: '"Launch my MVP and get 50 paying users by December 2026."' },
 ];
 
-function CanvasTab({ canvas, setCanvas, setTab }) {
+function PathTab({ canvas, setCanvas, setTab }) {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(canvas || {});
   const [view, setView] = useState(canvas?.bigVision ? 'view' : 'build');
@@ -4164,7 +4412,7 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
 }
 
 // ─── CONNECT TAB (peer group chats as a full page) ────────────────────────────
-function ConnectTab({ canvas, user, feed }) {
+function ConnectTab({ canvas, user, feed, mentors = [] }) {
   const [joined, setJoined] = useState(() => {
     try { return JSON.parse(localStorage.getItem('vh_peer_groups') || '[]'); } catch { return []; }
   });
@@ -4172,6 +4420,10 @@ function ConnectTab({ canvas, user, feed }) {
   const [groupMsgs, setGroupMsgs] = useState({});
   const [chatInput, setChatInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [chatMentorLocal, setChatMentorLocal] = useState(null);
+  const [mentorMessages, setMentorMessages] = useState([]);
+  const [mentorInput, setMentorInput] = useState('');
+  const [mentorLoading, setMentorLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
@@ -4247,17 +4499,49 @@ function ConnectTab({ canvas, user, feed }) {
         )}
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
-            {activeGroup ? `${activeGroup.emoji} ${activeGroup.name}` : 'Connect'}
+            {activeGroup ? `${activeGroup.emoji} ${activeGroup.name}` : '🤝 Connect'}
           </h1>
           <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
-            {activeGroup ? activeGroup.desc : 'Join a group and chat with peers on the same journey'}
+            {activeGroup ? activeGroup.desc : 'Mentors, peers & groups — all your connections in one place'}
           </p>
         </div>
       </div>
 
       {!activeGroup ? (
-        /* ── Group list ── */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto' }}>
+
+        {/* ── MENTORS SECTION ── */}
+        {mentors.length > 0 && (
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>🎓 Mentors</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {mentors.filter(m => m.status !== 'pending').slice(0, 6).map(m => (
+                <div key={m.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  {m.img
+                    ? <img src={m.img} alt={m.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    : <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#fff', fontWeight: 800, flexShrink: 0 }}>{(m.name||'M')[0]}</div>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontSize: 14, color: C.text }}>{m.name} {m.verified && <span style={{ fontSize: 10, color: C.accent }}>✓</span>}</div>
+                    <div style={{ fontSize: 12, color: C.muted }}>{m.title}</div>
+                    {m.quote && <div style={{ fontSize: 12, color: C.text, fontStyle: 'italic', marginTop: 4 }}>"{m.quote.slice(0,80)}{m.quote.length>80?'…':''}"</div>}
+                  </div>
+                  <button onClick={() => {
+                    // Store selected mentor and trigger chat — reuse MentorshipTab chat logic via ConnectTab local state
+                    setChatMentorLocal(m);
+                  }} style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    Chat →
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── PEER GROUPS SECTION ── */}
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>⚡ Peer Groups</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {PEER_GROUPS.map(g => {
             const isJoined = joined.includes(g.id);
             return (
@@ -4289,6 +4573,8 @@ function ConnectTab({ canvas, user, feed }) {
               Connect Supabase to enable live group chat. You can still join groups locally.
             </div>
           )}
+          </div>
+        </div>
         </div>
       ) : (
         /* ── Chat view ── */
@@ -4536,7 +4822,7 @@ function NavTour({ user, onDone }) {
 }
 
 function MainApp({ user, onSignOut }) {
-  const [tab, setTab] = useState('flow');
+  const [tab, setTab] = useState('home');
   const [showCoach, setShowCoach] = useState(false);
   const [showWellbeing, setShowWellbeing] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -4727,27 +5013,27 @@ function MainApp({ user, onSignOut }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const views = {
-    flow:          <FlowTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
-    canvas:        <CanvasTab canvas={canvas} setCanvas={handleSetCanvas} setTab={setTab} />,
+    home:          <HomeTab canvas={canvas} feed={feed} mentors={mentors} user={user} setTab={setTab} />,
+    showcase:      <ShowcaseTab canvas={canvas} feed={feed} setFeed={setFeed} setTab={setTab} user={user} feedLoading={feedLoading} mentors={mentors} />,
+    path:          <PathTab canvas={canvas} setCanvas={handleSetCanvas} setTab={setTab} />,
+    connect:       <ConnectTab canvas={canvas} user={user} feed={feed} mentors={mentors} />,
     roadmap:       <RoadmapTab canvas={canvas} setTab={setTab} />,
     tutor:         <TutorTab canvas={canvas} files={tutorFiles} setFiles={setTutorFiles}
                      timerRunning={timerRunning} setTimerRunning={setTimerRunning}
                      timerSeconds={timerSeconds} setTimerSeconds={setTimerSeconds}
                      timerIsBreak={timerIsBreak} setTimerIsBreak={setTimerIsBreak}
                      startTimer={startTimer} resetTimer={resetTimer} />,
-    mentorship:    <MentorshipTab mentors={mentors} />,
     reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
-    connect:       <ConnectTab canvas={canvas} user={user} feed={feed} />,
     settings:      <SettingsTab user={user} onSignOut={onSignOut} onTour={() => { localStorage.removeItem('vh_tour_done'); setShowNavTour(true); }} onQuiz={() => { localStorage.removeItem('vh_archetype'); setShowQuiz(true); }} />,
   };
 
   const MOBILE_NAV = [
-    { id: 'flow',         icon: Home,           label: 'Flow' },
-    { id: 'canvas',       icon: Lightbulb,      label: 'Canvas' },
-    { id: 'opportunities',icon: Compass,        label: 'Explore' },
-    { id: 'connect',      icon: MessageCircle,  label: 'Connect' },
-    { id: 'mentorship',   icon: Users,          label: 'Mentors' },
+    { id: 'home',         icon: Home,           label: 'Home' },
+    { id: 'showcase',     icon: Compass,        label: 'Showcase' },
+    { id: 'path',         icon: Lightbulb,      label: 'My Path' },
+    { id: 'connect',      icon: Users,          label: 'Connect' },
+    { id: 'opportunities',icon: MessageCircle,  label: 'Explore' },
   ];
 
   return (
