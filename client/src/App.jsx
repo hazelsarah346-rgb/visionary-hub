@@ -1444,7 +1444,7 @@ const REACTIONS = [
   { key: 'reflect',    emoji: '🌱', label: 'Reflect',   color: C.green   },
 ];
 
-function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId }) {
+function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId, currentUserAvatar }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(p.content || '');
@@ -1466,17 +1466,21 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
     setEditing(false);
   };
 
+  // Always show the current profile picture on your own posts —
+  // so if you change your photo, it updates everywhere instantly.
+  const displayAvatar = isOwn && currentUserAvatar ? currentUserAvatar : p.authorImg;
+
   const key = p.id || p.authorName;
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
-        <div onClick={() => onProfileClick?.(p.authorName, p.authorImg)} style={{ cursor: 'pointer' }}>
-          <Avatar src={p.authorImg} name={p.authorName} size={40} />
+        <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer' }}>
+          <Avatar src={displayAvatar} name={p.authorName} size={40} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span onClick={() => onProfileClick?.(p.authorName, p.authorImg)} style={{ fontWeight: 700, fontSize: 14, color: C.text, cursor: 'pointer' }}
+            <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ fontWeight: 700, fontSize: 14, color: C.text, cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
               onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{p.authorName}</span>
             {isVerifiedMentor && (
@@ -2121,6 +2125,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
           <PostCard key={p.id || i} p={p} isVerifiedMentor={isVerifiedMentor} isOwn={isOwn}
             reactions={reactions} setReactions={setReactions} setFeed={setFeed}
             userId={user?.id}
+            currentUserAvatar={avatarUrl}
             onDelete={async () => { await deletePost(p.id, user?.id); setFeed(prev => prev.filter(x => x.id !== p.id)); }}
             onProfileClick={(author, img) => setProfileModal({ author, authorImg: img })}
             onPeerGroups={() => setShowPeerGroups(true)} />
@@ -4501,9 +4506,18 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
       try {
         await supabase.auth.updateUser({ data: { full_name: n, bio: b, location: l, website: w, field: f } });
         const av = localStorage.getItem('vh_profile_avatar') || '';
+        const avPublic = av.startsWith('data:') ? '' : av; // don't store base64 in DB
         await saveUserData(user.id, {
-          profile: { avatarUrl: av.startsWith('data:') ? '' : av, name: n, bio: b, field: f, location: l, website: w }
+          profile: { avatarUrl: avPublic, name: n, bio: b, field: f, location: l, website: w }
         });
+        // Backfill new avatar + name onto ALL existing posts by this user
+        // so profile changes show instantly on old posts too
+        if (avPublic || n) {
+          const updates = {};
+          if (avPublic) updates.author_img  = avPublic;
+          if (n)        updates.author_name = n;
+          await supabase.from('posts').update(updates).eq('author_id', user.id);
+        }
       } catch (_) {}
     }
     setSaving(false); setSaved(true);
