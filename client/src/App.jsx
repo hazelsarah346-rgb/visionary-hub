@@ -1804,8 +1804,8 @@ function HomeTab({ canvas, feed, mentors, user, setTab, onCoach }) {
           <div style={{ background: C.card, border: `2px dashed ${C.border}`, borderRadius: 16, padding: '22px', textAlign: 'center' }}>
             <div style={{ fontSize: 30, marginBottom: 8 }}>🤝</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>Mentors are on their way</div>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Real mentors in your field are joining. Your AI mentor is ready now.</div>
-            <button onClick={() => setTab('connect')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Talk to AI Mentor →</button>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Real mentors in your field are joining. Use the AI tool to help with your path in the meantime.</div>
+            <button onClick={() => setTab('connect')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Use AI Tool →</button>
           </div>
         )}
       </div>
@@ -1901,7 +1901,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   };
 
   const post = async () => {
-    if (!content.trim() && !mediaFile) return; // need text or media
+    if (!mediaFile) return; // Showcase = media only. No media = no post.
     if (submitting) return;
     setSubmitting(true);
 
@@ -1998,53 +1998,39 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE BOX, compact bar ──── */}
-      <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.blue + '60' : C.border}`, borderRadius: 14, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
+      {/* ── COMPOSE BOX — media first, always ──── */}
+      <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.accent + '60' : C.border}`, borderRadius: 16, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
         onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
         onDragLeave={() => setMediaDragging(false)}
         onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
 
-        {/* Post type selector */}
-        <div style={{ display: 'flex', gap: 6, padding: '10px 14px 0', overflowX: 'auto' }}>
-          {POST_TYPES.map(t => (
-            <button key={t.id} onClick={() => setPostType(t.id)}
-              style={{ flexShrink: 0, padding: '4px 12px', borderRadius: 20, border: `1px solid ${postType === t.id ? t.color : C.border}`, background: postType === t.id ? t.color + '22' : 'transparent', color: postType === t.id ? t.color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-        {/* Compact input row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
-          <Avatar src={avatarUrl} name={displayName} size={30} />
-          <input value={content} onChange={e => setContent(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !submitting && (content.trim() || mediaFile) && post()}
-            placeholder={postType === 'achievement' ? 'Share a win or achievement…' : postType === 'project' ? 'Tell us about your project…' : postType === 'skill' ? 'What skill did you just learn?…' : postType === 'milestone' ? 'What milestone did you hit?…' : 'Share a thought with the community…'}
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
-          {/* Photo / Video icon buttons */}
-          <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
-            title="Add photo"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.muted, display: 'flex', alignItems: 'center' }}
-            onMouseEnter={e => e.currentTarget.style.color = C.blue}
-            onMouseLeave={e => e.currentTarget.style.color = C.muted}>
-            <Image size={17} />
-          </button>
-          <button onClick={() => { mediaInputRef.current.accept = 'video/*'; mediaInputRef.current?.click(); }}
-            title="Add video"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.muted, display: 'flex', alignItems: 'center' }}
-            onMouseEnter={e => e.currentTarget.style.color = C.purple}
-            onMouseLeave={e => e.currentTarget.style.color = C.muted}>
-            <Video size={17} />
-          </button>
-          <Btn size="sm" onClick={post} disabled={submitting || (!content.trim() && !mediaFile)}>
-            {submitting ? <Spinner /> : <Send size={12} />}
-          </Btn>
-        </div>
-
-        {/* Media preview (only when file selected) */}
-        {mediaPreview && (
-          <div style={{ borderTop: `1px solid ${C.border}` }}>
+        {!mediaPreview ? (
+          /* ── NO MEDIA YET: show big upload prompt ── */
+          <div style={{ padding: '18px 18px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <Avatar src={avatarUrl} name={displayName} size={34} />
+              <div style={{ fontSize: 13, color: C.muted }}>Share a photo or video to showcase your work…</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', borderRadius: 12, border: `1.5px dashed ${C.blue}55`, background: `${C.blue}08`, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = `${C.blue}18`; e.currentTarget.style.borderColor = C.blue; }}
+                onMouseLeave={e => { e.currentTarget.style.background = `${C.blue}08`; e.currentTarget.style.borderColor = `${C.blue}55`; }}>
+                <Image size={16} /> Photo
+              </button>
+              <button onClick={() => { mediaInputRef.current.accept = 'video/*'; mediaInputRef.current?.click(); }}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', borderRadius: 12, border: `1.5px dashed ${C.purple}55`, background: `${C.purple}08`, color: C.purple, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = `${C.purple}18`; e.currentTarget.style.borderColor = C.purple; }}
+                onMouseLeave={e => { e.currentTarget.style.background = `${C.purple}08`; e.currentTarget.style.borderColor = `${C.purple}55`; }}>
+                <Video size={16} /> Video
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ── MEDIA SELECTED: show preview + caption + post type + post button ── */
+          <div>
+            {/* Media preview */}
             {mediaPreview.type === 'video' ? (
-              /* ── REEL-STYLE VIDEO PREVIEW ── */
               <div style={{ position: 'relative' }}>
                 <ReelPlayer src={mediaPreview.url} />
                 <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
@@ -2053,21 +2039,40 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
                 </button>
               </div>
             ) : (
-              /* ── IMAGE PREVIEW ── */
               <div style={{ position: 'relative', background: '#000' }}>
-                <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'contain', display: 'block' }} />
+                <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'contain', display: 'block' }} />
                 <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
                   style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                   <X size={12} color="#fff" />
                 </button>
-                <div style={{ position: 'absolute', bottom: 9, left: 9, background: 'rgba(0,0,0,0.55)', borderRadius: 6, padding: '2px 8px', fontSize: 10, color: '#fff', fontWeight: 700 }}>
-                  📷 Photo
-                </div>
               </div>
             )}
-            {uploadProgress && <div style={{ padding: '6px 14px 8px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+
+            {/* Post type chips */}
+            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 0', overflowX: 'auto' }}>
+              {POST_TYPES.map(t => (
+                <button key={t.id} onClick={() => setPostType(t.id)}
+                  style={{ flexShrink: 0, padding: '4px 12px', borderRadius: 20, border: `1px solid ${postType === t.id ? t.color : C.border}`, background: postType === t.id ? t.color + '22' : 'transparent', color: postType === t.id ? t.color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Caption + post button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
+              <Avatar src={avatarUrl} name={displayName} size={30} />
+              <input value={content} onChange={e => setContent(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !submitting && mediaFile && post()}
+                placeholder="Add a caption…"
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+              <Btn size="sm" onClick={post} disabled={submitting || !mediaFile}>
+                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
+              </Btn>
+            </div>
+            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
           </div>
         )}
+
         {mediaDragging && (
           <div style={{ padding: '10px 16px', background: `${C.blue}08`, borderTop: `1px dashed ${C.blue}`, textAlign: 'center', fontSize: 12, color: C.blueLight }}>
             Drop photo or video here
@@ -5113,7 +5118,7 @@ function NavTour({ user, onDone }) {
     { icon: Compass,       color: C.teal,    label: 'Explore',       desc: 'Scholarships, internships, fellowships and programs matched to your field and goals.' },
     { icon: MessageCircle, color: C.green,   label: 'Connect',       desc: 'Peer group chats, find people at your exact stage and build real connections.' },
     { icon: Users,         color: C.purple,  label: 'Mentorship',    desc: 'Connect with mentors who have walked your path. Get real guidance, not just advice.' },
-    { icon: Bot,           color: '#EC4899', label: 'North Star AI', desc: 'Your personal AI coach, ask anything about your vision, roadmap, opportunities or growth.' },
+    { icon: Bot,           color: '#EC4899', label: 'AI Tool', desc: 'Use AI to help with your vision, roadmap, opportunities and growth. A tool — not a replacement for real mentors.' },
   ];
 
   return (
