@@ -1418,11 +1418,8 @@ function ReelPlayer({ src }) {
       <div style={{ position: 'relative', width: '100%', maxWidth: 340, aspectRatio: '9/16', overflow: 'hidden' }}>
         <video ref={videoRef} src={src} playsInline loop autoPlay muted={muted}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        {/* Bottom overlay: reel label + mute toggle */}
-        <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ background: 'rgba(0,0,0,0.5)', borderRadius: 6, padding: '2px 8px', fontSize: 10, color: '#fff', fontWeight: 700, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Video size={9} /> Reel
-          </div>
+        {/* Bottom overlay: mute toggle only */}
+        <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <button onClick={toggleMute}
             style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
             {muted
@@ -1471,44 +1468,72 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
   const displayAvatar = isOwn && currentUserAvatar ? currentUserAvatar : p.authorImg;
 
   const key = p.id || p.authorName;
+  const typeColor  = POST_TYPE_COLORS[p.post_type]?.text  || null;
+  const typeBg     = POST_TYPE_COLORS[p.post_type]?.bg    || null;
+  const typeLabel  = POST_TYPE_LABELS[p.post_type]        || null;
+  const isBig      = ['achievement', 'milestone'].includes(p.post_type); // special glow treatment
+  const hasMedia   = p.mediaUrl && !p.mediaUrl.startsWith('blob:');
+
   return (
-    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+    <div style={{
+      background: C.surface,
+      border: `1px solid ${isBig ? (typeColor + '44') : C.border}`,
+      borderRadius: 18,
+      overflow: 'hidden',
+      boxShadow: isBig ? `0 0 0 1px ${typeColor}22, 0 4px 20px ${typeColor}18` : '0 1px 4px rgba(0,0,0,0.12)',
+      transition: 'box-shadow 0.2s, border-color 0.2s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = isBig ? `0 0 0 1px ${typeColor}44, 0 8px 30px ${typeColor}28` : '0 2px 12px rgba(0,0,0,0.18)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = isBig ? `0 0 0 1px ${typeColor}22, 0 4px 20px ${typeColor}18` : '0 1px 4px rgba(0,0,0,0.12)'; }}
+    >
+
+      {/* Colour-coded top accent strip for non-thought posts */}
+      {p.post_type && p.post_type !== 'thought' && typeColor && (
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${typeColor}, ${typeColor}66)` }} />
+      )}
+
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
-        <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer' }}>
-          <Avatar src={displayAvatar} name={p.authorName} size={40} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 10px' }}>
+        <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer', flexShrink: 0 }}>
+          <Avatar src={displayAvatar} name={p.authorName} size={42} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ fontWeight: 700, fontSize: 14, color: C.text, cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{p.authorName}</span>
+            <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)}
+              style={{ fontWeight: 800, fontSize: 14, color: C.text, cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.color = typeColor || C.accent}
+              onMouseLeave={e => e.currentTarget.style.color = C.text}>
+              {p.authorName}
+            </span>
             {isVerifiedMentor && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
             )}
-            {p.post_type && p.post_type !== 'thought' && POST_TYPE_LABELS[p.post_type] && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', background: POST_TYPE_COLORS[p.post_type]?.bg || '#f1f5f9', color: POST_TYPE_COLORS[p.post_type]?.text || '#64748b', borderRadius: 99, padding: '2px 8px', fontSize: 10, fontWeight: 700 }}>{POST_TYPE_LABELS[p.post_type]}</span>
-            )}
           </div>
-          <div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{p.time || 'Recently'}</div>
         </div>
-        {/* 3-dot menu: own posts get edit/delete, others get report */}
-        <div ref={menuRef} style={{ position: 'relative' }}>
+
+        {/* Post type badge — prominent, right side */}
+        {typeLabel && (
+          <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', background: typeBg, color: typeColor, borderRadius: 10, padding: '4px 10px', fontSize: 11, fontWeight: 800, letterSpacing: 0.2 }}>{typeLabel}</span>
+        )}
+
+        {/* 3-dot menu */}
+        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
           <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
             <MoreHorizontal size={18} />
           </button>
           {menuOpen && (
-            <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 170 }}>
+            <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 99, minWidth: 170 }}>
               {isOwn ? (<>
                 <button onClick={() => { setMenuOpen(false); setEditText(p.content || ''); setEditing(true); }}
-                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '10px 10px 0 0' }}
+                  style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '12px 12px 0 0' }}
                   onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Edit3 size={13} color={C.blueLight} /> Edit post
                 </button>
                 <div style={{ height: 1, background: C.border }} />
                 <button onClick={async () => { setMenuOpen(false); if (!window.confirm('Delete this post?')) return; await onDelete(); }}
-                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '0 0 10px 10px' }}
+                  style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '0 0 12px 12px' }}
                   onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Trash2 size={13} /> Delete post
@@ -1517,19 +1542,18 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
                 <button onClick={async () => {
                   setMenuOpen(false);
                   if (flagged) { alert('You already reported this post.'); return; }
-                  const reason = window.prompt('Why are you reporting this post?\n\nOptions:\n• Spam or bot\n• Fake profile\n• Harassment\n• Inappropriate content\n• Other');
+                  const reason = window.prompt('Why are you reporting this post?\n\n• Spam or bot\n• Fake profile\n• Harassment\n• Inappropriate content\n• Other');
                   if (!reason) return;
                   if (supabase) {
                     await supabase.from('flagged_posts').insert([{ post_id: p.id, reported_by: userId || 'anonymous', reason }]);
-                    // Increment flag count
                     const newCount = (p.flag_count || 0) + 1;
                     await supabase.from('posts').update({ flag_count: newCount, hidden: newCount >= 3 }).eq('id', p.id);
                     if (newCount >= 3) setFeed(prev => prev.filter(x => x.id !== p.id));
                   }
                   setFlagged(true);
-                  alert('✅ Reported. Our team will review this post. Thank you for keeping North Star safe.');
+                  alert('✅ Reported. Thank you for keeping North Star safe.');
                 }}
-                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10 }}
+                  style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12 }}
                   onMouseEnter={e => e.currentTarget.style.background = '#f59e0b14'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <AlertCircle size={13} /> {flagged ? 'Reported' : 'Report post'}
@@ -1540,41 +1564,36 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         </div>
       </div>
 
-      {/* Media: full-width, skip blob: URLs (they expire and show as black broken images) */}
-      {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'image' && (
-        <div style={{ background: '#000' }}>
-          <img src={p.mediaUrl} alt="post" style={{ width: '100%', maxHeight: 480, objectFit: 'cover', display: 'block' }} onError={e => { e.target.parentElement.style.display = 'none'; }} />
-        </div>
-      )}
-      {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'video' && (
-        <ReelPlayer src={p.mediaUrl} />
-      )}
-
-      {/* Caption / inline edit */}
+      {/* Caption / inline edit — BEFORE media if no media, AFTER header */}
       {editing ? (
-        <div style={{ padding: '12px 16px 10px' }}>
-          <textarea
-            value={editText}
-            onChange={e => setEditText(e.target.value)}
-            autoFocus
-            rows={3}
-            style={{ width: '100%', background: C.card, border: `1.5px solid ${C.blueLight}`, borderRadius: 10, color: C.text, fontSize: 14, padding: '10px 12px', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
-          />
+        <div style={{ padding: '4px 16px 12px' }}>
+          <textarea value={editText} onChange={e => setEditText(e.target.value)} autoFocus rows={3}
+            style={{ width: '100%', background: C.card, border: `1.5px solid ${C.blueLight}`, borderRadius: 10, color: C.text, fontSize: 14, padding: '10px 12px', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>
-              {saving ? <Loader2 size={12} className="spin" /> : <Check size={12} />} Save
-            </Btn>
+            <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>{saving ? <Loader2 size={12} className="spin" /> : <Check size={12} />} Save</Btn>
             <Btn size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Btn>
           </div>
         </div>
       ) : p.content ? (
-        <div style={{ padding: '12px 16px 4px' }}>
-          <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>{p.content}</p>
+        <div style={{ padding: hasMedia ? '0 16px 12px' : '0 16px 4px' }}>
+          <p style={{ fontSize: 14, color: C.text, lineHeight: 1.8, margin: 0, whiteSpace: 'pre-wrap', fontWeight: isBig ? 600 : 400 }}>{p.content}</p>
         </div>
       ) : null}
 
+      {/* Media — full bleed, no side margins, fills the card */}
+      {hasMedia && p.mediaType === 'image' && (
+        <div style={{ background: '#000', marginTop: p.content ? 0 : 4 }}>
+          <img src={p.mediaUrl} alt="post"
+            style={{ width: '100%', maxHeight: 520, objectFit: 'cover', display: 'block' }}
+            onError={e => { e.target.parentElement.style.display = 'none'; }} />
+        </div>
+      )}
+      {hasMedia && p.mediaType === 'video' && (
+        <ReelPlayer src={p.mediaUrl} />
+      )}
+
       {/* Reactions */}
-      <div style={{ display: 'flex', gap: 3, padding: '10px 12px 12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 4, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
         {REACTIONS.map(r => {
           const reacted = !!(reactions[`${key}_${r.key}`]);
           const count = (p[r.key] || 0);
@@ -1585,21 +1604,14 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
                 setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
                 reactToPost(p.id, r.key);
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}18` : 'none', border: `1px solid ${reacted ? r.color + '60' : C.border}`, borderRadius: 99, padding: '5px 10px', cursor: reacted ? 'default' : 'pointer', color: reacted ? r.color : C.muted, fontSize: 11, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s', opacity: reacted ? 1 : 0.85 }}
-              onMouseEnter={e => { if (!reacted) { e.currentTarget.style.background = `${r.color}12`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '50'; }}}
-              onMouseLeave={e => { if (!reacted) { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}}>
-              <span style={{ fontSize: 13 }}>{r.emoji}</span>
-              {count > 0 && <span>{count}</span>}
-              <span>{r.label}</span>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 11px', cursor: reacted ? 'default' : 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}
+              onMouseEnter={e => { if (!reacted) { e.currentTarget.style.background = `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; }}}
+              onMouseLeave={e => { if (!reacted) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}}>
+              <span style={{ fontSize: 14 }}>{r.emoji}</span>
+              {count > 0 && <span style={{ fontWeight: 700, fontSize: 12 }}>{count}</span>}
             </button>
           );
         })}
-        <button onClick={() => onPeerGroups?.()}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: `1px solid ${C.border}`, borderRadius: 99, padding: '5px 10px', cursor: 'pointer', color: C.muted, fontSize: 11, fontFamily: 'inherit', transition: 'all 0.15s', marginLeft: 'auto' }}
-          onMouseEnter={e => { e.currentTarget.style.background = `${C.purple}14`; e.currentTarget.style.color = C.purple; e.currentTarget.style.borderColor = C.purple + '50'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}>
-          <Users size={12} /> Groups
-        </button>
       </div>
     </div>
   );
