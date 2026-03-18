@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GQ Practice – Intellibus</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+
+header { background: #1a1d2e; padding: 14px 28px; border-bottom: 2px solid #2ecc71; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 1.3rem; font-weight: 900; color: #2ecc71; }
+.logo span { color: #fff; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.score-pill { background: #0f1117; border: 1.5px solid #2ecc71; border-radius: 20px; padding: 4px 14px; font-size: 0.82rem; color: #2ecc71; font-weight: 700; }
+.history-btn { background: none; border: 1.5px solid #2a2d3e; border-radius: 8px; color: #888; padding: 4px 12px; cursor: pointer; font-size: 0.78rem; }
+.history-btn:hover { border-color: #2ecc71; color: #2ecc71; }
+
+/* HOME */
+.home { max-width: 960px; margin: 0 auto; padding: 36px 20px; }
+.home-title { font-size: 1.7rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
+.home-sub { color: #888; margin-bottom: 26px; font-size: 0.88rem; }
+.mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.mode-card { background: #1a1d2e; border: 2px solid #2a2d3e; border-radius: 14px; padding: 22px 18px; cursor: pointer; transition: all 0.2s; position: relative; }
+.mode-card:hover { border-color: #2ecc71; transform: translateY(-2px); }
+.mode-card.featured { border-color: #f39c12; }
+.mode-card.featured:hover { box-shadow: 0 0 18px #f39c1244; }
+.featured-badge { position: absolute; top: -10px; right: 12px; background: #f39c12; color: #0f1117; font-size: 0.66rem; font-weight: 800; padding: 2px 10px; border-radius: 20px; }
+.mode-icon { font-size: 1.9rem; margin-bottom: 9px; }
+.mode-name { font-size: 0.98rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
+.mode-desc { font-size: 0.76rem; color: #888; line-height: 1.5; margin-bottom: 10px; }
+.mode-tag { display: inline-block; border-radius: 20px; padding: 2px 10px; font-size: 0.68rem; font-weight: 700; }
+.tag-green  { background: #1e4d2b; color: #2ecc71; }
+.tag-orange { background: #4d3a1e; color: #f39c12; }
+.tag-blue   { background: #1e2e4d; color: #82aaff; }
+.tag-purple { background: #2e1e4d; color: #c792ea; }
+.tag-red    { background: #4d1e1e; color: #e74c3c; }
+
+.best-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.best-chip { background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 9px; padding: 7px 13px; font-size: 0.76rem; color: #888; }
+.best-chip strong { color: #2ecc71; }
+
+/* QUIZ */
+.quiz-wrap { max-width: 860px; margin: 0 auto; padding: 22px 20px; display: none; }
+.top-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.back-btn { background: none; border: 1.5px solid #2a2d3e; border-radius: 8px; color: #888; padding: 5px 11px; cursor: pointer; font-size: 0.76rem; white-space: nowrap; }
+.back-btn:hover { border-color: #2ecc71; color: #2ecc71; }
+.progress-track { flex: 1; background: #2a2d3e; border-radius: 10px; height: 7px; }
+.progress-fill { background: #2ecc71; height: 7px; border-radius: 10px; transition: width 0.4s; }
+.q-label { font-size: 0.76rem; color: #888; white-space: nowrap; }
+
+.timer-bar-wrap { margin-bottom: 14px; }
+.timer-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.timer-label { font-size: 0.76rem; color: #888; }
+.timer-num { font-size: 0.88rem; font-weight: 800; color: #2ecc71; transition: color 0.3s; }
+.timer-num.warn { color: #f39c12; } .timer-num.danger { color: #e74c3c; }
+.timer-track { background: #2a2d3e; border-radius: 10px; height: 5px; }
+.timer-fill { background: #2ecc71; height: 5px; border-radius: 10px; transition: width 1s linear, background 0.3s; }
+.timer-fill.warn { background: #f39c12; } .timer-fill.danger { background: #e74c3c; }
+
+.card { background: #1a1d2e; border: 2px solid #2a2d3e; border-radius: 13px; padding: 24px; }
+.card.correct-card { border-color: #2ecc71; }
+.card.wrong-card   { border-color: #e74c3c; }
+.card.timeout-card { border-color: #f39c12; }
+
+.diff-tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 11px; }
+.easy   { background: #1e4d2b; color: #2ecc71; }
+.medium { background: #4d3a1e; color: #f39c12; }
+.hard   { background: #4d1e1e; color: #e74c3c; }
+
+.q-title { font-size: 0.98rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.q-hint  { font-size: 0.78rem; color: #888; margin-bottom: 15px; }
+
+pre, .sql-block { background: #0a0c14; border: 1px solid #2a2d3e; border-radius: 9px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.7; color: #a8e6cf; overflow-x: auto; margin-bottom: 18px; white-space: pre; }
+.kw  { color: #c792ea; } .fn  { color: #82aaff; } .str { color: #f78c6c; } .num { color: #f78c6c; }
+.skw { color: #c792ea; } .scl { color: #82aaff; } .sval{ color: #f78c6c; } .cmt { color: #546e7a; font-style: italic; }
+
+.pattern-box { background: #0a0c14; border: 1px solid #2a2d3e; border-radius: 9px; padding: 18px; text-align: center; margin-bottom: 18px; font-size: 1.2rem; letter-spacing: 3px; color: #fff; font-weight: 700; line-height: 2; }
+.blank { color: #2ecc71; border-bottom: 2px solid #2ecc71; padding: 0 5px; }
+
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.options.single-col { grid-template-columns: 1fr; }
+.opt-btn { background: #0f1117; border: 2px solid #2a2d3e; border-radius: 9px; padding: 10px 15px; font-size: 0.85rem; color: #ccc; cursor: pointer; text-align: left; transition: all 0.18s; font-family: 'Courier New', monospace; }
+.opt-btn:hover:not(:disabled) { border-color: #2ecc71; color: #fff; background: #1a2e1e; }
+.opt-btn.correct-ans { border-color: #2ecc71 !important; background: #1a2e1e !important; color: #2ecc71 !important; font-weight: 700; }
+.opt-btn.wrong-ans   { border-color: #e74c3c !important; background: #2e1a1a !important; color: #e74c3c !important; }
+.opt-btn:disabled { cursor: default; }
+
+.explanation { background: #0a0c14; border-left: 4px solid #2ecc71; border-radius: 5px; padding: 11px 14px; font-size: 0.81rem; color: #aaa; line-height: 1.6; display: none; margin-bottom: 13px; font-family: 'Segoe UI', sans-serif; }
+.explanation.show { display: block; }
+.explanation.wrong-exp { border-color: #e74c3c; }
+.explanation.timeout-exp { border-color: #f39c12; }
+
+.next-btn { background: #2ecc71; color: #0f1117; border: none; border-radius: 9px; padding: 9px 24px; font-size: 0.88rem; font-weight: 800; cursor: pointer; display: none; }
+.next-btn.show { display: inline-block; }
+.next-btn:hover { background: #27ae60; }
+
+/* RESULT */
+.result { text-align: center; padding: 40px 20px; display: none; }
+.result.show { display: block; }
+.result-emoji { font-size: 3.2rem; margin-bottom: 10px; }
+.result-title { font-size: 1.7rem; font-weight: 900; color: #2ecc71; margin-bottom: 5px; }
+.result-score { font-size: 2.8rem; font-weight: 900; color: #fff; }
+.result-denom { color: #555; font-size: 0.88rem; margin-bottom: 5px; }
+.stars { font-size: 1.5rem; margin-bottom: 13px; }
+.result-sub { color: #888; margin-bottom: 20px; font-size: 0.86rem; }
+.result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.restart-btn { background: #2ecc71; color: #0f1117; border: none; border-radius: 9px; padding: 10px 26px; font-size: 0.88rem; font-weight: 800; cursor: pointer; }
+.home-btn2 { background: #1a1d2e; color: #2ecc71; border: 2px solid #2ecc71; border-radius: 9px; padding: 10px 26px; font-size: 0.88rem; font-weight: 800; cursor: pointer; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: #000a; display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal-overlay.show { display: flex; }
+.modal { background: #1a1d2e; border: 2px solid #2a2d3e; border-radius: 14px; padding: 26px; max-width: 480px; width: 92%; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 14px; }
+.hist-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #2a2d3e; font-size: 0.8rem; color: #888; }
+.hist-row:last-child { border: none; }
+.hist-score { color: #2ecc71; font-weight: 700; }
+.modal-close { background: #2ecc71; color: #0f1117; border: none; border-radius: 8px; padding: 7px 20px; font-weight: 800; cursor: pointer; margin-top: 14px; }
+.no-hist { color: #555; font-size: 0.84rem; text-align: center; padding: 18px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GQ <span>Practice</span></div>
+  <div class="header-right">
+    <div class="score-pill">Score: <span id="scoreNum">0</span></div>
+    <button class="history-btn" onclick="showHistory()">📊 History</button>
+  </div>
+</header>
+
+<div class="home" id="homeScreen">
+  <div class="home-title">Intellibus GQ Practice</div>
+  <div class="home-sub">Hard, realistic questions — timed just like the real test. Practice every section below.</div>
+  <div class="best-row" id="bestRow"></div>
+  <div class="mode-grid">
+    <div class="mode-card featured" onclick="startMode('sim')">
+      <div class="featured-badge">START HERE</div>
+      <div class="mode-icon">🎯</div>
+      <div class="mode-name">Full Simulation</div>
+      <div class="mode-desc">All categories mixed and shuffled. Closest to the real GQ experience.</div>
+      <span class="mode-tag tag-orange">30 questions · 60s each</span>
+    </div>
+    <div class="mode-card" onclick="startMode('logic')">
+      <div class="mode-icon">🧠</div>
+      <div class="mode-name">Logical Ability</div>
+      <div class="mode-desc">IQ-style reasoning: sequences, analogies, deduction, word problems.</div>
+      <span class="mode-tag tag-green">20 questions · 60s each</span>
+    </div>
+    <div class="mode-card" onclick="startMode('code')">
+      <div class="mode-icon">💻</div>
+      <div class="mode-name">Crack the Code</div>
+      <div class="mode-desc">Read code, find the output. Covers loops, functions, lists, recursion.</div>
+      <span class="mode-tag tag-orange">20 questions · 60s each</span>
+    </div>
+    <div class="mode-card" onclick="startMode('sql')">
+      <div class="mode-icon">🗄️</div>
+      <div class="mode-name">SQL Basics</div>
+      <div class="mode-desc">SELECT, JOIN, GROUP BY, subqueries. Tested in Data Engineer &amp; Full Stack roles.</div>
+      <span class="mode-tag tag-blue">15 questions · 60s each</span>
+    </div>
+    <div class="mode-card" onclick="startMode('java')">
+      <div class="mode-icon">☕</div>
+      <div class="mode-name">Java Basics</div>
+      <div class="mode-desc">Java output questions: OOP, types, loops, exceptions. Core Intellibus skill.</div>
+      <span class="mode-tag tag-purple">15 questions · 60s each</span>
+    </div>
+    <div class="mode-card" onclick="startMode('hard')">
+      <div class="mode-icon">🔥</div>
+      <div class="mode-name">Hard Mode</div>
+      <div class="mode-desc">Only the hardest questions from all categories. No hints shown.</div>
+      <span class="mode-tag tag-red">20 questions · 45s each</span>
+    </div>
+  </div>
+</div>
+
+<div class="quiz-wrap" id="quizWrap">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goHome()">← Home</button>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="q-label" id="qLabel"></div>
+  </div>
+  <div class="timer-bar-wrap">
+    <div class="timer-row">
+      <div class="timer-label">Time remaining</div>
+      <div class="timer-num" id="timerNum">60s</div>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+  </div>
+  <div id="questionArea"></div>
+  <div class="result" id="resultScreen">
+    <div class="result-emoji" id="rEmoji"></div>
+    <div class="result-title" id="rTitle"></div>
+    <div class="result-score" id="rScore"></div>
+    <div class="result-denom" id="rDenom"></div>
+    <div class="stars" id="rStars"></div>
+    <div class="result-sub" id="rSub"></div>
+    <div class="result-btns">
+      <button class="restart-btn" onclick="restartMode()">Try Again</button>
+      <button class="home-btn2" onclick="goHome()">← All Sections</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="histModal" onclick="closeHistory(event)">
+  <div class="modal">
+    <h2>📊 Score History</h2>
+    <div id="histContent"></div>
+    <button class="modal-close" onclick="closeHistModal()">Close</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  LOGICAL ABILITY — 20 questions
+// ═══════════════════════════════════════════════════════════
+const logicQ = [
+  { d:"easy", t:"What comes next?", h:"How much is added each time?",
+    type:"pattern", p:"2 &nbsp; 4 &nbsp; 6 &nbsp; 8 &nbsp; <span class='blank'>?</span>",
+    o:["9","10","11","12"], a:1,
+    e:"<strong>+2 each time.</strong> 2,4,6,8,<strong>10</strong>" },
+  { d:"easy", t:"Odd one out?", h:"Which number has a different property from all others?",
+    type:"pattern", p:"3 &nbsp;&nbsp; 7 &nbsp;&nbsp; 11 &nbsp;&nbsp; 14 &nbsp;&nbsp; 19",
+    o:["3","7","14","19"], a:2,
+    e:"3,7,11,19 are odd. <strong>14 is even</strong> — odd one out." },
+  { d:"easy", t:"Complete the analogy:", h:"Baby dog = Puppy. Baby cat = ?",
+    type:"pattern", p:"Dog → Puppy &nbsp;&nbsp; Cat → <span class='blank'>?</span>",
+    o:["Cub","Kitten","Calf","Foal"], a:1,
+    e:"Baby dog = Puppy. Baby cat = <strong>Kitten</strong>." },
+  { d:"easy", t:"What comes next?", h:"1×1, 2×2, 3×3...",
+    type:"pattern", p:"1 &nbsp; 4 &nbsp; 9 &nbsp; 16 &nbsp; <span class='blank'>?</span>",
+    o:["20","25","24","36"], a:1,
+    e:"Perfect squares: 1²,2²,3²,4² → 5²=<strong>25</strong>" },
+  { d:"easy", t:"Complete the analogy:", h:"What is the relationship on the left?",
+    type:"pattern", p:"Hot → Cold &nbsp;&nbsp; Fast → <span class='blank'>?</span>",
+    o:["Quick","Speedy","Slow","Run"], a:2,
+    e:"Hot↔Cold are opposites. Fast↔<strong>Slow</strong>." },
+  { d:"medium", t:"What is missing?", h:"Each row follows the same rule.",
+    type:"pattern", p:"2 → 4 → 8<br>3 → 6 → 12<br>5 → 10 → <span class='blank'>?</span>",
+    o:["15","18","20","25"], a:2,
+    e:"×2 each step. 5→10→<strong>20</strong>." },
+  { d:"medium", t:"Next letter?", h:"Find the gap between consecutive letters (A=1, B=2...).",
+    type:"pattern", p:"A &nbsp; C &nbsp; F &nbsp; J &nbsp; <span class='blank'>?</span>",
+    o:["M","N","O","P"], a:2,
+    e:"+2,+3,+4,+5. J(10)+5=O(15)=<strong>O</strong>" },
+  { d:"medium", t:"Complete: 6 → 36 as 7 → ?", h:"What operation turns 6 into 36?",
+    type:"pattern", p:"6 → 36 &nbsp;&nbsp; 7 → <span class='blank'>?</span>",
+    o:["42","49","14","56"], a:1,
+    e:"6²=36. 7²=<strong>49</strong>." },
+  { d:"medium", t:"What comes next?", h:"Look at the difference of differences.",
+    type:"pattern", p:"3 &nbsp; 6 &nbsp; 11 &nbsp; 18 &nbsp; 27 &nbsp; <span class='blank'>?</span>",
+    o:["36","38","40","34"], a:1,
+    e:"Gaps +3,+5,+7,+9,+11. 27+11=<strong>38</strong>." },
+  { d:"medium", t:"Venn diagram:", h:"Both = A+B − (at least one). At least one = Total−Neither.",
+    type:"pattern", p:"30 students<br>18 play football, 15 play tennis<br>5 play neither<br>How many play <strong>both</strong>?",
+    o:["6","7","8","10"], a:2,
+    e:"At least one=25. Both=18+15−25=<strong>8</strong>." },
+  { d:"medium", t:"Logical deduction:", h:"If A→B and B→C, what follows?",
+    type:"pattern", p:"All Bloops are Razzles<br>All Razzles are Lazzles<br>All Bloops Lazzles?",
+    o:["Yes, definitely","No","Only some","Cannot tell"], a:0,
+    e:"A→B, B→C so A→C. <strong>Yes, definitely.</strong>" },
+  { d:"medium", t:"What is missing?", h:"Look at each row and column.",
+    type:"pattern", p:"1 &nbsp; 2 &nbsp; 4<br>2 &nbsp; 4 &nbsp; 8<br>3 &nbsp; 6 &nbsp; <span class='blank'>?</span>",
+    o:["9","10","12","18"], a:2,
+    e:"Each row doubles. 3×4=<strong>12</strong>." },
+  { d:"hard", t:"Fibonacci?", h:"Each number = sum of the two before it.",
+    type:"pattern", p:"1 &nbsp; 1 &nbsp; 2 &nbsp; 3 &nbsp; 5 &nbsp; 8 &nbsp; <span class='blank'>?</span>",
+    o:["11","12","13","14"], a:2,
+    e:"5+8=<strong>13</strong>. Fibonacci sequence." },
+  { d:"hard", t:"What comes next?", h:"Look at both the number and its position.",
+    type:"pattern", p:"2 &nbsp; 6 &nbsp; 12 &nbsp; 20 &nbsp; 30 &nbsp; <span class='blank'>?</span>",
+    o:["38","40","42","44"], a:2,
+    e:"n×(n+1): 1×2,2×3,3×4,4×5,5×6,6×7=<strong>42</strong>." },
+  { d:"hard", t:"Clock: If 3:00 is 90°, what angle at 6:30?", h:"Hour hand moves 0.5° per minute.",
+    type:"pattern", p:"Clock hands at <strong>6:30</strong><br>What is the angle between them?",
+    o:["0°","15°","30°","45°"], a:1,
+    e:"At 6:30: hour=195°, minute=180°. Difference=<strong>15°</strong>." },
+  { d:"hard", t:"Speed–distance: Train A at 60mph, Train B at 90mph, 300 miles apart, heading toward each other. When do they meet?", h:"Combined speed = 60+90. Time = Distance ÷ Speed.",
+    type:"pattern", p:"Train A: 60 mph →<br>Train B: ← 90 mph<br>Distance: 300 miles<br>Meet in how many hours?",
+    o:["1.5 hrs","2 hrs","3 hrs","4 hrs"], a:1,
+    e:"Combined speed=150. 300÷150=<strong>2 hours</strong>." },
+  { d:"hard", t:"What number replaces ?", h:"Look at the relationship between each group's three numbers.",
+    type:"pattern", p:"[ 2, 5, 3 ] &nbsp; [ 4, 9, 5 ] &nbsp; [ 6, ?, 7 ]",
+    o:["11","12","13","14"], a:2,
+    e:"Middle = first + last. 2+3=5, 4+5=9, 6+7=<strong>13</strong>." },
+  { d:"hard", t:"Percentage: A coat was $80, now $60. What % decrease?", h:"% decrease = (decrease ÷ original) × 100.",
+    type:"pattern", p:"Original price: $80<br>New price: $60<br>Percentage decrease = <span class='blank'>?</span>",
+    o:["20%","25%","30%","33%"], a:1,
+    e:"Decrease=20. 20/80×100=<strong>25%</strong>." },
+  { d:"hard", t:"Profit/Loss: Bought at $200, sold at $150. % loss?", h:"% loss = (loss ÷ cost price) × 100.",
+    type:"pattern", p:"Cost price: $200 &nbsp; Selling price: $150<br>% Loss = <span class='blank'>?</span>",
+    o:["20%","25%","30%","33%"], a:1,
+    e:"Loss=50. 50/200×100=<strong>25%</strong>." },
+  { d:"hard", t:"Ratio: Mix cement:sand = 1:3. 20kg total. How much cement?", h:"Cement fraction = 1/(1+3).",
+    type:"pattern", p:"Cement : Sand = 1 : 3<br>Total mixture = 20 kg<br>Cement = <span class='blank'>?</span> kg",
+    o:["3kg","4kg","5kg","6kg"], a:2,
+    e:"Cement = 1/4 of 20 = <strong>5 kg</strong>." },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  CRACK THE CODE — 20 questions
+// ═══════════════════════════════════════════════════════════
+const codeQ = [
+  { d:"easy", t:"Output?", h:"Trace x step by step.",
+    type:"code", c:`x = 5
+x = x + 3
+x = x * 2
+print(x)`,
+    o:["13","16","11","10"], a:1,
+    e:"x=5→8→<strong>16</strong>" },
+  { d:"easy", t:"What prints?", h:"Which branch runs?",
+    type:"code", c:`age = 20
+if age >= 18:
+    print("Adult")
+else:
+    print("Minor")`,
+    o:["Minor","Adult","Nothing","Error"], a:1,
+    e:"20>=18 True → <strong>Adult</strong>" },
+  { d:"easy", t:"Output?", h:"range(1,4) = 1,2,3. Add them up.",
+    type:"code", c:`total = 0
+for i in range(1, 4):
+    total = total + i
+print(total)`,
+    o:["6","10","3","9"], a:0,
+    e:"0+1+2+3=<strong>6</strong>" },
+  { d:"easy", t:"Output?", h:"String × number repeats it.",
+    type:"code", c:`word = "go"
+print(word * 3)`,
+    o:["gooo","gogogo","go go go","go3"], a:1,
+    e:"'go'×3=<strong>gogogo</strong>" },
+  { d:"easy", t:"Output?", h:"len() counts characters.",
+    type:"code", c:`text = "hello"
+print(len(text))`,
+    o:["4","5","6","hello"], a:1,
+    e:"'hello' has 5 letters → <strong>5</strong>" },
+  { d:"medium", t:"Output?", h:"Inner function call resolves first.",
+    type:"code", c:`def double(n):
+    return n * 2
+
+result = double(double(3))
+print(result)`,
+    o:["6","9","12","18"], a:2,
+    e:"double(3)=6, double(6)=<strong>12</strong>" },
+  { d:"medium", t:"Output?", h:"Index -1 = last item.",
+    type:"code", c:`items = ["apple", "banana", "cherry"]
+print(items[-1])`,
+    o:["apple","banana","cherry","Error"], a:2,
+    e:"items[-1] = last = <strong>cherry</strong>" },
+  { d:"medium", t:"Output?", h:"When does n<5 become false?",
+    type:"code", c:`n = 1
+while n < 5:
+    n = n * 2
+print(n)`,
+    o:["4","8","5","16"], a:1,
+    e:"1→2→4→8. 8 not <5, stops → <strong>8</strong>" },
+  { d:"medium", t:"Output?", h:"% gives remainder. 7÷2 remainder = 1.",
+    type:"code", c:`def check(num):
+    if num % 2 == 0:
+        return "even"
+    return "odd"
+
+print(check(7))`,
+    o:["even","odd","7","None"], a:1,
+    e:"7%2=1 ≠ 0 → <strong>odd</strong>" },
+  { d:"medium", t:"Output?", h:"What does .upper() do?",
+    type:"code", c:`name = "sarah"
+print(name.upper())`,
+    o:["sarah","Sarah","SARAH","s-a-r-a-h"], a:2,
+    e:".upper() converts all to uppercase → <strong>SARAH</strong>" },
+  { d:"medium", t:"Output?", h:"Dictionary: look up by key.",
+    type:"code", c:`person = {"name": "Alice", "age": 30}
+print(person["age"] + 5)`,
+    o:["30","35","305","Error"], a:1,
+    e:"person['age']=30. 30+5=<strong>35</strong>" },
+  { d:"medium", t:"Output?", h:"Count how many times the loop runs.",
+    type:"code", c:`count = 0
+for i in range(5):
+    if i % 2 == 0:
+        count += 1
+print(count)`,
+    o:["2","3","4","5"], a:1,
+    e:"range(5)=0,1,2,3,4. Even: 0,2,4 → count=<strong>3</strong>" },
+  { d:"hard", t:"Output?", h:"Filter odd numbers, then square each.",
+    type:"code", c:`nums = [1,2,3,4,5]
+result = [x*x for x in nums if x%2!=0]
+print(result)`,
+    o:["[1,4,9,16,25]","[1,9,25]","[2,4]","[1,3,5]"], a:1,
+    e:"Odd: 1,3,5 → squared → <strong>[1,9,25]</strong>" },
+  { d:"hard", t:"Output?", h:"Trace each recursive call as a chain.",
+    type:"code", c:`def mystery(n):
+    if n <= 0:
+        return 0
+    return n + mystery(n-1)
+
+print(mystery(4))`,
+    o:["4","10","24","0"], a:1,
+    e:"4+3+2+1+0=<strong>10</strong>" },
+  { d:"hard", t:"Output?", h:"Loop through dict keys, check each value.",
+    type:"code", c:`data = {"a":1, "b":2, "c":3}
+total = 0
+for key in data:
+    if data[key] > 1:
+        total += data[key]
+print(total)`,
+    o:["6","5","3","2"], a:1,
+    e:"b=2,c=3 pass. 2+3=<strong>5</strong>" },
+  { d:"hard", t:"Output?", h:"What does split() return? What does capitalize() do?",
+    type:"code", c:`s = "the quick brown fox"
+words = s.split()
+words = [w.capitalize() for w in words]
+print(" ".join(words))`,
+    o:["the quick brown fox","THE QUICK BROWN FOX","The Quick Brown Fox","The quick brown fox"],
+    a:2, e:"capitalize each → join → <strong>The Quick Brown Fox</strong>" },
+  { d:"hard", t:"Output?", h:"What is printed vs returned?",
+    type:"code", c:`def greet(name):
+    return "Hello, " + name
+
+result = greet("World")
+print(result)`,
+    o:["Hello,","Hello, World","World","None"], a:1,
+    e:"Returns 'Hello, World', then print prints it → <strong>Hello, World</strong>" },
+  { d:"hard", t:"Output?", h:"Sets remove duplicates — order may vary.",
+    type:"code", c:`nums = [1, 2, 2, 3, 3, 3]
+unique = set(nums)
+print(len(unique))`,
+    o:["6","3","1","Error"], a:1,
+    e:"set removes duplicates: {1,2,3} → len=<strong>3</strong>" },
+  { d:"hard", t:"Output?", h:"What does sorted() return?",
+    type:"code", c:`scores = [42, 7, 99, 15]
+top = sorted(scores)[-1]
+print(top)`,
+    o:["42","7","99","15"], a:2,
+    e:"sorted=[7,15,42,99]. [-1]=last=<strong>99</strong>" },
+  { d:"hard", t:"Output?", h:"try/except catches errors — which block runs?",
+    type:"code", c:`try:
+    result = 10 / 0
+    print("OK")
+except ZeroDivisionError:
+    print("Error")`,
+    o:["OK","Error","10","0"], a:1,
+    e:"10/0 raises ZeroDivisionError → except block → <strong>Error</strong>" },
+  { d:"hard", t:"Output?", h:"What does global do? Trace x inside and outside.",
+    type:"code", c:`x = 10
+def change():
+    global x
+    x = 20
+change()
+print(x)`,
+    o:["10","20","None","Error"], a:1,
+    e:"global x lets the function modify outer x. x becomes 20 → <strong>20</strong>" },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  SQL — 15 questions
+// ═══════════════════════════════════════════════════════════
+const sqlQ = [
+  { d:"easy", t:"How many rows returned?", h:"WHERE filters rows.",
+    type:"code", c:`SELECT * FROM employees
+WHERE department = 'Sales';
+
+-- employees: Alice(Sales), Bob(HR),
+-- Carol(Sales), Dave(IT)`,
+    o:["1","2","3","4"], a:1, e:"Alice and Carol are in Sales → <strong>2 rows</strong>" },
+  { d:"easy", t:"What does COUNT(*) return?", h:"COUNT counts matching rows.",
+    type:"code", c:`SELECT COUNT(*) FROM orders
+WHERE status = 'completed';
+
+-- orders: 3 completed, 5 pending, 2 cancelled`,
+    o:["10","5","3","2"], a:2, e:"Only completed=3 → <strong>3</strong>" },
+  { d:"easy", t:"What does ORDER BY ASC do?", h:"ASC = ascending = smallest first.",
+    type:"code", c:`SELECT name, salary FROM staff
+ORDER BY salary ASC;`,
+    o:["Random","Highest first","Lowest first","Alphabetical"], a:2,
+    e:"ASC = ascending = <strong>lowest salary first</strong>" },
+  { d:"medium", t:"What does DISTINCT return?", h:"DISTINCT removes duplicate values.",
+    type:"code", c:`SELECT DISTINCT city FROM customers;
+
+-- customers: NYC, LA, NYC, Chicago, LA`,
+    o:["5 rows","4 rows","3 rows","1 row"], a:2,
+    e:"NYC,LA,Chicago are unique → <strong>3 rows</strong>" },
+  { d:"medium", t:"What does MAX() return?", h:"MAX returns the highest value.",
+    type:"code", c:`SELECT MAX(score) FROM results
+WHERE subject = 'Math';
+
+-- Math scores: 72, 88, 95, 61`,
+    o:["72","88","95","61"], a:2, e:"Highest of [72,88,95,61] = <strong>95</strong>" },
+  { d:"medium", t:"What does this return?", h:"GROUP BY + SUM: one row per group.",
+    type:"code", c:`SELECT dept, SUM(salary) AS total
+FROM employees
+GROUP BY dept;
+
+-- HR: 50k,60k  |  IT: 80k,90k`,
+    o:["1 row: 280k","HR=110k, IT=170k","4 individual rows","Error"], a:1,
+    e:"GROUP BY dept → <strong>HR=110k, IT=170k</strong>" },
+  { d:"medium", t:"What does LIMIT do here?", h:"DESC=highest first. LIMIT caps results.",
+    type:"code", c:`SELECT name FROM products
+ORDER BY price DESC
+LIMIT 3;
+
+-- 20 products total`,
+    o:["All 20","Cheapest 3","Most expensive 3","Random 3"], a:2,
+    e:"DESC=highest first, LIMIT 3 = <strong>top 3 most expensive</strong>" },
+  { d:"medium", t:"What does AVG() return?", h:"AVG = sum ÷ count.",
+    type:"code", c:`SELECT AVG(score) FROM quiz;
+
+-- scores: 60, 70, 80, 90`,
+    o:["70","75","80","300"], a:1, e:"(60+70+80+90)/4=300/4=<strong>75</strong>" },
+  { d:"hard", t:"What does INNER JOIN return?", h:"INNER JOIN = only matching rows in BOTH tables.",
+    type:"code", c:`SELECT o.id, c.name
+FROM orders o
+INNER JOIN customers c ON o.cust_id = c.id;
+
+-- orders: cust_id 1,2,5
+-- customers: id 1,2,3,4`,
+    o:["All orders","cust_id 1 & 2 only","All customers","Error"], a:1,
+    e:"INNER JOIN: cust_id 5 has no match → <strong>only cust_id 1 & 2</strong>" },
+  { d:"hard", t:"HAVING vs WHERE?", h:"HAVING filters AFTER grouping.",
+    type:"code", c:`SELECT dept, COUNT(*) AS num
+FROM employees
+GROUP BY dept
+HAVING COUNT(*) > 2;`,
+    o:["All depts","Depts with >2 employees","Exactly 2 per dept","Error"], a:1,
+    e:"HAVING filters groups → <strong>only depts with more than 2 employees</strong>" },
+  { d:"hard", t:"What does this subquery return?", h:"Inner SELECT runs first, produces a value.",
+    type:"code", c:`SELECT name FROM products
+WHERE price > (
+    SELECT AVG(price) FROM products
+);
+
+-- prices: 10,20,30,40,50  avg=30`,
+    o:["All","10 and 20","40 and 50","30 only"], a:2,
+    e:"AVG=30. price>30 → <strong>40 and 50</strong>" },
+  { d:"hard", t:"LEFT JOIN — what returns?", h:"LEFT JOIN keeps all rows from the LEFT table.",
+    type:"code", c:`SELECT c.name, o.id
+FROM customers c
+LEFT JOIN orders o ON c.id = o.cust_id;
+
+-- customers: id 1,2,3
+-- orders: cust_id 1,2 (no order for id 3)`,
+    o:["2 rows","3 rows, id 3 has NULL","3 rows, id 3 excluded","Error"], a:1,
+    e:"LEFT JOIN keeps all customers. Customer 3 gets <strong>NULL for order id</strong> → <strong>3 rows</strong>" },
+  { d:"hard", t:"UPDATE: how many rows change?", h:"WHERE determines which rows are updated.",
+    type:"code", c:`UPDATE employees
+SET salary = salary * 1.1
+WHERE dept = 'IT';
+
+-- IT dept has 4 employees`,
+    o:["All employees","4 rows","1 row","0 rows"], a:1,
+    e:"WHERE dept='IT' matches 4 employees → <strong>4 rows updated</strong>" },
+  { d:"hard", t:"What does this return?", h:"BETWEEN is inclusive on both ends.",
+    type:"code", c:`SELECT COUNT(*) FROM products
+WHERE price BETWEEN 20 AND 50;
+
+-- prices: 10,20,30,40,50,60`,
+    o:["3","4","5","6"], a:1,
+    e:"BETWEEN 20 AND 50 is inclusive: 20,30,40,50 → <strong>4 rows</strong>" },
+  { d:"hard", t:"CASE expression — what does this return for score=75?", h:"CASE is like if/else in SQL.",
+    type:"code", c:`SELECT
+  CASE
+    WHEN score >= 90 THEN 'A'
+    WHEN score >= 70 THEN 'B'
+    WHEN score >= 50 THEN 'C'
+    ELSE 'F'
+  END AS grade
+FROM results WHERE id = 1;
+
+-- score for id 1 = 75`,
+    o:["A","B","C","F"], a:1,
+    e:"75 >= 70 → first matching case → <strong>B</strong>" },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  JAVA — 15 questions
+// ═══════════════════════════════════════════════════════════
+const javaQ = [
+  { d:"easy", t:"Output?", h:"System.out.println prints a line.",
+    type:"code", c:`public class Main {
+  public static void main(String[] args) {
+    int x = 5;
+    x = x + 3;
+    System.out.println(x);
+  }
+}`,
+    o:["3","5","8","15"], a:2, e:"x=5+3=<strong>8</strong>" },
+  { d:"easy", t:"Output?", h:"Integer division in Java truncates (no decimals).",
+    type:"code", c:`int a = 7;
+int b = 2;
+System.out.println(a / b);`,
+    o:["3.5","3","4","Error"], a:1, e:"7/2 with integers = <strong>3</strong> (truncated)" },
+  { d:"easy", t:"Output?", h:"What is the % operator?",
+    type:"code", c:`int x = 17;
+System.out.println(x % 5);`,
+    o:["2","3","4","5"], a:1, e:"17÷5=3 remainder <strong>2</strong>" },
+  { d:"easy", t:"Output?", h:"String concatenation with +",
+    type:"code", c:`String s = "Hello";
+s = s + " World";
+System.out.println(s);`,
+    o:["Hello","World","Hello World","HelloWorld"], a:2,
+    e:"String + String concatenates → <strong>Hello World</strong>" },
+  { d:"medium", t:"Output?", h:"Pre-increment (++x) increments then returns.",
+    type:"code", c:`int x = 5;
+int y = ++x;
+System.out.println(y);`,
+    o:["5","6","7","Error"], a:1,
+    e:"++x increments x to 6, then assigns. y=<strong>6</strong>" },
+  { d:"medium", t:"Output?", h:"Post-increment (x++) returns then increments.",
+    type:"code", c:`int x = 5;
+int y = x++;
+System.out.println(y);`,
+    o:["5","6","7","Error"], a:0,
+    e:"x++ returns 5 first, then increments. y=<strong>5</strong>" },
+  { d:"medium", t:"Output?", h:"for loop — how many times does it print?",
+    type:"code", c:`for (int i = 0; i < 3; i++) {
+    System.out.print(i + " ");
+}`,
+    o:["0 1 2","1 2 3","0 1 2 3","1 2"], a:0,
+    e:"i=0,1,2 (stops at 3) → <strong>0 1 2</strong>" },
+  { d:"medium", t:"Output?", h:"String.length() returns number of characters.",
+    type:"code", c:`String name = "Intellibus";
+System.out.println(name.length());`,
+    o:["8","9","10","11"], a:2, e:"Intellibus has 10 characters → <strong>10</strong>" },
+  { d:"medium", t:"What does this print?", h:"Arrays start at index 0.",
+    type:"code", c:`int[] arr = {10, 20, 30, 40};
+System.out.println(arr[2]);`,
+    o:["10","20","30","40"], a:2, e:"Index 2 = 3rd element = <strong>30</strong>" },
+  { d:"medium", t:"Output?", h:"boolean values in Java are true/false.",
+    type:"code", c:`int a = 5, b = 10;
+boolean result = (a > b);
+System.out.println(result);`,
+    o:["true","false","1","0"], a:1, e:"5 > 10 is false → prints <strong>false</strong>" },
+  { d:"hard", t:"Output?", h:"What does static mean for a variable?",
+    type:"code", c:`class Counter {
+  static int count = 0;
+  Counter() { count++; }
+}
+Counter a = new Counter();
+Counter b = new Counter();
+System.out.println(Counter.count);`,
+    o:["0","1","2","Error"], a:2,
+    e:"static count is shared. Created twice → count=<strong>2</strong>" },
+  { d:"hard", t:"Output?", h:"Casting: what happens when you cast double to int?",
+    type:"code", c:`double x = 9.99;
+int y = (int) x;
+System.out.println(y);`,
+    o:["9.99","10","9","Error"], a:2,
+    e:"Casting double→int truncates decimals. <strong>9</strong>" },
+  { d:"hard", t:"Output?", h:"What does the ternary operator ? : do?",
+    type:"code", c:`int x = 10;
+String result = (x > 5) ? "Big" : "Small";
+System.out.println(result);`,
+    o:["Big","Small","true","false"], a:0,
+    e:"10>5 is true → takes 'Big' → <strong>Big</strong>" },
+  { d:"hard", t:"Output?", h:"Trace the loop — when does i stop?",
+    type:"code", c:`int sum = 0;
+for (int i = 1; i <= 5; i++) {
+    sum += i;
+}
+System.out.println(sum);`,
+    o:["10","15","20","25"], a:1,
+    e:"1+2+3+4+5=<strong>15</strong>" },
+  { d:"hard", t:"What is printed?", h:"instanceof checks the object's type.",
+    type:"code", c:`Object obj = "Hello";
+System.out.println(obj instanceof String);`,
+    o:["true","false","Hello","Error"], a:0,
+    e:"`\"Hello\"` is a String → instanceof String = <strong>true</strong>" },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+const TIMER = { logic:60, code:60, sql:60, java:60, sim:60, hard:45 };
+let mode=null, questions=[], current=0, score=0, answered=false, timerInterval=null, timeLeft=60;
+
+function startMode(m) {
+  mode = m;
+  if (m==='logic')  questions = shuffle([...logicQ]);
+  else if(m==='code')  questions = shuffle([...codeQ]);
+  else if(m==='sql')   questions = shuffle([...sqlQ]);
+  else if(m==='java')  questions = shuffle([...javaQ]);
+  else if(m==='hard')  questions = shuffle([...logicQ,...codeQ,...sqlQ,...javaQ].filter(q=>q.d==='hard')).slice(0,20);
+  else { // sim — 30 mixed
+    questions = shuffle([
+      ...shuffle(logicQ).slice(0,8),
+      ...shuffle(codeQ).slice(0,8),
+      ...shuffle(sqlQ).slice(0,7),
+      ...shuffle(javaQ).slice(0,7)
+    ]);
+  }
+  current=0; score=0; answered=false;
+  document.getElementById("scoreNum").textContent=0;
+  document.getElementById("homeScreen").style.display="none";
+  document.getElementById("quizWrap").style.display="block";
+  document.getElementById("resultScreen").style.display="none";
+  document.getElementById("resultScreen").classList.remove("show");
+  document.getElementById("questionArea").style.display="";
+  render();
+}
+
+function goHome() {
+  clearInterval(timerInterval);
+  document.getElementById("homeScreen").style.display="";
+  document.getElementById("quizWrap").style.display="none";
+  renderBest();
+}
+
+function render() {
+  clearInterval(timerInterval);
+  const q = questions[current];
+  const pct = (current/questions.length)*100;
+  document.getElementById("progressFill").style.width=pct+"%";
+  document.getElementById("qLabel").textContent=`${current+1} / ${questions.length}`;
+  answered=false;
+
+  const showHint = mode !== 'hard';
+  const hintHtml = showHint ? `<div class="q-hint">💡 ${q.h}</div>` : '';
+
+  let content = "";
+  if (q.type==="pattern") {
+    content = `<div class="pattern-box">${q.p}</div>`;
+  } else {
+    // Syntax highlight
+    let code = q.c
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\b(def|return|if|else|elif|for|while|in|and|or|not|class|import|from|True|False|None|global|lambda|try|except|raise)\b/g,'<span class="kw">$1</span>')
+      .replace(/\b(print|len|range|sorted|set|list|int|str|bool|type|max|min|sum|zip|map|filter|enumerate|dict)\b/g,'<span class="fn">$1</span>')
+      .replace(/\b(public|private|static|void|int|double|boolean|String|class|new|return|if|else|for|while|System|out|println|print|instanceof|null|true|false)\b/g,'<span class="kw">$1</span>')
+      .replace(/\b(SELECT|FROM|WHERE|ORDER|BY|ASC|DESC|LIMIT|GROUP|HAVING|JOIN|INNER|LEFT|RIGHT|ON|AS|DISTINCT|UPDATE|SET|INSERT|INTO|DELETE|COUNT|SUM|AVG|MAX|MIN|BETWEEN|AND|OR|NOT|CASE|WHEN|THEN|ELSE|END)\b/g,'<span class="skw">$1</span>')
+      .replace(/"([^"]*?)"/g,'<span class="str">"$1"</span>')
+      .replace(/'([^']*?)'/g,'<span class="str">\'$1\'</span>')
+      .replace(/--.*$/gm,'<span class="cmt">$&</span>')
+      .replace(/\b(\d+\.?\d*)\b(?![^<]*>)/g,'<span class="num">$1</span>');
+    content = `<pre>${code}</pre>`;
+  }
+
+  const long = q.o.some(o=>o.length>22);
+  const optClass = long ? "options single-col" : "options";
+  const opts = q.o.map((o,i)=>
+    `<button class="opt-btn" id="opt${i}" onclick="choose(${i})">${o}</button>`
+  ).join("");
+
+  document.getElementById("questionArea").innerHTML = `
+    <div class="card" id="mainCard">
+      <span class="diff-tag ${q.d}">${q.d}</span>
+      <div class="q-title">${q.t}</div>
+      ${hintHtml}
+      ${content}
+      <div class="${optClass}">${opts}</div>
+      <div class="explanation" id="exp">${q.e}</div>
+      <button class="next-btn" id="nextBtn" onclick="next()">
+        ${current<questions.length-1?"Next Question →":"See Results"}
+      </button>
+    </div>`;
+
+  startTimer(TIMER[mode]);
+}
+
+function startTimer(secs) {
+  timeLeft = secs;
+  updateTimerUI(secs);
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    updateTimerUI(secs);
+    if(timeLeft<=0){clearInterval(timerInterval);timeout();}
+  },1000);
+}
+
+function updateTimerUI(total) {
+  const num=document.getElementById("timerNum");
+  const fill=document.getElementById("timerFill");
+  if(!num)return;
+  const pct=(timeLeft/(total||60))*100;
+  num.textContent=timeLeft+"s";
+  fill.style.width=pct+"%";
+  const warn=timeLeft<=20,danger=timeLeft<=10;
+  num.className="timer-num"+(danger?" danger":warn?" warn":"");
+  fill.className="timer-fill"+(danger?" danger":warn?" warn":"");
+}
+
+function timeout() {
+  if(answered)return;
+  answered=true;
+  const q=questions[current];
+  for(let j=0;j<q.o.length;j++){
+    const b=document.getElementById("opt"+j);
+    b.disabled=true;
+    if(j===q.a)b.classList.add("correct-ans");
+  }
+  const exp=document.getElementById("exp");
+  exp.classList.add("show","timeout-exp");
+  exp.innerHTML=`⏰ <strong>Time's up!</strong> Answer: <strong>${q.o[q.a]}</strong> — ${q.e}`;
+  document.getElementById("mainCard").classList.add("timeout-card");
+  document.getElementById("nextBtn").classList.add("show");
+}
+
+function choose(i) {
+  if(answered)return;
+  answered=true;
+  clearInterval(timerInterval);
+  const q=questions[current];
+  const right=i===q.a;
+  if(right){score++;document.getElementById("scoreNum").textContent=score;}
+  for(let j=0;j<q.o.length;j++){
+    const b=document.getElementById("opt"+j);
+    b.disabled=true;
+    if(j===q.a)b.classList.add("correct-ans");
+    else if(j===i&&!right)b.classList.add("wrong-ans");
+  }
+  const exp=document.getElementById("exp");
+  exp.classList.add("show");
+  if(!right)exp.classList.add("wrong-exp");
+  document.getElementById("mainCard").classList.add(right?"correct-card":"wrong-card");
+  document.getElementById("nextBtn").classList.add("show");
+}
+
+function next() {
+  current++;
+  if(current>=questions.length)showResult();
+  else render();
+}
+
+function showResult() {
+  clearInterval(timerInterval);
+  document.getElementById("questionArea").style.display="none";
+  const rs=document.getElementById("resultScreen");
+  rs.style.display="block";rs.classList.add("show");
+  const pct=score/questions.length;
+  const labels={logic:"Logical Ability",code:"Crack the Code",sql:"SQL Basics",java:"Java Basics",sim:"Full Simulation",hard:"Hard Mode"};
+  const label=labels[mode];
+  let emoji,title,stars,sub;
+  if(pct>=0.9){emoji="🏆";title="Outstanding!";stars="⭐⭐⭐⭐⭐";sub="You're ready for the real GQ test!";}
+  else if(pct>=0.7){emoji="🎯";title="Great Job!";stars="⭐⭐⭐⭐";sub="Almost there — review the ones you missed.";}
+  else if(pct>=0.5){emoji="📚";title="Good Start!";stars="⭐⭐⭐";sub="Re-read the explanations and try again.";}
+  else{emoji="💪";title="Keep Going!";stars="⭐⭐";sub="Go through the hints — you'll improve fast!";}
+  document.getElementById("rEmoji").textContent=emoji;
+  document.getElementById("rTitle").textContent=title;
+  document.getElementById("rScore").textContent=score;
+  document.getElementById("rDenom").textContent=`out of ${questions.length} · ${label}`;
+  document.getElementById("rStars").textContent=stars;
+  document.getElementById("rSub").textContent=sub;
+  document.getElementById("progressFill").style.width="100%";
+  document.getElementById("qLabel").textContent="Done!";
+  saveScore(label,score,questions.length);renderBest();
+}
+
+function restartMode(){startMode(mode);}
+
+// ── HISTORY ──
+function saveScore(label,s,total){
+  const hist=JSON.parse(localStorage.getItem("gqHistory")||"[]");
+  hist.unshift({label,score:s,total,pct:Math.round(s/total*100),date:new Date().toLocaleDateString()});
+  localStorage.setItem("gqHistory",JSON.stringify(hist.slice(0,40)));
+}
+function renderBest(){
+  const hist=JSON.parse(localStorage.getItem("gqHistory")||"[]");
+  if(!hist.length){document.getElementById("bestRow").innerHTML="";return;}
+  const best={};
+  hist.forEach(h=>{if(!best[h.label]||h.pct>best[h.label])best[h.label]=h.pct;});
+  document.getElementById("bestRow").innerHTML=
+    Object.entries(best).map(([k,v])=>`<div class="best-chip">🏅 <strong>${k}:</strong> Best ${v}%</div>`).join("")+
+    `<div class="best-chip" style="color:#555">${hist.length} attempts</div>`;
+}
+function showHistory(){
+  const hist=JSON.parse(localStorage.getItem("gqHistory")||"[]");
+  document.getElementById("histContent").innerHTML=hist.length
+    ?hist.slice(0,20).map(h=>`<div class="hist-row"><span>${h.date} · ${h.label}</span><span class="hist-score">${h.score}/${h.total} (${h.pct}%)</span></div>`).join("")
+    :`<div class="no-hist">No scores yet — complete a section first!</div>`;
+  document.getElementById("histModal").classList.add("show");
+}
+function closeHistModal(){document.getElementById("histModal").classList.remove("show");}
+function closeHistory(e){if(e.target===document.getElementById("histModal"))closeHistModal();}
+
+renderBest();
+</script>
+</body>
+</html>

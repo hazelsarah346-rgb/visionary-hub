@@ -10,7 +10,7 @@ import {
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData, checkBanned } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -131,6 +131,8 @@ const ARCHETYPES = {
     focus: ['Opportunities', 'Mentorship', 'Vision Canvas'] },
 };
 
+
+const ADMIN_EMAIL = 'hazlesarah346@yahoo.com'; // Only this email sees the admin panel
 
 const POST_TYPES = [
   { id: 'achievement', label: '🏆 Achievement', color: '#D97706' },
@@ -401,11 +403,11 @@ function Btn({ children, onClick, variant = 'primary', size = 'md', disabled = f
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const NAV = [
-  { id: 'home',          icon: Home,            label: 'Home',            sub: 'Your goal & daily action' },
-  { id: 'showcase',      icon: Compass,         label: 'Showcase',        sub: 'Your portfolio & wins' },
+  { id: 'showcase',      icon: Compass,         label: 'Showcase',        sub: 'See what people are building' },
+  { id: 'connect',       icon: Users,           label: 'Connect',         sub: 'Mentors & like-minded people' },
   { id: 'path',          icon: Lightbulb,       label: 'My Path',         sub: 'Vision, roadmap & goals' },
-  { id: 'connect',       icon: Users,           label: 'Connect',         sub: 'Mentors & like-minded peers' },
   { id: 'opportunities', icon: MessageCircle,   label: 'Opportunities',   sub: 'Programs that match your goal' },
+  { id: 'home',          icon: Home,            label: 'My Space',        sub: 'Your goal & progress' },
 ];
 // Reflect & Roadmap are accessed from Vision Canvas shortcut cards
 
@@ -465,6 +467,14 @@ function Sidebar({ tab, setTab, canvas, onCoach, user, onSignOut }) {
           <ChevronRight size={11} color={`${C.purple}88`} />
         </button>
 
+        {/* Admin link — only visible to admin */}
+        {user?.email === ADMIN_EMAIL && (
+          <button onClick={() => setTab('admin')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${tab === 'admin' ? '#ef444455' : C.border}`, background: tab === 'admin' ? '#ef444412' : 'transparent', cursor: 'pointer', fontFamily: 'inherit', width: '100%', marginBottom: 6 }}>
+            <AlertCircle size={14} color={tab === 'admin' ? '#ef4444' : C.muted} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: tab === 'admin' ? '#ef4444' : C.muted }}>🛡️ Admin</span>
+          </button>
+        )}
         {/* Settings + Profile row */}
         <div style={{ display: 'flex', gap: 4 }}>
           <button onClick={() => setTab('settings')}
@@ -1374,6 +1384,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(p.content || '');
   const [saving, setSaving] = useState(false);
+  const [flagged, setFlagged] = useState(false);
   const menuRef = useRef(null);
   useEffect(() => {
     const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
@@ -1412,14 +1423,14 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
           </div>
           <div style={{ fontSize: 11, color: C.muted }}>{p.time || p.createdAt || 'Recently'}</div>
         </div>
-        {/* 3-dot menu: ONLY on own posts */}
-        {isOwn && (
-          <div ref={menuRef} style={{ position: 'relative' }}>
-            <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
-              <MoreHorizontal size={18} />
-            </button>
-            {menuOpen && (
-              <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 150 }}>
+        {/* 3-dot menu: own posts get edit/delete, others get report */}
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+            <MoreHorizontal size={18} />
+          </button>
+          {menuOpen && (
+            <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 99, minWidth: 170 }}>
+              {isOwn ? (<>
                 <button onClick={() => { setMenuOpen(false); setEditText(p.content || ''); setEditing(true); }}
                   style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '10px 10px 0 0' }}
                   onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`}
@@ -1433,10 +1444,31 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Trash2 size={13} /> Delete post
                 </button>
-              </div>
-            )}
-          </div>
-        )}
+              </>) : (<>
+                <button onClick={async () => {
+                  setMenuOpen(false);
+                  if (flagged) { alert('You already reported this post.'); return; }
+                  const reason = window.prompt('Why are you reporting this post?\n\nOptions:\n• Spam or bot\n• Fake profile\n• Harassment\n• Inappropriate content\n• Other');
+                  if (!reason) return;
+                  if (supabase) {
+                    await supabase.from('flagged_posts').insert([{ post_id: p.id, reported_by: userId || 'anonymous', reason }]);
+                    // Increment flag count
+                    const newCount = (p.flag_count || 0) + 1;
+                    await supabase.from('posts').update({ flag_count: newCount, hidden: newCount >= 3 }).eq('id', p.id);
+                    if (newCount >= 3) setFeed(prev => prev.filter(x => x.id !== p.id));
+                  }
+                  setFlagged(true);
+                  alert('✅ Reported. Our team will review this post. Thank you for keeping North Star safe.');
+                }}
+                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10 }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f59e0b14'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <AlertCircle size={13} /> {flagged ? 'Reported' : 'Report post'}
+                </button>
+              </>)}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Media: full-width, skip blob: URLs (they expire and show as black broken images) */}
@@ -1506,25 +1538,23 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
 
 
 // ─── HOME TAB ─────────────────────────────────────────────────────────────────
-function HomeTab({ canvas, feed, mentors, user, setTab }) {
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
-  const firstName   = displayName.split(' ')[0];
+function HomeTab({ canvas, feed, mentors, user, setTab, onCoach }) {
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || '';
+  const firstName   = displayName.split(' ')[0] || 'there';
   const avatarUrl   = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || null;
-  const xp          = parseInt(localStorage.getItem('vh_xp') || '0');
-  const streak      = parseInt(localStorage.getItem('vh_streak') || '0');
+  const hasPath     = !!(canvas?.bigVision || canvas?.goal12Month);
+  const roadmap     = (() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } })();
+  const rmDone      = (() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } })();
 
-  // Pull roadmap for today's action
-  const roadmap   = (() => { try { return JSON.parse(localStorage.getItem('vh_roadmap') || 'null'); } catch { return null; } })();
-  const rmDone    = (() => { try { return JSON.parse(localStorage.getItem('vh_rm_done') || '{}'); } catch { return {}; } })();
-  const peers     = (() => { try { return JSON.parse(localStorage.getItem('vh_peers') || '[]'); } catch { return []; } })();
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  // Find next incomplete milestone across all phases
+  // Today's action from roadmap
   const todayAction = (() => {
     if (!roadmap?.phases) return null;
     for (const phase of roadmap.phases) {
       for (const task of (phase.tasks || [])) {
-        const key = `${phase.phase}-${task}`;
-        if (!rmDone[key]) return { task, phase: phase.phase };
+        if (!rmDone[`${phase.phase}-${task}`]) return { task, phase: phase.phase };
       }
     }
     return null;
@@ -1532,163 +1562,158 @@ function HomeTab({ canvas, feed, mentors, user, setTab }) {
 
   const totalMilestones = roadmap?.phases?.reduce((a, p) => a + (p.tasks?.length || 0), 0) || 0;
   const doneMilestones  = Object.keys(rmDone).length;
-  const phaseDone       = roadmap?.phases ? roadmap.phases.filter(p => (p.tasks||[]).every(t => rmDone[`${p.phase}-${t}`])).length : 0;
-  const totalPhases     = roadmap?.phases?.length || 4;
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  const recentPosts = [...(feed || [])].slice(0, 3);
+  const recentPosts = [...(feed || [])].slice(0, 2);
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', paddingBottom: 40 }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', paddingBottom: 60 }}>
 
-      {/* ── GREETING HEADER ─────────────────────────────────────── */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      {/* ── WARM GREETING ───────────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           {avatarUrl
-            ? <img src={avatarUrl} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${C.accent}` }} />
-            : <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff' }}>{firstName[0]}</div>
+            ? <img src={avatarUrl} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${C.accent}` }} />
+            : <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg,${C.accent},${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff' }}>{firstName[0]?.toUpperCase()}</div>
           }
           <div>
-            <div style={{ fontSize: 14, color: C.muted }}>{greeting} 👋</div>
+            <div style={{ fontSize: 13, color: C.muted }}>{timeGreeting} 👋</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: C.text }}>{firstName}</div>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
-            {streak > 0 && <div style={{ background: '#FFF7ED', border: '1px solid #FDE68A', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: '#D97706' }}>🔥 {streak} day streak</div>}
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: C.accent }}>⚡ {xp} XP</div>
-          </div>
         </div>
 
-        {/* North Star Goal */}
-        {canvas?.bigVision && (
-          <div style={{ background: `linear-gradient(135deg, ${C.accent}18, ${C.accent2}12)`, border: `1px solid ${C.accent}30`, borderRadius: 16, padding: '18px 20px', marginBottom: 8 }}>
+        {/* Hero message — changes based on whether they have a path */}
+        {!hasPath ? (
+          <div style={{ background: `linear-gradient(135deg,#1e1b4b,#1e3a5f)`, borderRadius: 20, padding: '24px 22px', marginBottom: 4 }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', lineHeight: 1.35, marginBottom: 10 }}>
+              You don't have to have<br/>it figured out yet. 💫
+            </div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,.65)', lineHeight: 1.7, marginBottom: 18 }}>
+              That's exactly why North Star exists. Talk to a mentor, connect with people on the same journey, and your path will start to reveal itself.
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => setTab('connect')} style={{ padding: '11px 20px', borderRadius: 12, border: 'none', background: C.accent, color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+                🤝 Talk to a mentor
+              </button>
+              <button onClick={() => setTab('path')} style={{ padding: '11px 20px', borderRadius: 12, border: '1px solid rgba(255,255,255,.2)', background: 'transparent', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                ✨ Help me figure it out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: `linear-gradient(135deg,${C.accent}18,${C.accent2}12)`, border: `1px solid ${C.accent}30`, borderRadius: 18, padding: '18px 20px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: C.accent, marginBottom: 6 }}>⭐ Your North Star</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{canvas.bigVision}</div>
-            {canvas.goal12Month && <div style={{ fontSize: 13, color: C.muted, marginTop: 6 }}>🎯 12-month goal: {canvas.goal12Month}</div>}
-          </div>
-        )}
-        {!canvas?.bigVision && (
-          <div onClick={() => setTab('path')} style={{ background: C.card, border: `2px dashed ${C.accent}50`, borderRadius: 16, padding: '18px 20px', cursor: 'pointer', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>⭐</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Set your North Star</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>Define your goal and get a personalised roadmap →</div>
-          </div>
-        )}
-      </div>
-
-      {/* ── TWO COLUMN GRID ─────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
-
-        {/* Today's Action */}
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: C.muted, marginBottom: 12 }}>⚡ Today's Action</div>
-          {todayAction ? (
-            <>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, lineHeight: 1.6, marginBottom: 12 }}>{todayAction.task}</div>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 14 }}>From: {todayAction.phase}</div>
-              <button onClick={() => setTab('path')} style={{ width: '100%', padding: '10px 0', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>View My Roadmap →</button>
-            </>
-          ) : roadmap ? (
-            <div style={{ textAlign: 'center', padding: '12px 0' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>All milestones complete!</div>
-              <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Time to set a new goal</div>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>Generate your roadmap to get daily actions</div>
-              <button onClick={() => setTab('path')} style={{ padding: '10px 20px', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Build My Roadmap →</button>
-            </div>
-          )}
-        </div>
-
-        {/* Roadmap Progress */}
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: C.muted, marginBottom: 12 }}>🗺️ Roadmap Progress</div>
-          {roadmap ? (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: C.text }}>Phase {phaseDone + 1} of {totalPhases}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{totalMilestones ? Math.round(doneMilestones / totalMilestones * 100) : 0}%</span>
-              </div>
-              <div style={{ background: C.border, borderRadius: 8, height: 8, marginBottom: 12 }}>
-                <div style={{ height: 8, borderRadius: 8, background: `linear-gradient(90deg, ${C.accent}, ${C.accent2})`, width: `${totalMilestones ? Math.round(doneMilestones / totalMilestones * 100) : 0}%`, transition: 'width .5s' }} />
-              </div>
-              <div style={{ fontSize: 12, color: C.muted }}>{doneMilestones} of {totalMilestones} milestones complete</div>
-              {roadmap.phases?.map((p, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                  <span style={{ fontSize: 10 }}>{(p.tasks||[]).every(t => rmDone[`${p.phase}-${t}`]) ? '✅' : i === phaseDone ? '🔵' : '⚪'}</span>
-                  <span style={{ fontSize: 12, color: i === phaseDone ? C.text : C.muted, fontWeight: i === phaseDone ? 700 : 400 }}>{p.phase}</span>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, lineHeight: 1.5, marginBottom: roadmap ? 12 : 0 }}>{canvas.bigVision}</div>
+            {roadmap && todayAction && (
+              <div style={{ background: C.bg, borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>⚡ Today</div>
+                  <div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{todayAction.task}</div>
                 </div>
-              ))}
-            </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: 13, color: C.muted }}>No roadmap yet — build yours in My Path</div>
-            </div>
-          )}
-        </div>
+                <button onClick={() => setTab('path')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Go →</button>
+              </div>
+            )}
+            {roadmap && totalMilestones > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 4 }}>
+                  <span>Roadmap progress</span>
+                  <span style={{ fontWeight: 700, color: C.accent }}>{Math.round(doneMilestones/totalMilestones*100)}%</span>
+                </div>
+                <div style={{ background: C.border, borderRadius: 6, height: 6 }}>
+                  <div style={{ height: 6, borderRadius: 6, background: `linear-gradient(90deg,${C.accent},${C.accent2})`, width: `${Math.round(doneMilestones/totalMilestones*100)}%`, transition: 'width .5s' }} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── MENTOR QUICK LAUNCH ─────────────────────────────────── */}
-      {mentors.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>🤝 Your Mentors</div>
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
-            {mentors.slice(0, 4).map(m => (
-              <div key={m.id} onClick={() => setTab('connect')} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', minWidth: 180, cursor: 'pointer', flexShrink: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>{m.name}</div>
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 10 }}>{m.title}</div>
-                <div style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>Chat →</div>
+      {/* ── MENTORS — always front and centre ───────────────────── */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: C.text }}>🎓 Your Mentors</div>
+            <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Real people who've been where you are</div>
+          </div>
+          <button onClick={() => setTab('connect')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>See all →</button>
+        </div>
+
+        {mentors.filter(m => m.status !== 'pending').length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {mentors.filter(m => m.status !== 'pending').slice(0, 3).map(m => (
+              <div key={m.id} onClick={() => setTab('connect')} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color .2s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = C.accent + '60'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+                {m.img
+                  ? <img src={m.img} alt={m.name} style={{ width: 46, height: 46, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  : <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg,${C.accent},${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#fff', fontWeight: 800, flexShrink: 0 }}>{(m.name||'M')[0]}</div>
+                }
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: C.text }}>{m.name} {m.verified && <span style={{ fontSize: 10, color: C.accent }}>✓</span>}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>{m.title}</div>
+                  {m.quote && <div style={{ fontSize: 12, color: C.text, fontStyle: 'italic', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>"{m.quote}"</div>}
+                </div>
+                <div style={{ padding: '7px 14px', borderRadius: 10, background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>Chat</div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ── PEERS ON YOUR PATH ──────────────────────────────────── */}
-      {peers.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>⚡ People on your path</div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {peers.slice(0, 3).map((p, i) => (
-              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', flex: '1 1 180px' }}>
-                <div style={{ fontSize: 22, marginBottom: 6 }}>{p.avatar || '👤'}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{p.goal || p.field || ''}</div>
-              </div>
-            ))}
+        ) : (
+          <div style={{ background: C.card, border: `2px dashed ${C.border}`, borderRadius: 16, padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🤝</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>Mentors coming soon</div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>We're onboarding real mentors in your field. In the meantime, your AI mentor is ready.</div>
+            <button onClick={() => setTab('connect')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Talk to AI Mentor →</button>
           </div>
+        )}
+      </div>
+
+      {/* ── BUILD YOUR PATH (gentle, not demanding) ─────────────── */}
+      {!roadmap && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px', marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 32, flexShrink: 0 }}>🗺️</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>Whenever you're ready — build your path</div>
+            <div style={{ fontSize: 12, color: C.muted }}>A personalised roadmap made just for you. No pressure — start when it feels right.</div>
+          </div>
+          <button onClick={() => setTab('path')} style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Start →</button>
         </div>
       )}
 
-      {/* ── RECENT SHOWCASE ─────────────────────────────────────── */}
+      {/* ── COMMUNITY — see who else is here ────────────────────── */}
       {recentPosts.length > 0 && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>💼 Recent Showcase</div>
-            <button onClick={() => setTab('showcase')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>See all →</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: C.text }}>💼 Community Showcase</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>See what others are building</div>
+            </div>
+            <button onClick={() => setTab('showcase')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>See all →</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {recentPosts.map(p => (
               <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   {p.authorImg
-                    ? <img src={p.authorImg} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                    : <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700 }}>{(p.authorName||'?')[0]}</div>
+                    ? <img src={p.authorImg} style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
+                    : <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700 }}>{(p.authorName||'?')[0]}</div>
                   }
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.authorName}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{p.authorName}</span>
                   {p.post_type && p.post_type !== 'thought' && (
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: POST_TYPE_COLORS[p.post_type]?.bg || C.border, color: POST_TYPE_COLORS[p.post_type]?.text || C.muted }}>
-                      {POST_TYPE_LABELS[p.post_type] || p.post_type}
-                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: POST_TYPE_COLORS[p.post_type]?.bg || C.border, color: POST_TYPE_COLORS[p.post_type]?.text || C.muted }}>{POST_TYPE_LABELS[p.post_type]}</span>
                   )}
                 </div>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{(p.content||'').slice(0, 120)}{(p.content||'').length > 120 ? '…' : ''}</div>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{(p.content||'').slice(0,140)}{(p.content||'').length > 140 ? '…' : ''}</div>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Empty state — no posts yet */}
+      {recentPosts.length === 0 && (
+        <div style={{ background: C.card, border: `2px dashed ${C.border}`, borderRadius: 16, padding: '28px', textAlign: 'center' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>✨</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>Be the first to share</div>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Share a win, a challenge, or where you're at. Your community is waiting.</div>
+          <button onClick={() => setTab('showcase')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Share something →</button>
         </div>
       )}
     </div>
@@ -1959,6 +1984,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {feed
+          .filter(p => !p.hidden)
           .filter(p => myPortfolio ? (user?.id && p.authorId === user.id) : true)
           .filter(p => filterType === 'all' ? true : (p.post_type || 'thought') === filterType)
           .map((p, i) => {
@@ -4103,6 +4129,156 @@ function SecurityPasswordReset({ email }) {
 }
 
 // ─── SETTINGS / ACCOUNT TAB ───────────────────────────────────────────────────
+
+// ─── ADMIN TAB ───────────────────────────────────────────────────────────────
+function AdminTab({ user }) {
+  const [flags, setFlags] = useState([]);
+  const [banned, setBanned] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('flags'); // 'flags' | 'banned'
+  const [banEmail, setBanEmail] = useState('');
+  const [banReason, setBanReason] = useState('');
+
+  useEffect(() => { loadData(); }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    if (!supabase) { setLoading(false); return; }
+    const [{ data: f }, { data: b }] = await Promise.all([
+      supabase.from('flagged_posts').select('*, posts(id, content, author_name, author_id, author_img, flag_count, hidden)').order('created_at', { ascending: false }).limit(50),
+      supabase.from('banned_users').select('*').order('banned_at', { ascending: false }),
+    ]);
+    setFlags(f || []);
+    setBanned(b || []);
+    setLoading(false);
+  };
+
+  const hidePost = async (postId) => {
+    if (!supabase) return;
+    await supabase.from('posts').update({ hidden: true }).eq('id', postId);
+    setFlags(prev => prev.map(f => f.post_id === postId ? { ...f, posts: { ...f.posts, hidden: true } } : f));
+    alert('Post hidden ✅');
+  };
+
+  const deletePost = async (postId) => {
+    if (!window.confirm('Permanently delete this post?')) return;
+    if (!supabase) return;
+    await supabase.from('posts').delete().eq('id', postId);
+    await supabase.from('flagged_posts').delete().eq('post_id', postId);
+    setFlags(prev => prev.filter(f => f.post_id !== postId));
+    alert('Post deleted ✅');
+  };
+
+  const banUser = async (userId, email, reason) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('banned_users').insert([{ user_id: userId, email, reason: reason || 'Violated community rules', banned_by: user?.email }]);
+    if (error && error.code === '23505') { alert('User already banned.'); return; }
+    // Hide all their posts
+    await supabase.from('posts').update({ hidden: true }).eq('author_id', userId);
+    await loadData();
+    alert(`🚫 ${email || userId} banned and all their posts hidden.`);
+  };
+
+  const unbanUser = async (id) => {
+    if (!supabase) return;
+    await supabase.from('banned_users').delete().eq('id', id);
+    await loadData();
+  };
+
+  const manualBan = async () => {
+    if (!banEmail.trim()) return;
+    // Find user by email in flagged posts or just store by email
+    await supabase.from('banned_users').insert([{ user_id: banEmail, email: banEmail, reason: banReason || 'Manual ban by admin', banned_by: user?.email }]);
+    setBanEmail(''); setBanReason('');
+    await loadData();
+    alert('User banned ✅');
+  };
+
+  // Group flags by post
+  const flagsByPost = flags.reduce((acc, f) => {
+    const key = f.post_id;
+    if (!acc[key]) acc[key] = { post: f.posts, flags: [] };
+    acc[key].flags.push(f);
+    return acc;
+  }, {});
+
+  return (
+    <div style={{ maxWidth: 800, margin: '0 auto', paddingBottom: 40 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: C.text, margin: '0 0 4px' }}>🛡️ Admin Panel</h1>
+        <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Community safety — automated rules do 95% of the work. This is just for edge cases.</p>
+      </div>
+
+      {/* How it works */}
+      <div style={{ background: `${C.accent}10`, border: `1px solid ${C.accent}30`, borderRadius: 14, padding: 16, marginBottom: 24, fontSize: 13, color: C.text }}>
+        <strong>🤖 Automated protections running 24/7:</strong>
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, color: C.muted }}>
+          <div>✅ 3 reports → post auto-hidden instantly, no action needed from you</div>
+          <div>✅ Hidden posts disappear from everyone's feed immediately</div>
+          <div>✅ Banned users can't log back in</div>
+          <div>✅ All posts from banned users auto-hidden</div>
+        </div>
+      </div>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {[{id:'flags',label:`🚩 Flagged Posts (${Object.keys(flagsByPost).length})`},{id:'banned',label:`🚫 Banned (${banned.length})`},{id:'ban',label:'➕ Manual Ban'}].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${tab===t.id ? C.accent : C.border}`, background: tab===t.id ? C.accent : C.card, color: tab===t.id ? '#fff' : C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t.label}</button>
+        ))}
+        <button onClick={loadData} style={{ marginLeft: 'auto', padding: '8px 14px', borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>↺ Refresh</button>
+      </div>
+
+      {loading ? <div style={{ textAlign: 'center', padding: 40, color: C.muted }}>Loading…</div> : tab === 'flags' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {Object.keys(flagsByPost).length === 0 && <div style={{ textAlign: 'center', padding: 40, color: C.muted, background: C.card, borderRadius: 14 }}>🎉 No flagged posts — community is clean!</div>}
+          {Object.entries(flagsByPost).map(([postId, { post, flags: pFlags }]) => (
+            <div key={postId} style={{ background: C.card, border: `1px solid ${pFlags.length >= 3 ? '#ef4444' : '#f59e0b'}40`, borderRadius: 14, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: pFlags.length >= 3 ? '#ef444420' : '#f59e0b20', color: pFlags.length >= 3 ? '#ef4444' : '#f59e0b' }}>
+                    🚩 {pFlags.length} {pFlags.length === 1 ? 'report' : 'reports'} {pFlags.length >= 3 ? '— AUTO-HIDDEN' : ''}
+                  </span>
+                  {post?.hidden && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#ef444420', color: '#ef4444' }}>HIDDEN</span>}
+                </div>
+                <div style={{ fontSize: 12, color: C.muted }}>{post?.author_name || 'Unknown'}</div>
+              </div>
+              <div style={{ fontSize: 13, color: C.text, marginBottom: 10, background: C.bg, borderRadius: 8, padding: '8px 12px' }}>{post?.content || '(no content)'}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 12 }}>
+                Reports: {pFlags.map(f => f.reason).join(' · ')}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {!post?.hidden && <button onClick={() => hidePost(postId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>👁 Hide Post</button>}
+                <button onClick={() => deletePost(postId)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 Delete Post</button>
+                {post?.author_id && <button onClick={() => banUser(post.author_id, post.author_name, 'Multiple community reports')} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>🚫 Ban User</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : tab === 'banned' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {banned.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: C.muted, background: C.card, borderRadius: 14 }}>No banned users yet</div>}
+          {banned.map(b => (
+            <div key={b.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{b.email || b.user_id}</div>
+                <div style={{ fontSize: 11, color: C.muted }}>Reason: {b.reason} · Banned {new Date(b.banned_at).toLocaleDateString()}</div>
+              </div>
+              <button onClick={() => unbanUser(b.id)} style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Unban</button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 16 }}>🚫 Ban a user manually</div>
+          <input value={banEmail} onChange={e => setBanEmail(e.target.value)} placeholder="Email address or user ID" style={{ width: '100%', padding: '10px 14px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 13, marginBottom: 10, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+          <input value={banReason} onChange={e => setBanReason(e.target.value)} placeholder="Reason (e.g. bot, harassment, spam)" style={{ width: '100%', padding: '10px 14px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, fontSize: 13, marginBottom: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+          <button onClick={manualBan} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Ban User</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
   const meta = user?.user_metadata || {};
   const providerAvatar = meta.avatar_url || meta.picture || null;
@@ -4822,7 +4998,7 @@ function NavTour({ user, onDone }) {
 }
 
 function MainApp({ user, onSignOut }) {
-  const [tab, setTab] = useState('home');
+  const [tab, setTab] = useState('showcase');
   const [showCoach, setShowCoach] = useState(false);
   const [showWellbeing, setShowWellbeing] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -5026,6 +5202,7 @@ function MainApp({ user, onSignOut }) {
     reflect:       <ReflectTab canvas={canvas} user={user} setTab={setTab} />,
     opportunities: <OpportunitiesTab canvas={canvas} />,
     settings:      <SettingsTab user={user} onSignOut={onSignOut} onTour={() => { localStorage.removeItem('vh_tour_done'); setShowNavTour(true); }} onQuiz={() => { localStorage.removeItem('vh_archetype'); setShowQuiz(true); }} />,
+    admin:         <AdminTab user={user} />,
   };
 
   const MOBILE_NAV = [
@@ -5172,7 +5349,18 @@ export default function App() {
     supabase.auth.getSession()
       .then(({ data: { session: s } }) => { if (!cancelled) setSession(s ?? null); })
       .catch(() => { if (!cancelled) setSession(null); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if (!cancelled) setSession(s ?? null); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      if (s?.user) {
+        const banned = await checkBanned(s.user.id, s.user.email);
+        if (banned) {
+          await supabase.auth.signOut();
+          alert('🚫 Your account has been suspended for violating North Star community rules.');
+          if (!cancelled) setSession(null);
+          return;
+        }
+      }
+      if (!cancelled) setSession(s ?? null);
+    });
     return () => { cancelled = true; clearTimeout(timeout); subscription?.unsubscribe(); };
   }, []);
 

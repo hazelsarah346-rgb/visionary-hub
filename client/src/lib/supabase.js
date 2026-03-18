@@ -13,10 +13,21 @@ export async function fetchPosts() {
   const { data, error } = await supabase
     .from('posts')
     .select('*')
+    .eq('hidden', false)
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) { console.error('fetchPosts:', error.message); return []; }
   return (data || []).map(normalizePost);
+}
+
+export async function checkBanned(userId, email) {
+  if (!supabase || !userId) return false;
+  const { data } = await supabase
+    .from('banned_users')
+    .select('id')
+    .or(`user_id.eq.${userId},email.eq.${email || 'none'}`)
+    .limit(1);
+  return (data || []).length > 0;
 }
 
 export async function insertPost({ authorName, authorImg, content, imageUrl, mediaType, userId, postType }) {
