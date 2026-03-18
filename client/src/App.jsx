@@ -1657,129 +1657,69 @@ function HomeTab({ canvas, feed, mentors, user, setTab, onCoach }) {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', paddingBottom: 60 }}>
 
-      {/* ══ MIRROR: WHO YOU ARE ═══════════════════════════════════ */}
-      {/* This section knows your name, your field, your phase.     */}
-      {/* It reflects YOU back — not a generic dashboard.           */}
-      <div style={{ background: `linear-gradient(135deg,${phaseData.color}22,${phaseData.color}08)`, border: `1px solid ${phaseData.color}30`, borderRadius: 22, padding: '20px 22px', marginBottom: 22 }}>
-
-        {/* Greeting row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          {avatarUrl
-            ? <img src={avatarUrl} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${phaseData.color}` }} />
-            : <div style={{ width: 48, height: 48, borderRadius: '50%', background: `linear-gradient(135deg,${phaseData.color},${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{firstName[0]?.toUpperCase()}</div>
-          }
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, color: C.muted }}>{timeGreeting} 👋</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: C.text, lineHeight: 1.1 }}>{firstName}</div>
-            {field && <div style={{ fontSize: 11, color: phaseData.color, fontWeight: 700, marginTop: 2 }}>{field}</div>}
-          </div>
-          {/* Phase badge */}
-          <div style={{ textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: 24 }}>{phaseData.emoji}</div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: phaseData.color, whiteSpace: 'nowrap' }}>{phaseData.name}</div>
-          </div>
-        </div>
-
-        {/* Phase progress bar */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 5 }}>
-            <span style={{ fontWeight: 700, color: C.text }}>{phaseData.emoji} Phase {phase}: {phaseData.name}</span>
-            <span style={{ color: phaseData.color, fontWeight: 700 }}>{xp} XP</span>
-          </div>
-          <div style={{ background: C.border, borderRadius: 8, height: 7 }}>
-            <div style={{ height: 7, borderRadius: 8, background: `linear-gradient(90deg,${phaseData.color},${phaseData.color}99)`, width: `${phaseProgress}%`, transition: 'width 1s ease' }} />
-          </div>
-          <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>{phaseData.desc}</div>
-        </div>
-
-        {/* Stats row */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          {[
-            { label: 'Posts', value: postsCount, icon: '💼' },
-            { label: 'Milestones', value: doneMilestones, icon: '🎯' },
-            { label: 'Phase', value: `${phase}/4`, icon: '🚀' },
-          ].map(s => (
-            <div key={s.label} style={{ flex: 1, background: C.bg + 'cc', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: 15 }}>{s.icon}</div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: C.text }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: C.muted }}>{s.label}</div>
-            </div>
-          ))}
+      {/* ── GREETING ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+        {avatarUrl
+          ? <img src={avatarUrl} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${C.accent}` }} />
+          : <div style={{ width: 52, height: 52, borderRadius: '50%', background: `linear-gradient(135deg,${C.accent},${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{firstName[0]?.toUpperCase()}</div>
+        }
+        <div>
+          <div style={{ fontSize: 13, color: C.muted }}>{timeGreeting} 👋</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: C.text, lineHeight: 1.1 }}>{firstName}</div>
+          {field && <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, marginTop: 2 }}>{field}</div>}
         </div>
       </div>
 
-      {/* ══ DOOR: YOUR ONE ACTION TODAY ══════════════════════════ */}
-      {/* Not a list. Not a dashboard. ONE thing. Always.          */}
-      {hasPath && todayAction ? (
-        <div style={{ background: `linear-gradient(135deg,${C.accent},${C.accent2})`, borderRadius: 18, padding: '18px 20px', marginBottom: 22 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,.7)', marginBottom: 6 }}>⚡ Your one action today</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.4, marginBottom: 14 }}>{todayAction.task}</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setTab('path')} style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', background: 'rgba(255,255,255,.2)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Open My Path →
-            </button>
-            <button onClick={() => setTab('showcase')} style={{ padding: '10px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.3)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Post a win 🏆
-            </button>
-          </div>
+      {/* ── NORTH STAR GOAL ── big and bold if they have one */}
+      {canvas?.bigVision && (
+        <div style={{ background: `linear-gradient(135deg,${C.accent}18,${C.accent2}10)`, border: `1px solid ${C.accent}30`, borderRadius: 16, padding: '16px 18px', marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: C.accent, marginBottom: 6 }}>⭐ Your North Star</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.text, lineHeight: 1.5 }}>{canvas.bigVision}</div>
+        </div>
+      )}
+
+      {/* ── TODAY'S ONE ACTION ── the door. one thing, not a list. */}
+      {todayAction ? (
+        <div style={{ background: `linear-gradient(135deg,${C.accent},${C.accent2})`, borderRadius: 16, padding: '16px 18px', marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: 'rgba(255,255,255,.65)', marginBottom: 6 }}>⚡ Next step</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.5, marginBottom: 14 }}>{todayAction.task}</div>
+          <button onClick={() => setTab('path')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: 'rgba(255,255,255,.2)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Open My Path →
+          </button>
         </div>
       ) : !hasPath ? (
-        /* No path yet — warm, not demanding */
-        <div style={{ background: `linear-gradient(135deg,#1e1b4b,#1e3a5f)`, borderRadius: 18, padding: '22px 22px', marginBottom: 22 }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', lineHeight: 1.35, marginBottom: 10 }}>
-            You don't have to have<br/>it figured out yet. 💫
+        <div style={{ background: `linear-gradient(135deg,#1a1040,#0f2a4a)`, borderRadius: 16, padding: '20px 20px', marginBottom: 16 }}>
+          <div style={{ fontSize: 20, fontWeight: 900, color: '#fff', lineHeight: 1.4, marginBottom: 8 }}>
+            You don't have to have it figured out yet. 💫
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.65)', lineHeight: 1.7, marginBottom: 18 }}>
-            That's exactly why North Star exists. Talk to someone who's been there. Your path will start to reveal itself.
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', lineHeight: 1.7, marginBottom: 16 }}>
+            That's why North Star exists. Start by connecting with a mentor.
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <button onClick={() => setTab('connect')} style={{ padding: '11px 20px', borderRadius: 12, border: 'none', background: C.accent, color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
-              🤝 Talk to a mentor
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setTab('connect')} style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+              🤝 Find a mentor
             </button>
-            <button onClick={() => setTab('path')} style={{ padding: '11px 20px', borderRadius: 12, border: '1px solid rgba(255,255,255,.2)', background: 'transparent', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-              ✨ Help me figure it out
+            <button onClick={() => setTab('path')} style={{ padding: '10px 18px', borderRadius: 10, border: '1px solid rgba(255,255,255,.2)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Build my path
             </button>
           </div>
         </div>
-      ) : roadmap ? null : (
-        /* Has vision, no roadmap yet */
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px 18px', marginBottom: 22, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ fontSize: 28, flexShrink: 0 }}>🗺️</div>
+      ) : (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ fontSize: 26 }}>🗺️</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 2 }}>Ready to build your roadmap?</div>
-            <div style={{ fontSize: 12, color: C.muted }}>Turn your vision into a step-by-step path. Takes 30 seconds.</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Build your roadmap</div>
+            <div style={{ fontSize: 12, color: C.muted }}>Turn your vision into a step-by-step plan.</div>
           </div>
-          <button onClick={() => setTab('path')} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Build it →</button>
+          <button onClick={() => setTab('path')} style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Start →</button>
         </div>
       )}
 
-      {/* North Star goal — if they have one */}
-      {hasPath && canvas?.bigVision && (
-        <div style={{ background: C.card, border: `1px solid ${C.accent}28`, borderRadius: 14, padding: '13px 16px', marginBottom: 22 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: C.accent, marginBottom: 5 }}>⭐ Your North Star</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.5 }}>{canvas.bigVision}</div>
-          {roadmap && totalMilestones > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 4 }}>
-                <span>Roadmap</span>
-                <span style={{ fontWeight: 700, color: C.accent }}>{doneMilestones}/{totalMilestones} milestones</span>
-              </div>
-              <div style={{ background: C.border, borderRadius: 6, height: 5 }}>
-                <div style={{ height: 5, borderRadius: 6, background: `linear-gradient(90deg,${C.accent},${C.accent2})`, width: `${Math.round(doneMilestones/totalMilestones*100)}%`, transition: 'width .5s' }} />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ══ MENTORS — always visible, always front ════════════════ */}
-      <div style={{ marginBottom: 24 }}>
+      {/* ── MENTORS ── */}
+      <div style={{ marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: C.text }}>🎓 Your Mentors</div>
-            <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>Real people who've been exactly where you are</div>
-          </div>
-          <button onClick={() => setTab('connect')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>All →</button>
+          <div style={{ fontSize: 15, fontWeight: 900, color: C.text }}>🎓 Your Mentors</div>
+          <button onClick={() => setTab('connect')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>See all →</button>
         </div>
         {mentors.filter(m => m.status !== 'pending').length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1802,63 +1742,40 @@ function HomeTab({ canvas, feed, mentors, user, setTab, onCoach }) {
           </div>
         ) : (
           <div style={{ background: C.card, border: `2px dashed ${C.border}`, borderRadius: 16, padding: '22px', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, marginBottom: 8 }}>🤝</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>Mentors are on their way</div>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Real mentors in your field are joining. Use the AI tool to help with your path in the meantime.</div>
-            <button onClick={() => setTab('connect')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Use AI Tool →</button>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Real mentors in your field are joining soon.</div>
+            <button onClick={() => setTab('connect')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Go to Connect →</button>
           </div>
         )}
       </div>
 
-      {/* ══ WINDOW: SEE PEOPLE MAKING IT ═════════════════════════ */}
-      {/* Young ambitious people need to see PROOF it's possible.  */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: C.text }}>
-              💼 {field ? `${field} builders` : 'Community wins'}
+      {fieldPosts.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: C.text }}>
+              💼 {field ? `${field} community` : 'Community'}
             </div>
-            <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>
-              {field ? `People building in your world` : 'People just like you, making it happen'}
-            </div>
+            <button onClick={() => setTab('showcase')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>See all →</button>
           </div>
-          <button onClick={() => setTab('showcase')} style={{ background: 'none', border: 'none', color: C.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>See all →</button>
-        </div>
-        {fieldPosts.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {fieldPosts.map(p => (
-              <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   {p.authorImg
-                    ? <img src={p.authorImg} style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
-                    : <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#fff', fontWeight: 700 }}>{(p.authorName||'?')[0]}</div>
+                    ? <img src={p.authorImg} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                    : <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700 }}>{(p.authorName||'?')[0]}</div>
                   }
                   <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{p.authorName}</span>
                   {p.post_type && p.post_type !== 'thought' && (
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: POST_TYPE_COLORS[p.post_type]?.bg || C.border, color: POST_TYPE_COLORS[p.post_type]?.text || C.muted }}>{POST_TYPE_LABELS[p.post_type]}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: POST_TYPE_COLORS[p.post_type]?.bg || C.border, color: POST_TYPE_COLORS[p.post_type]?.text || C.muted }}>{POST_TYPE_LABELS[p.post_type]}</span>
                   )}
                 </div>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{(p.content||'').slice(0,140)}{(p.content||'').length > 140 ? '…' : ''}</div>
+                {p.mediaUrl && !p.mediaUrl.startsWith('blob:') && p.mediaType === 'image' && (
+                  <img src={p.mediaUrl} alt="" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 8, display: 'block', marginBottom: 6 }} onError={e => { e.target.style.display = 'none'; }} />
+                )}
+                {p.content && <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{(p.content).slice(0, 120)}{p.content.length > 120 ? '…' : ''}</div>}
               </div>
             ))}
-          </div>
-        ) : (
-          <div style={{ background: C.card, border: `2px dashed ${C.border}`, borderRadius: 16, padding: '26px', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, marginBottom: 8 }}>✨</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>Be the first to share</div>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Your community is here. They just need someone to go first.</div>
-            <button onClick={() => setTab('showcase')} style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Share something →</button>
-          </div>
-        )}
-      </div>
-
-      {/* Next phase nudge */}
-      {phase < 4 && (
-        <div style={{ marginTop: 20, background: `${phaseData.color}10`, border: `1px dashed ${phaseData.color}40`, borderRadius: 14, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ fontSize: 20 }}>🔓</div>
-          <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 700, color: C.text }}>Unlock Phase {phase + 1}: {PHASES[phase + 1].name}</span><br/>
-            {phaseData.next}
           </div>
         </div>
       )}
