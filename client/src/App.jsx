@@ -1790,15 +1790,20 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
           const count   = (p[r.key] || 0);
           return (
             <button key={r.key} onClick={() => {
-                if (locked) return; // already reacted differently — do nothing
+                if (locked) return; // already reacted differently — blocked
                 if (reacted) {
-                  // remove own reaction
+                  // toggle OFF — remove this reaction
                   setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
                   unreactToPost(p.id, r.key);
                 } else {
-                  // add reaction
-                  setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
+                  // toggle ON — clear ALL stale reactions for this post first (fixes old multi-click data)
+                  setReactions(s => {
+                    const next = { ...s };
+                    REACTIONS.forEach(rx => { delete next[`${key}_${rx.key}`]; }); // nuke any stale entries
+                    next[`${key}_${r.key}`] = true;
+                    return next;
+                  });
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
                   reactToPost(p.id, r.key);
                 }
@@ -2045,9 +2050,6 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
     if (postMode === 'visual') {
       if (!mediaFile) return; // visual proof requires media
       resolvedType = postType || 'achievement';
-    } else if (postMode === 'real') {
-      if (!finalContent) return;
-      resolvedType = 'real';
     } else if (postMode === 'pledge') {
       if (!finalContent) return;
       if (pledgeDate) finalContent = `[DEADLINE:${pledgeDate}] ${finalContent}`;
@@ -2168,41 +2170,44 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         );
       })()}
 
-      {/* ── CURRENTLY BUILDING STRIP ─────────────────────────────────── */}
+      {/* ── MY BUILDING STATUS (personal, not broadcast) ─────────────── */}
       <div style={{ marginBottom: 16 }}>
-        {/* Input row */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: buildingStatuses.length > 0 ? 10 : 0 }}>
-          <div style={{ flex: 1, display: 'flex', gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '8px 12px', alignItems: 'center' }}>
-            <span style={{ fontSize: 14 }}>🔨</span>
-            <input value={buildingInput} onChange={e => setBuildingInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submitBuilding()}
-              placeholder="What are you building right now? (clears in 24h)"
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 12, fontFamily: 'inherit' }} />
+        {buildingStatuses.length === 0 || !buildingStatuses.find(s => s.userId === (user?.id || 'anon')) ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1, display: 'flex', gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '10px 14px', alignItems: 'center' }}>
+              <span style={{ fontSize: 14 }}>🔨</span>
+              <input value={buildingInput} onChange={e => setBuildingInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitBuilding()}
+                placeholder="What are you building right now?"
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 12, fontFamily: 'inherit' }} />
+            </div>
+            <button onClick={submitBuilding} disabled={!buildingInput.trim()}
+              style={{ padding: '10px 16px', borderRadius: 12, background: buildingInput.trim() ? C.blue : C.border, border: 'none', cursor: buildingInput.trim() ? 'pointer' : 'default', color: '#fff', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', transition: 'background 0.2s' }}>
+              Set
+            </button>
           </div>
-          <button onClick={submitBuilding} disabled={!buildingInput.trim()}
-            style={{ padding: '8px 14px', borderRadius: 12, background: buildingInput.trim() ? C.blue : C.border, border: 'none', cursor: buildingInput.trim() ? 'pointer' : 'default', color: '#fff', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', transition: 'background 0.2s' }}>
-            Set
-          </button>
-        </div>
-        {/* Live builder strip */}
-        {buildingStatuses.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-            {buildingStatuses.map((s, i) => (
-              <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, background: `${C.green}0D`, border: `1px solid ${C.green}28`, borderRadius: 20, padding: '5px 12px 5px 7px' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, animation: 'pulse 2s infinite' }} />
-                <Avatar src={s.avatar} name={s.name} size={20} />
-                <span style={{ fontSize: 11, color: C.text, fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span style={{ color: C.green, fontWeight: 800 }}>{s.name.split(' ')[0]}</span> · {s.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const myStatus = buildingStatuses.find(s => s.userId === (user?.id || 'anon'));
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: `${C.green}0A`, border: `1px solid ${C.green}25`, borderRadius: 12, padding: '10px 14px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: C.text, fontWeight: 600, flex: 1 }}>🔨 {myStatus.text}</span>
+              <span style={{ fontSize: 10, color: C.muted }}>clears in 24h</span>
+              <button onClick={() => {
+                const next = buildingStatuses.filter(s => s.userId !== (user?.id || 'anon'));
+                setBuildingStatuses(next);
+                try { localStorage.setItem('vh_building', JSON.stringify(next)); } catch {}
+              }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 2 }}>
+                <X size={12} />
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── FILTER BAR ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}, {id:'pledge',label:'🤝 Pledges'}, {id:'real',label:'💯 Real'}].map(f => (
+        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}, {id:'pledge',label:'🤝 Pledges'}].map(f => (
           <button key={f.id} onClick={() => setFilterType(f.id)}
             style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filterType === f.id ? C.accent : C.border}`, background: filterType === f.id ? C.accent : C.card, color: filterType === f.id ? '#fff' : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {f.label}
@@ -2225,19 +2230,17 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
       {/* ── COMPOSE BOX ─────────────────────────────────────────────── */}
       <div style={{ marginBottom: 18 }}>
 
-        {/* Mode selector — choose your post type upfront */}
+        {/* Mode selector row — compact, no visual noise by default */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
           {[
-            { mode: 'visual',  emoji: '📸', label: 'Visual Proof',  color: C.blue,   desc: 'Photo or video required' },
-            { mode: 'real',    emoji: '💯', label: 'The Real',       color: '#EF4444',desc: 'Raw & honest, no filter' },
-            { mode: 'pledge',  emoji: '🤝', label: '90-Day Pledge',  color: C.purple, desc: 'Public commitment' },
-            { mode: 'capsule', emoji: '⏰', label: 'Time Capsule',   color: C.teal,   desc: 'Sealed until future date' },
+            { mode: 'visual',  emoji: '📸', label: 'Proof',         color: C.blue   },
+            { mode: 'pledge',  emoji: '🤝', label: '90-Day Pledge', color: C.purple },
+            { mode: 'capsule', emoji: '⏰', label: 'Time Capsule',  color: C.teal   },
           ].map(m => {
             const active = postMode === m.mode;
             return (
               <button key={m.mode} onClick={() => { setPostMode(m.mode); setContent(''); setMediaFile(null); setMediaPreview(null); }}
-                title={m.desc}
-                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 13px', borderRadius: 20, border: `1px solid ${active ? m.color : C.border}`, background: active ? m.color + '1A' : C.surface, color: active ? m.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 20, border: `1px solid ${active ? m.color : C.border}`, background: active ? m.color + '1A' : C.surface, color: active ? m.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
                 {m.emoji} {m.label}
               </button>
             );
@@ -2250,15 +2253,17 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
             onDragLeave={() => setMediaDragging(false)}
             onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
             {!mediaPreview ? (
+              /* Compact single-row trigger — not a big dashed box */
               <button onClick={() => mediaInputRef.current?.click()}
-                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: mediaDragging ? `${C.blue}10` : C.surface, border: `2px dashed ${mediaDragging ? C.blue : C.border}`, borderRadius: 18, padding: '28px 20px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, background: `${C.blue}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Image size={24} color={C.blue} />
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, background: mediaDragging ? `${C.blue}10` : C.surface, border: `1px solid ${mediaDragging ? C.blue : C.border}`, borderRadius: 14, padding: '12px 16px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Image size={18} color={C.blue} />
                 </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>Share your visual proof</div>
-                  <div style={{ fontSize: 12, color: C.muted }}>Drop a photo or video — screenshots, demos, projects, wins</div>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Add photo or video</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>Your proof, your win — show don't tell</div>
                 </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, background: `${C.blue}14`, border: `1px solid ${C.blue}30`, borderRadius: 8, padding: '5px 10px', flexShrink: 0 }}>Browse</div>
               </button>
             ) : (
               <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
@@ -2304,30 +2309,6 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
                 {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── THE REAL MODE — raw honest text, no filter ── */}
-        {postMode === 'real' && (
-          <div style={{ background: '#0D0A0A', border: `1px solid #EF444433`, borderRadius: 18, overflow: 'hidden' }}>
-            <div style={{ height: 3, background: 'linear-gradient(90deg,#EF4444,#7f1d1d)' }} />
-            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Avatar src={avatarUrl} name={displayName} size={36} />
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{displayName}</div>
-                <div style={{ fontSize: 10, color: '#64748B' }}>💯 The Real — keep it honest, no filters</div>
-              </div>
-            </div>
-            <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder="What's actually going on? The setbacks, the doubt, the real story behind the highlight reel…"
-              rows={4}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: '#CBD5E1', fontSize: 14, fontFamily: 'inherit', lineHeight: 1.8, fontStyle: 'italic', padding: '10px 16px', resize: 'none' }} />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 14px' }}>
-              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
-                style={{ background: '#EF4444', borderColor: '#EF4444' }}>
-                {submitting ? <Spinner /> : <><Send size={12} /> Share it real</>}
-              </Btn>
-            </div>
           </div>
         )}
 
