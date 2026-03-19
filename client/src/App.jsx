@@ -8,6 +8,7 @@ import {
   Download, Menu, Mic, BookMarked, Flame, Wind, ChevronDown, ChevronUp,
   Activity, PenLine, Share2, Bot, Settings, LogOut,
   Bell, Image, Video, MoreHorizontal, Eye, EyeOff, Lock, Copy, AlertCircle,
+  MessageSquare, Phone, PhoneCall, VideoIcon,
 } from 'lucide-react';
 import { api } from './api';
 import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData, checkBanned } from './lib/supabase';
@@ -19,6 +20,7 @@ const C = {
   text: '#EFF6FF', muted: '#64748B',
   green: '#10B981', yellow: '#F59E0B', purple: '#8B5CF6', red: '#EF4444',
   teal: '#06B6D4',
+  accent: '#2563EB', accent2: '#8B5CF6',
 };
 const PHASE_COLORS = ['#2563EB', '#8B5CF6', '#F59E0B', '#10B981'];
 
@@ -1592,21 +1594,27 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         <ReelPlayer src={p.mediaUrl} />
       )}
 
-      {/* Reactions */}
+      {/* Reactions — click to react, click again to un-react */}
       <div style={{ display: 'flex', gap: 4, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
         {REACTIONS.map(r => {
           const reacted = !!(reactions[`${key}_${r.key}`]);
           const count = (p[r.key] || 0);
           return (
             <button key={r.key} onClick={() => {
-                if (reacted) return;
-                setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
-                setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
-                reactToPost(p.id, r.key);
+                if (reacted) {
+                  // Un-react
+                  setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
+                  setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
+                } else {
+                  // React
+                  setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
+                  setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
+                  reactToPost(p.id, r.key);
+                }
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 11px', cursor: reacted ? 'default' : 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}
-              onMouseEnter={e => { if (!reacted) { e.currentTarget.style.background = `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; }}}
-              onMouseLeave={e => { if (!reacted) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.muted; e.currentTarget.style.borderColor = C.border; }}}>
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 11px', cursor: 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; }}>
               <span style={{ fontSize: 14 }}>{r.emoji}</span>
               {count > 0 && <span style={{ fontWeight: 700, fontSize: 12 }}>{count}</span>}
             </button>
@@ -1795,7 +1803,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [mediaDragging, setMediaDragging] = useState(false);
-  const [postType, setPostType] = useState('thought');
+  const [postType, setPostType] = useState(null);
   const [filterType, setFilterType] = useState('all');
   const [myPortfolio, setMyPortfolio] = useState(false);
   const mediaInputRef = useRef(null);
@@ -1818,19 +1826,20 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   };
 
   const post = async () => {
-    if (!mediaFile) return; // Showcase = media only. No media = no post.
+    if (!content.trim() && !mediaFile) return; // Need at least text or media
     if (submitting) return;
     setSubmitting(true);
 
-    // 1. Upload media to Supabase Storage
+    const resolvedType = postType || 'thought';
+
+    // 1. Upload media if attached
     let hostedUrl = null;
     if (mediaFile) {
-      setUploadProgress('Uploading media…');
+      setUploadProgress('Uploading…');
       hostedUrl = await uploadMedia(mediaFile);
       if (!hostedUrl) {
-        // Upload failed, don't save a blob URL (it expires immediately)
         setUploadProgress('');
-        alert('Media upload failed. Please make sure the "media" storage bucket exists in Supabase (Dashboard → Storage → New bucket → name: "media" → Public ✓). Try again after creating it.');
+        alert('Media upload failed. Make sure a "media" bucket exists in Supabase Storage (Dashboard → Storage → New bucket → name: "media" → Public ✓).');
         setSubmitting(false);
         return;
       }
@@ -1840,18 +1849,17 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
     const authorName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
     const authorImg  = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
-    // 2. Insert into Supabase: everyone can see it in real-time
+    // 2. Insert into Supabase
     const saved = await insertPost({
-      authorName,
-      authorImg,
+      authorName, authorImg,
       content: content.trim(),
       imageUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
       userId: user?.id || null,
-      postType,
+      postType: resolvedType,
     });
 
-    // 3. Always add to feed immediately (saved post uses DB id; fallback uses temp id)
+    // 3. Optimistic update
     const newPost = saved || {
       id: `temp-${Date.now()}`,
       authorId: user?.id || null,
@@ -1859,12 +1867,12 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
       content: content.trim(),
       mediaUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
-      post_type: postType,
+      post_type: resolvedType,
       inspired: 0, encouraged: 0, learned: 0, reflect: 0, time: 'Just now',
     };
     setFeed(prev => prev.find(p => p.id === newPost.id) ? prev : [newPost, ...prev]);
 
-    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false); setPostType('thought');
+    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false); setPostType(null);
   };
 
 
@@ -1915,113 +1923,96 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE BOX — media first, always ──── */}
-      <div style={{ background: C.surface, border: `1px solid ${mediaPreview ? C.accent + '60' : C.border}`, borderRadius: 16, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}
-        onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
-        onDragLeave={() => setMediaDragging(false)}
-        onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
+      {/* ── COMPOSE BOX — productivity log, one click ──── */}
+      <div style={{ background: C.surface, border: `1px solid ${showCompose ? C.blue + '55' : C.border}`, borderRadius: 16, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}>
 
-        {!mediaPreview ? (
-          /* ── NO MEDIA YET: show big upload prompt ── */
-          <div style={{ padding: '18px 18px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <Avatar src={avatarUrl} name={displayName} size={34} />
-              <div style={{ fontSize: 13, color: C.muted }}>Share a photo or video to showcase your work…</div>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { mediaInputRef.current.accept = 'image/*'; mediaInputRef.current?.click(); }}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', borderRadius: 12, border: `1.5px dashed ${C.blue}55`, background: `${C.blue}08`, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = `${C.blue}18`; e.currentTarget.style.borderColor = C.blue; }}
-                onMouseLeave={e => { e.currentTarget.style.background = `${C.blue}08`; e.currentTarget.style.borderColor = `${C.blue}55`; }}>
-                <Image size={16} /> Photo
-              </button>
-              <button onClick={() => { mediaInputRef.current.accept = 'video/*'; mediaInputRef.current?.click(); }}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', borderRadius: 12, border: `1.5px dashed ${C.purple}55`, background: `${C.purple}08`, color: C.purple, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = `${C.purple}18`; e.currentTarget.style.borderColor = C.purple; }}
-                onMouseLeave={e => { e.currentTarget.style.background = `${C.purple}08`; e.currentTarget.style.borderColor = `${C.purple}55`; }}>
-                <Video size={16} /> Video
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* ── MEDIA SELECTED: show preview + caption + post type + post button ── */
-          <div>
-            {/* Media preview */}
-            {mediaPreview.type === 'video' ? (
-              <div style={{ position: 'relative' }}>
-                <ReelPlayer src={mediaPreview.url} />
+        {/* Always-visible prompt row */}
+        <div style={{ display: 'flex', alignItems: showCompose ? 'flex-start' : 'center', gap: 10, padding: showCompose ? '14px 14px 0' : '12px 14px' }}>
+          <Avatar src={avatarUrl} name={displayName} size={34} style={{ flexShrink: 0, marginTop: showCompose ? 3 : 0 }} />
+          {!showCompose ? (
+            <button onClick={() => setShowCompose(true)}
+              style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '9px 16px', textAlign: 'left', color: C.muted, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              What did you build, learn, or achieve today?
+            </button>
+          ) : (
+            <textarea
+              autoFocus
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && e.metaKey && !submitting && post()}
+              placeholder={{
+                achievement: "What did you achieve? Own it — no win is too small 🏆",
+                project:     "What are you building right now? 💡",
+                skill:       "What did you just learn or level up on? 📚",
+                milestone:   "What checkpoint did you hit on your journey? 🎯",
+                thought:     "What's on your mind? Share your progress, questions, or ideas…",
+              }[postType || 'thought']}
+              rows={3}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', resize: 'none', lineHeight: 1.65 }}
+            />
+          )}
+        </div>
+
+        {showCompose && (
+          <>
+            {/* Attached media preview */}
+            {mediaPreview && (
+              <div style={{ position: 'relative', background: '#000', margin: '10px 0 0' }}>
+                {mediaPreview.type === 'video'
+                  ? <video src={mediaPreview.url} controls style={{ width: '100%', maxHeight: 320, display: 'block' }} />
+                  : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
+                }
                 <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                  style={{ position: 'absolute', top: 10, left: 10, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', zIndex: 2 }}>
-                  <X size={12} color="#fff" />
-                </button>
-              </div>
-            ) : (
-              <div style={{ position: 'relative', background: '#000' }}>
-                <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'contain', display: 'block' }} />
-                <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                  style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                  style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <X size={12} color="#fff" />
                 </button>
               </div>
             )}
 
-            {/* Post type chips */}
-            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 0', overflowX: 'auto' }}>
-              {POST_TYPES.map(t => (
-                <button key={t.id} onClick={() => setPostType(t.id)}
-                  style={{ flexShrink: 0, padding: '4px 12px', borderRadius: 20, border: `1px solid ${postType === t.id ? t.color : C.border}`, background: postType === t.id ? t.color + '22' : 'transparent', color: postType === t.id ? t.color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                  {t.label}
+            {/* Action bar: type chips + attach + cancel + post */}
+            <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 14px 12px', marginTop: 10 }}>
+              {/* Post type row */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
+                {[
+                  { id: 'thought',     emoji: '💬', label: 'Thought'     },
+                  { id: 'achievement', emoji: '🏆', label: 'Win'          },
+                  { id: 'project',     emoji: '💡', label: 'Project'      },
+                  { id: 'skill',       emoji: '📚', label: 'Skill'        },
+                  { id: 'milestone',   emoji: '🎯', label: 'Milestone'    },
+                ].map(t => {
+                  const color = POST_TYPES.find(p => p.id === t.id)?.color || C.muted;
+                  const active = (postType || 'thought') === t.id;
+                  return (
+                    <button key={t.id} onClick={() => setPostType(t.id)}
+                      style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 11px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '1A' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      {t.emoji} {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Buttons row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={() => mediaInputRef.current?.click()}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Image size={13} /> Attach
                 </button>
-              ))}
+                <div style={{ flex: 1 }} />
+                <button onClick={() => { setShowCompose(false); setContent(''); setMediaFile(null); setMediaPreview(null); setPostType(null); }}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Cancel
+                </button>
+                <Btn size="sm" onClick={post} disabled={submitting || (!content.trim() && !mediaFile)}>
+                  {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : 'Post →'}
+                </Btn>
+              </div>
+              {uploadProgress && <div style={{ marginTop: 6, fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
             </div>
-
-            {/* Caption + post button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
-              <Avatar src={avatarUrl} name={displayName} size={30} />
-              <input value={content} onChange={e => setContent(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !submitting && mediaFile && post()}
-                placeholder="Add a caption…"
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
-              <Btn size="sm" onClick={post} disabled={submitting || !mediaFile}>
-                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
-              </Btn>
-            </div>
-            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
-          </div>
+          </>
         )}
 
-        {mediaDragging && (
-          <div style={{ padding: '10px 16px', background: `${C.blue}08`, borderTop: `1px dashed ${C.blue}`, textAlign: 'center', fontSize: 12, color: C.blueLight }}>
-            Drop photo or video here
-          </div>
-        )}
         <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
       </div>
 
-      {/* ── AI COMMUNITY INSIGHT ─────────────────────────────────────── */}
-      {feed.length > 0 && (
-        <div style={{ background: `linear-gradient(135deg, ${C.blue}12, ${C.purple}12)`, border: `1px solid ${C.blue}30`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{ width: 32, height: 32, background: `${C.blue}20`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-            <Brain size={15} color={C.blue} />
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: C.blue, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>AI Community Insight</div>
-            <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>
-              {(() => {
-                const totalReactions = feed.reduce((s, p) => s + (p.inspired||0) + (p.encouraged||0) + (p.learned||0) + (p.reflect||0), 0);
-                const totalInspired = feed.reduce((s, p) => s + (p.inspired || 0), 0);
-                const mediaCount = feed.filter(p => p.mediaUrl).length;
-                const names = [...new Set(feed.map(p => p.authorName?.split(' ')[0]).filter(Boolean))].slice(0, 3);
-                if (totalReactions > 10) return `${totalReactions} reactions shared in this community, 🔥 inspired, 💪 encouraged, 📚 learned, 🌱 reflected. The energy here is real.`;
-                if (totalInspired > 5) return `${totalInspired} 🔥 inspiration reactions flowing in this feed. Keep building.`;
-                if (mediaCount > 2) return `${mediaCount} posts with photos and videos. This community shows, not just tells.`;
-                if (names.length > 1) return `${names.join(', ')} and others are building in public. Join them.`;
-                return 'Share what you are working on. Consistency in public builds real momentum.';
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── FEED HEADER ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -4667,6 +4658,7 @@ function SettingsTab({ user, onSignOut, onTour, onQuiz }) {
 
 // ─── CONNECT TAB (peer group chats as a full page) ────────────────────────────
 function ConnectTab({ canvas, user, feed, mentors = [] }) {
+  const [section, setSection] = useState('mentors'); // 'mentors' | 'groups' | 'peers'
   const [joined, setJoined] = useState(() => {
     try { return JSON.parse(localStorage.getItem('vh_peer_groups') || '[]'); } catch { return []; }
   });
@@ -4674,10 +4666,23 @@ function ConnectTab({ canvas, user, feed, mentors = [] }) {
   const [groupMsgs, setGroupMsgs] = useState({});
   const [chatInput, setChatInput] = useState('');
   const [sending, setSending] = useState(false);
+  // Mentor section states
   const [chatMentorLocal, setChatMentorLocal] = useState(null);
   const [mentorMessages, setMentorMessages] = useState([]);
   const [mentorInput, setMentorInput] = useState('');
   const [mentorLoading, setMentorLoading] = useState(false);
+  const [mentorSearch, setMentorSearch] = useState('');
+  const [mentorCategory, setMentorCategory] = useState('All');
+  const [showBecome, setShowBecome] = useState(false);
+  // Become a mentor form
+  const [bName, setBName] = useState(''); const [bEmail, setBEmail] = useState('');
+  const [bTitle, setBTitle] = useState(''); const [bField, setBField] = useState('Career / Purpose');
+  const [bProof, setBProof] = useState(''); const [bLinkedIn, setBLinkedIn] = useState('');
+  const [bSubmitting, setBSubmitting] = useState(false); const [bSubmitted, setBSubmitted] = useState(false);
+  // Find peers
+  const [peerGoal, setPeerGoal] = useState('');
+  const [peers, setPeers] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_peers') || '[]'); } catch { return []; } });
+  const [peerLoading, setPeerLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
@@ -4739,100 +4744,129 @@ function ConnectTab({ canvas, user, feed, mentors = [] }) {
 
   const msgs = activeGroup ? (groupMsgs[activeGroup.id] || []) : [];
 
-  return (
-    <div style={{ maxWidth: 680, margin: '0 auto', height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
+  const MENTOR_CATS = ['All', 'Academic / Study', 'Career / Purpose', 'Wellness / Balance', 'Innovation / Startup'];
+  const filteredMentors = mentors.filter(m => m.status !== 'pending').filter(m => {
+    const matchCat = mentorCategory === 'All' || m.field === mentorCategory;
+    const matchSearch = !mentorSearch || `${m.name} ${m.title} ${m.field}`.toLowerCase().includes(mentorSearch.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+  const openMentorChat = (m) => {
+    setChatMentorLocal(m);
+    setMentorMessages([{ role: 'ai', content: `Hi! I'm ${m.name}, ${m.title}.\n\n"${m.quote}"\n\nI'm here to give you real guidance — not generic advice. What specific challenge are you working through right now?` }]);
+    setMentorInput('');
+  };
+
+  const sendMentorMsg = async () => {
+    const text = mentorInput.trim(); if (!text || mentorLoading) return;
+    const newMsgs = [...mentorMessages, { role: 'user', content: text }];
+    setMentorMessages(newMsgs); setMentorInput(''); setMentorLoading(true);
+    try {
+      const r = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mentor: chatMentorLocal, messages: newMsgs.slice(-8).map(m => ({ role: m.role === 'ai' ? 'assistant' : m.role, content: m.content })) }) });
+      const d = await r.json();
+      setMentorMessages(prev => [...prev, { role: 'ai', content: d.reply || "Let's dig into this together." }]);
+    } catch { setMentorMessages(prev => [...prev, { role: 'ai', content: 'Connection issue. Please try again.' }]); }
+    setMentorLoading(false);
+  };
+
+  const findPeerMatch = async () => {
+    if (!peerGoal.trim()) return;
+    setPeerLoading(true);
+    try {
+      const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: `Generate 3 fictional but realistic accountability partner profiles for a student working on: "${peerGoal}". Return JSON array: [{"name":"...","goal":"...","field":"...","timezone":"...","vibe":"...","emoji":"..."}]. Make them diverse, relatable, specific.` }], mode: 'vision', canvas: {} }) });
+      const d = await r.json();
+      const match = (d.reply || '').match(/\[[\s\S]*?\]/);
+      if (match) { const found = JSON.parse(match[0]); setPeers(found); localStorage.setItem('vh_peers', JSON.stringify(found)); }
+    } catch { /* silent */ }
+    setPeerLoading(false);
+  };
+
+  const submitMentorApp = async () => {
+    if (!bName.trim() || !bTitle.trim() || !bEmail.trim()) return;
+    setBSubmitting(true);
+    try {
+      let aiTitle = bTitle; let aiQuote = 'Here to help you grow.';
+      try {
+        const r = await fetch('/api/ai/tutor', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: `Based on: "${bTitle}", generate JSON: {"title":"short professional title max 8 words","quote":"inspiring mentor quote max 15 words"}` }], mode: 'study', canvas: {} }) });
+        const d = await r.json();
+        const match = (d.reply || '').match(/\{[\s\S]*?\}/);
+        if (match) { const p = JSON.parse(match[0]); aiTitle = p.title || bTitle; aiQuote = p.quote || aiQuote; }
+      } catch { /* use defaults */ }
+      if (supabase) await supabase.from('mentors').insert([{ name: bName, title: aiTitle, field: bField, quote: aiQuote, img: `https://i.pravatar.cc/150?u=${bEmail}`, persona: 'mentor', stats: JSON.stringify({ mentored: 0, rating: 5.0 }), status: 'pending', verified: false, email: bEmail, linkedin: bLinkedIn, proof: bProof }]);
+    } catch { /* silent */ }
+    setBSubmitted(true); setBSubmitting(false);
+  };
+
+  // ── MENTOR AI CHAT VIEW ─────────────────────────────────────────────────────
+  if (chatMentorLocal) {
+    return (
+      <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <button onClick={() => setChatMentorLocal(null)} style={{ padding: '7px 14px', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>← Back</button>
+          <Avatar src={chatMentorLocal.img} name={chatMentorLocal.name} size={44} />
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: C.text }}>{chatMentorLocal.name}</div>
+            <div style={{ fontSize: 12, color: C.muted }}>{chatMentorLocal.title} · {chatMentorLocal.field}</div>
+          </div>
+          <div style={{ marginLeft: 'auto', background: `${C.green}12`, border: `1px solid ${C.green}28`, borderRadius: 99, padding: '4px 12px', fontSize: 11, color: C.green, fontWeight: 700 }}>● Live Session</div>
+        </div>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px' }}>
+            {mentorMessages.map((m, i) => (
+              <div key={i} style={{ marginBottom: 14, display: 'flex', gap: 9, flexDirection: m.role === 'user' ? 'row-reverse' : 'row' }}>
+                {m.role === 'ai' && <Avatar src={chatMentorLocal.img} name={chatMentorLocal.name} size={30} />}
+                <div style={{ maxWidth: '78%', background: m.role === 'user' ? `${C.blue}20` : C.card, border: `1px solid ${m.role === 'user' ? C.blue + '33' : C.border}`, borderRadius: m.role === 'user' ? '13px 13px 4px 13px' : '13px 13px 13px 4px', padding: '10px 14px', fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{m.content}</div>
+              </div>
+            ))}
+            {mentorLoading && (
+              <div style={{ display: 'flex', gap: 9 }}>
+                <Avatar src={chatMentorLocal.img} name={chatMentorLocal.name} size={30} />
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '13px 13px 13px 4px', padding: '12px 16px', display: 'flex', gap: 5 }}>
+                  {[0,1,2].map(j => <div key={j} style={{ width: 7, height: 7, borderRadius: '50%', background: C.blue, opacity: 0.4, animation: `bounce 1.2s ${j*0.15}s infinite` }} />)}
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          <div style={{ padding: '10px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+            <input value={mentorInput} onChange={e => setMentorInput(e.target.value)} placeholder={`Ask ${chatMentorLocal.name.split(' ')[0]} anything…`}
+              onKeyDown={e => { if (e.key === 'Enter') sendMentorMsg(); }}
+              style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '9px 13px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <button onClick={sendMentorMsg} disabled={!mentorInput.trim() || mentorLoading}
+              style={{ width: 38, height: 38, borderRadius: 9, background: mentorInput.trim() && !mentorLoading ? C.blue : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Send size={14} color="#fff" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 700, margin: '0 auto' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
         {activeGroup && (
-          <button onClick={() => setActiveGroup(null)} style={{ width: 36, height: 36, borderRadius: '50%', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = C.blueLight}
-            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
-            <ChevronLeft size={18} color={C.text} />
+          <button onClick={() => setActiveGroup(null)} style={{ width: 34, height: 34, borderRadius: '50%', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ChevronLeft size={17} color={C.text} />
           </button>
         )}
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: '0 0 2px', color: C.text }}>
             {activeGroup ? `${activeGroup.emoji} ${activeGroup.name}` : '🤝 Connect'}
           </h1>
           <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
-            {activeGroup ? activeGroup.desc : 'Mentors, peers & groups — all your connections in one place'}
+            {activeGroup ? activeGroup.desc : 'Find your mentor, peers, or join a group'}
           </p>
         </div>
       </div>
 
-      {!activeGroup ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto' }}>
-
-        {/* ── MENTORS SECTION ── */}
-        {mentors.length > 0 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>🎓 Mentors</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {mentors.filter(m => m.status !== 'pending').slice(0, 6).map(m => (
-                <div key={m.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  {m.img
-                    ? <img src={m.img} alt={m.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                    : <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#fff', fontWeight: 800, flexShrink: 0 }}>{(m.name||'M')[0]}</div>
-                  }
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800, fontSize: 14, color: C.text }}>{m.name} {m.verified && <span style={{ fontSize: 10, color: C.accent }}>✓</span>}</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>{m.title}</div>
-                    {m.quote && <div style={{ fontSize: 12, color: C.text, fontStyle: 'italic', marginTop: 4 }}>"{m.quote.slice(0,80)}{m.quote.length>80?'…':''}"</div>}
-                  </div>
-                  <button onClick={() => {
-                    // Store selected mentor and trigger chat — reuse MentorshipTab chat logic via ConnectTab local state
-                    setChatMentorLocal(m);
-                  }} style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                    Chat →
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── PEER GROUPS SECTION ── */}
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 12 }}>⚡ Peer Groups</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {PEER_GROUPS.map(g => {
-            const isJoined = joined.includes(g.id);
-            return (
-              <div key={g.id} style={{ background: C.surface, border: `1px solid ${isJoined ? g.color + '60' : C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'all 0.2s' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
-                  <div style={{ width: 50, height: 50, borderRadius: 14, background: g.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.emoji}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.name}</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>{g.desc}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => toggle(g.id)}
-                      style={{ padding: '6px 14px', borderRadius: 99, border: `1px solid ${isJoined ? g.color : C.border}`, background: isJoined ? g.color + '18' : 'transparent', color: isJoined ? g.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      {isJoined ? '✓ Joined' : 'Join'}
-                    </button>
-                    {isJoined && (
-                      <button onClick={() => openGroup(g)}
-                        style={{ padding: '6px 14px', borderRadius: 99, border: 'none', background: g.color, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        Chat →
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {!supabase && (
-            <div style={{ textAlign: 'center', padding: '20px', fontSize: 12, color: C.muted, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>
-              Connect Supabase to enable live group chat. You can still join groups locally.
-            </div>
-          )}
-          </div>
-        </div>
-        </div>
-      ) : (
-        /* ── Chat view ── */
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 18, overflow: 'hidden' }}>
+      {/* ── ACTIVE GROUP CHAT ── */}
+      {activeGroup ? (
+        <div style={{ display: 'flex', flexDirection: 'column', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 18, overflow: 'hidden', height: 'calc(100vh - 160px)' }}>
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {msgs.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -4848,9 +4882,7 @@ function ConnectTab({ canvas, user, feed, mentors = [] }) {
                   <Avatar src={m.author_img} name={m.author_name} size={32} />
                   <div style={{ maxWidth: '72%' }}>
                     {!isMe && <div style={{ fontSize: 10, color: C.muted, marginBottom: 3, marginLeft: 4 }}>{m.author_name}</div>}
-                    <div style={{ background: isMe ? activeGroup.color + '28' : C.card, border: `1px solid ${isMe ? activeGroup.color + '50' : C.border}`, borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '9px 13px', fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      {m.content}
-                    </div>
+                    <div style={{ background: isMe ? activeGroup.color + '28' : C.card, border: `1px solid ${isMe ? activeGroup.color + '50' : C.border}`, borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '9px 13px', fontSize: 14, color: C.text, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.content}</div>
                     <div style={{ fontSize: 10, color: C.muted, marginTop: 3, textAlign: isMe ? 'right' : 'left', paddingInline: 4 }}>
                       {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                     </div>
@@ -4860,7 +4892,6 @@ function ConnectTab({ canvas, user, feed, mentors = [] }) {
             })}
             <div ref={chatEndRef} />
           </div>
-          {/* Input */}
           <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, alignItems: 'flex-end', background: C.surface }}>
             <Avatar src={avatarUrl} name={displayName} size={32} />
             <textarea value={chatInput} onChange={e => setChatInput(e.target.value)}
@@ -4868,13 +4899,405 @@ function ConnectTab({ canvas, user, feed, mentors = [] }) {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
               style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: '10px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.5 }} />
             <button onClick={sendMsg} disabled={!chatInput.trim() || sending}
-              style={{ width: 40, height: 40, borderRadius: 12, background: chatInput.trim() && !sending ? activeGroup.color : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
+              style={{ width: 40, height: 40, borderRadius: 12, background: chatInput.trim() && !sending ? activeGroup.color : C.border, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Send size={16} color="#fff" />
             </button>
           </div>
         </div>
+
+      ) : (
+        <div>
+          {/* ── SUB-TAB NAV ── */}
+          <div style={{ display: 'flex', gap: 0, marginBottom: 24, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 4 }}>
+            {[
+              { id: 'mentors', label: '🎓 Mentors' },
+              { id: 'groups',  label: '⚡ Groups'  },
+              { id: 'peers',   label: '🤝 Find Peers' },
+            ].map(s => (
+              <button key={s.id} onClick={() => setSection(s.id)}
+                style={{ flex: 1, padding: '9px 6px', borderRadius: 10, border: 'none', background: section === s.id ? C.card : 'transparent', color: section === s.id ? C.text : C.muted, fontSize: 13, fontWeight: section === s.id ? 800 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ══════════ MENTORS SECTION ══════════ */}
+          {section === 'mentors' && (
+            <div>
+              {/* Search + filter */}
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <Search size={14} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: C.muted }} />
+                <input value={mentorSearch} onChange={e => setMentorSearch(e.target.value)}
+                  placeholder="Search mentors by name, title, or field…"
+                  style={{ width: '100%', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: '11px 14px 11px 38px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+                {MENTOR_CATS.map(cat => (
+                  <button key={cat} onClick={() => setMentorCategory(cat)}
+                    style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 99, border: `1px solid ${mentorCategory === cat ? C.blue : C.border}`, background: mentorCategory === cat ? `${C.blue}18` : 'transparent', color: mentorCategory === cat ? C.blueLight : C.muted, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: mentorCategory === cat ? 700 : 400 }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Become a mentor CTA */}
+              {!showBecome && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: `${C.purple}0A`, border: `1px solid ${C.purple}25`, borderRadius: 14, padding: '12px 18px', marginBottom: 20 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>✋ Become a Mentor</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>Share your real experience. AI builds your profile.</div>
+                  </div>
+                  <button onClick={() => setShowBecome(true)}
+                    style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: C.purple, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                    Apply →
+                  </button>
+                </div>
+              )}
+
+              {/* Become a mentor form */}
+              {showBecome && !bSubmitted && (
+                <div style={{ background: C.surface, border: `1px solid ${C.purple}44`, borderRadius: 16, padding: '20px', marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: C.text }}>✋ Become a Mentor</div>
+                    <button onClick={() => setShowBecome(false)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer' }}><X size={16} /></button>
+                  </div>
+                  <p style={{ fontSize: 13, color: C.muted, margin: '0 0 18px', lineHeight: 1.65 }}>Share your background. AI will write your profile title and quote — we verify your impact before you go live.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    {[['Full Name *', bName, setBName, 'Your name', 'text'], ['Email *', bEmail, setBEmail, 'your@email.com', 'email']].map(([label, val, setter, ph, type]) => (
+                      <div key={label}>
+                        <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>{label}</label>
+                        <input value={val} onChange={e => setter(e.target.value)} placeholder={ph} type={type}
+                          style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>Your background & expertise *</label>
+                    <textarea value={bTitle} onChange={e => setBTitle(e.target.value)} rows={2}
+                      placeholder="e.g. Startup founder who raised $2M seed, 5 years in product design, or final-year medical student"
+                      style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>Mentoring focus</label>
+                      <select value={bField} onChange={e => setBField(e.target.value)}
+                        style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}>
+                        {MENTOR_CATS.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>LinkedIn (optional)</label>
+                      <input value={bLinkedIn} onChange={e => setBLinkedIn(e.target.value)} placeholder="linkedin.com/in/..."
+                        style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 5 }}>Proof of impact (optional but helps verification)</label>
+                    <textarea value={bProof} onChange={e => setBProof(e.target.value)} rows={2}
+                      placeholder="e.g. Mentored 20 students, built product used by 5,000 people, published research…"
+                      style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <Btn onClick={submitMentorApp} disabled={!bName.trim() || !bTitle.trim() || !bEmail.trim() || bSubmitting}>
+                    {bSubmitting ? <><Spinner /> Submitting…</> : 'Submit Application →'}
+                  </Btn>
+                </div>
+              )}
+              {showBecome && bSubmitted && (
+                <div style={{ background: C.surface, border: `1px solid ${C.green}44`, borderRadius: 16, padding: '28px', textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: C.text, marginBottom: 8 }}>Application received!</div>
+                  <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.7, maxWidth: 360, margin: '0 auto 16px' }}>We'll review your background within 48 hours. If approved, your profile goes live with a <strong style={{ color: C.blue }}>✓ Verified</strong> badge.</div>
+                  <button onClick={() => { setShowBecome(false); setBSubmitted(false); setBName(''); setBEmail(''); setBTitle(''); setBProof(''); setBLinkedIn(''); }}
+                    style={{ padding: '8px 20px', borderRadius: 10, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Close
+                  </button>
+                </div>
+              )}
+
+              {/* Mentor cards */}
+              <div className="vh-grid-2" style={{ gap: 16 }}>
+                {filteredMentors.map(m => (
+                  <div key={m.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 20, transition: 'border-color 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = C.blue + '66'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'flex-start' }}>
+                      <Avatar src={m.img} name={m.name} size={50} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 2 }}>
+                          <span style={{ fontWeight: 800, fontSize: 14, color: C.text }}>{m.name}</span>
+                          {m.verified && <span style={{ display: 'inline-flex', alignItems: 'center', background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '1px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Verified</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: C.muted }}>{m.title}</div>
+                        <div style={{ fontSize: 10, color: C.blueLight, fontWeight: 600, marginTop: 4, background: `${C.blue}10`, display: 'inline-block', padding: '2px 8px', borderRadius: 99 }}>{m.field || 'General'}</div>
+                      </div>
+                    </div>
+                    {m.quote && <div style={{ fontSize: 13, color: C.text, lineHeight: 1.55, marginBottom: 14, fontStyle: 'italic', opacity: 0.85 }}>"{m.quote}"</div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 11, color: C.muted }}>{m.stats?.mentored > 0 ? `${m.stats.mentored}+ guided · ⭐ ${m.stats.rating || 5.0}` : 'New mentor'}</div>
+                      <Btn size="sm" onClick={() => openMentorChat(m)}>Start Session →</Btn>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {filteredMentors.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '56px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
+                  <Users size={32} color={C.border} style={{ marginBottom: 12 }} />
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.muted, marginBottom: 6 }}>No mentors found</div>
+                  <div style={{ fontSize: 12, color: '#334155', maxWidth: 280, margin: '0 auto', lineHeight: 1.6 }}>
+                    {mentorSearch || mentorCategory !== 'All' ? 'Try a different search or category.' : 'Mentors appear here once approved. Be the first — apply above!'}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════ GROUPS SECTION ══════════ */}
+          {section === 'groups' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {PEER_GROUPS.map(g => {
+                const isJoined = joined.includes(g.id);
+                return (
+                  <div key={g.id} style={{ background: C.surface, border: `1px solid ${isJoined ? g.color + '60' : C.border}`, borderRadius: 16, overflow: 'hidden', transition: 'all 0.2s' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+                      <div style={{ width: 50, height: 50, borderRadius: 14, background: g.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{g.emoji}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, fontSize: 15, color: C.text, marginBottom: 2 }}>{g.name}</div>
+                        <div style={{ fontSize: 12, color: C.muted }}>{g.desc}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                        <button onClick={() => toggle(g.id)}
+                          style={{ padding: '6px 14px', borderRadius: 99, border: `1px solid ${isJoined ? g.color : C.border}`, background: isJoined ? g.color + '18' : 'transparent', color: isJoined ? g.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          {isJoined ? '✓ Joined' : 'Join'}
+                        </button>
+                        {isJoined && (
+                          <button onClick={() => openGroup(g)}
+                            style={{ padding: '6px 14px', borderRadius: 99, border: 'none', background: g.color, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                            Chat →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!supabase && (
+                <div style={{ textAlign: 'center', padding: '16px', fontSize: 12, color: C.muted, background: C.surface, borderRadius: 12, border: `1px solid ${C.border}` }}>
+                  Connect Supabase to enable live group chat.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════ FIND PEERS SECTION ══════════ */}
+          {section === 'peers' && (
+            <div>
+              <div style={{ background: `${C.teal}0A`, border: `1px solid ${C.teal}25`, borderRadius: 16, padding: '18px 20px', marginBottom: 24 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 6 }}>Find your accountability partner 🤝</div>
+                <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px', lineHeight: 1.65 }}>Tell us what you're working on and we'll match you with peers on the same journey.</p>
+                <div style={{ display: 'flex', gap: 9 }}>
+                  <input value={peerGoal} onChange={e => setPeerGoal(e.target.value)}
+                    placeholder='e.g. "launching my startup", "getting into grad school"'
+                    onKeyDown={e => { if (e.key === 'Enter') findPeerMatch(); }}
+                    style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.border}`, borderRadius: 10, color: C.text, padding: '11px 14px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                  <Btn onClick={findPeerMatch} disabled={!peerGoal.trim() || peerLoading}>
+                    {peerLoading ? <Spinner /> : <><Users size={13} /> Match</>}
+                  </Btn>
+                </div>
+              </div>
+              {peerLoading && (
+                <div style={{ textAlign: 'center', padding: '32px', color: C.muted, fontSize: 13 }}>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
+                    {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: C.teal, opacity: 0.5, animation: `bounce 1.2s ${i*0.15}s infinite` }} />)}
+                  </div>
+                  Finding your matches…
+                </div>
+              )}
+              {peers.length > 0 && !peerLoading && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {peers.map((p, i) => (
+                    <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg, ${C.teal}, ${C.blue})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{p.emoji || '👤'}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14, color: C.text, marginBottom: 3 }}>{p.name}</div>
+                        <div style={{ fontSize: 12, color: C.blueLight, marginBottom: 5 }}>{p.field} · {p.timezone}</div>
+                        <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, marginBottom: 8 }}>Working on: <span style={{ color: C.text }}>{p.goal}</span></div>
+                        <div style={{ fontSize: 11, color: C.teal, fontStyle: 'italic' }}>Vibe: {p.vibe}</div>
+                      </div>
+                      <Btn size="sm" variant="secondary">Connect →</Btn>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {peers.length === 0 && !peerLoading && (
+                <div style={{ textAlign: 'center', padding: '44px 0', border: `2px dashed ${C.border}`, borderRadius: 16 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🤝</div>
+                  <div style={{ fontSize: 14, color: C.text, fontWeight: 700, marginBottom: 6 }}>You don't have to build alone</div>
+                  <div style={{ fontSize: 12, color: C.muted, maxWidth: 340, margin: '0 auto' }}>Tell us what you're working on above and we'll find peers on the same journey.</div>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
       )}
     </div>
+  );
+}
+
+// ─── PRIVATE DM DRAWER ────────────────────────────────────────────────────────
+// Slide-in private chat between two users. Works for peer DMs and mentor chats.
+// Calls via Jitsi Meet — free, no API key, just a private room URL.
+function DMDrawer({ user, canvas, peer, onClose }) {
+  // peer = { id, name, img, title? }
+  const [msgs, setMsgs]       = useState([]);
+  const [input, setInput]     = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [inCall, setInCall]   = useState(false);
+  const endRef                = useRef(null);
+
+  const myId   = user?.id   || 'anon';
+  const myName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'You';
+  const myImg  = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || null;
+
+  // Conversation ID = sorted pair so both sides see the same room
+  const convId = [myId, peer.id].sort().join('__');
+
+  // Jitsi room = unique per conversation, safe chars only
+  const callRoom = `northstar-${convId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 40)}`;
+  const callUrl  = `https://meet.jit.si/${callRoom}`;
+
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return; }
+    // Load history
+    supabase.from('direct_messages').select('*')
+      .eq('conv_id', convId).order('created_at', { ascending: true }).limit(100)
+      .then(({ data }) => { setMsgs(data || []); setLoading(false); });
+
+    // Real-time subscription
+    const ch = supabase.channel(`dm-${convId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `conv_id=eq.${convId}` },
+        p => setMsgs(prev => prev.find(m => m.id === p.new.id) ? prev : [...prev, p.new]))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [convId]);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setInput('');
+    const msg = {
+      conv_id:       convId,
+      sender_id:     myId,
+      sender_name:   myName,
+      sender_img:    myImg,
+      recipient_id:  peer.id,
+      content:       text,
+      created_at:    new Date().toISOString(),
+    };
+    // Optimistic
+    setMsgs(prev => [...prev, { ...msg, id: `tmp-${Date.now()}` }]);
+    if (supabase) await supabase.from('direct_messages').insert([msg]);
+    setSending(false);
+  };
+
+  // Overlay + drawer
+  return (
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)', zIndex: 200 }} />
+
+      {/* Drawer */}
+      <div style={{ position: 'fixed', bottom: 0, right: 0, top: 0, width: '100%', maxWidth: 420, background: C.card, boxShadow: '-4px 0 40px rgba(0,0,0,0.5)', zIndex: 201, display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, display: 'flex' }}>
+            <X size={20} />
+          </button>
+          {peer.img
+            ? <img src={peer.img} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            : <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${C.accent},${C.accent2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#fff', fontWeight: 800, flexShrink: 0 }}>{(peer.name||'?')[0]}</div>
+          }
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: C.text }}>{peer.name}</div>
+            {peer.title && <div style={{ fontSize: 12, color: C.muted }}>{peer.title}</div>}
+          </div>
+          {/* Call buttons */}
+          <button
+            onClick={() => { setInCall(true); window.open(callUrl, '_blank'); }}
+            title="Start video call"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', background: `${C.green}22`, color: C.green, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Video size={15} /> Call
+          </button>
+        </div>
+
+        {/* Call active banner */}
+        {inCall && (
+          <div style={{ background: `${C.green}18`, borderBottom: `1px solid ${C.green}30`, padding: '8px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: C.green, fontWeight: 700 }}>🎥 Call open in new tab</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => window.open(callUrl, '_blank')} style={{ fontSize: 11, color: C.green, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>Rejoin</button>
+              <button onClick={() => setInCall(false)} style={{ fontSize: 11, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Dismiss</button>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading && <div style={{ textAlign: 'center', color: C.muted, fontSize: 13, marginTop: 40 }}><Loader2 size={20} /></div>}
+          {!loading && msgs.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>👋</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 6 }}>Start a conversation</div>
+              <div style={{ fontSize: 12, color: C.muted }}>Your messages are private between you and {peer.name}.</div>
+            </div>
+          )}
+          {msgs.map((m, i) => {
+            const isMe = m.sender_id === myId;
+            return (
+              <div key={m.id || i} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-end' }}>
+                {!isMe && (m.sender_img
+                  ? <img src={m.sender_img} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  : <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff', fontWeight: 700, flexShrink: 0 }}>{(m.sender_name||'?')[0]}</div>
+                )}
+                <div style={{
+                  maxWidth: '75%',
+                  background: isMe ? C.accent : C.surface,
+                  color: isMe ? '#fff' : C.text,
+                  borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                  padding: '10px 14px',
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  wordBreak: 'break-word',
+                }}>
+                  {m.content}
+                </div>
+              </div>
+            );
+          })}
+          <div ref={endRef} />
+        </div>
+
+        {/* Input */}
+        <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, background: C.card }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+            placeholder={`Message ${peer.name}…`}
+            style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, color: C.text, padding: '10px 16px', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
+          />
+          <button onClick={send} disabled={!input.trim() || sending}
+            style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', background: input.trim() ? C.accent : C.border, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default', flexShrink: 0, transition: 'background 0.15s' }}>
+            {sending ? <Loader2 size={16} /> : <Send size={16} />}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -5080,6 +5503,7 @@ function MainApp({ user, onSignOut }) {
   const [showCoach, setShowCoach] = useState(false);
   const [showWellbeing, setShowWellbeing] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [dmPeer, setDmPeer] = useState(null); // { id, name, img, title } — opens DM drawer
   const [canvas, setCanvas] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_canvas') || 'null'); } catch { return null; } });
   const [feed, setFeed] = useState([]);
   const [mentors, setMentors] = useState([]);
@@ -5389,6 +5813,7 @@ function MainApp({ user, onSignOut }) {
 
       {showCoach && <AICoachPanel canvas={canvas} onClose={() => setShowCoach(false)} />}
       {showWellbeing && <WellbeingModal onClose={() => setShowWellbeing(false)} />}
+      {dmPeer && <DMDrawer user={user} canvas={canvas} peer={dmPeer} onClose={() => setDmPeer(null)} />}
 
       {/* First-time navigation guide */}
       {showNavTour && (
