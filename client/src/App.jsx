@@ -2207,7 +2207,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
 
       {/* ── FILTER BAR ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}, {id:'pledge',label:'🤝 Pledges'}].map(f => (
+        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}].map(f => (
           <button key={f.id} onClick={() => setFilterType(f.id)}
             style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filterType === f.id ? C.accent : C.border}`, background: filterType === f.id ? C.accent : C.card, color: filterType === f.id ? '#fff' : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {f.label}
@@ -2227,148 +2227,68 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE BOX ─────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 18 }}>
+      {/* ── COMPOSE — photo/video proof only ────────────────────────── */}
+      <div style={{ marginBottom: 18 }}
+        onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
+        onDragLeave={() => setMediaDragging(false)}
+        onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
 
-        {/* Mode selector row — compact, no visual noise by default */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
-          {[
-            { mode: 'visual',  emoji: '📸', label: 'Proof',         color: C.blue   },
-            { mode: 'pledge',  emoji: '🤝', label: '90-Day Pledge', color: C.purple },
-            { mode: 'capsule', emoji: '⏰', label: 'Time Capsule',  color: C.teal   },
-          ].map(m => {
-            const active = postMode === m.mode;
-            return (
-              <button key={m.mode} onClick={() => { setPostMode(m.mode); setContent(''); setMediaFile(null); setMediaPreview(null); }}
-                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 20, border: `1px solid ${active ? m.color : C.border}`, background: active ? m.color + '1A' : C.surface, color: active ? m.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-                {m.emoji} {m.label}
+        {!mediaPreview ? (
+          /* Compact row — nothing pops until you pick media */
+          <button onClick={() => mediaInputRef.current?.click()}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, background: mediaDragging ? `${C.blue}10` : C.surface, border: `1px solid ${mediaDragging ? C.blue : C.border}`, borderRadius: 14, padding: '12px 16px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Image size={18} color={C.blue} />
+            </div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Share your proof</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Photo or video — your win, your project, your progress</div>
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, background: `${C.blue}14`, border: `1px solid ${C.blue}30`, borderRadius: 8, padding: '5px 10px', flexShrink: 0 }}>Browse</div>
+          </button>
+        ) : (
+          /* Media selected — show preview + label + post */
+          <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
+            <div style={{ position: 'relative', background: '#000' }}>
+              {mediaPreview.type === 'video'
+                ? <ReelPlayer src={mediaPreview.url} />
+                : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+              }
+              <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                <X size={14} color="#fff" />
               </button>
-            );
-          })}
-        </div>
-
-        {/* ── VISUAL PROOF MODE ── */}
-        {postMode === 'visual' && (
-          <div onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
-            onDragLeave={() => setMediaDragging(false)}
-            onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
-            {!mediaPreview ? (
-              /* Compact single-row trigger — not a big dashed box */
-              <button onClick={() => mediaInputRef.current?.click()}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, background: mediaDragging ? `${C.blue}10` : C.surface, border: `1px solid ${mediaDragging ? C.blue : C.border}`, borderRadius: 14, padding: '12px 16px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Image size={18} color={C.blue} />
-                </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Add photo or video</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>Your proof, your win — show don't tell</div>
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, background: `${C.blue}14`, border: `1px solid ${C.blue}30`, borderRadius: 8, padding: '5px 10px', flexShrink: 0 }}>Browse</div>
-              </button>
-            ) : (
-              <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
-                <div style={{ position: 'relative', background: '#000' }}>
-                  {mediaPreview.type === 'video'
-                    ? <ReelPlayer src={mediaPreview.url} />
-                    : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
-                  }
-                  <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                    style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-                    <X size={14} color="#fff" />
+            </div>
+            {/* Win type chips */}
+            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
+              {[
+                { id: 'achievement', emoji: '🏆', label: 'Win'       },
+                { id: 'project',     emoji: '💡', label: 'Project'   },
+                { id: 'skill',       emoji: '📚', label: 'Skill'     },
+                { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
+                { id: 'thought',     emoji: '💬', label: 'Other'     },
+              ].map(t => {
+                const color = POST_TYPES.find(pt => pt.id === t.id)?.color || C.muted;
+                const active = (postType || 'achievement') === t.id;
+                return (
+                  <button key={t.id} onClick={() => setPostType(t.id)}
+                    style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                    {t.emoji} {t.label}
                   </button>
-                </div>
-                {/* Win type chips */}
-                <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
-                  {[
-                    { id: 'achievement', emoji: '🏆', label: 'Win'       },
-                    { id: 'project',     emoji: '💡', label: 'Project'   },
-                    { id: 'skill',       emoji: '📚', label: 'Skill'     },
-                    { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
-                    { id: 'thought',     emoji: '💬', label: 'Other'     },
-                  ].map(t => {
-                    const color = POST_TYPES.find(pt => pt.id === t.id)?.color || C.muted;
-                    const active = (postType || 'achievement') === t.id;
-                    return (
-                      <button key={t.id} onClick={() => setPostType(t.id)}
-                        style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
-                        {t.emoji} {t.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
-                  <Avatar src={avatarUrl} name={displayName} size={30} />
-                  <input value={content} onChange={e => setContent(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && !submitting && post()}
-                    placeholder="What's the story behind this? (optional)"
-                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
-                  <Btn size="sm" onClick={post} disabled={submitting}>
-                    {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
-                  </Btn>
-                </div>
-                {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 90-DAY PLEDGE MODE ── */}
-        {postMode === 'pledge' && (
-          <div style={{ background: C.surface, border: `1px solid ${C.purple}44`, borderRadius: 18, overflow: 'hidden' }}>
-            <div style={{ height: 3, background: `linear-gradient(90deg,${C.purple},${C.purple}55)` }} />
-            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Avatar src={avatarUrl} name={displayName} size={36} />
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{displayName}</div>
-                <div style={{ fontSize: 10, color: C.muted }}>🤝 Public 90-Day Pledge — hold yourself accountable</div>
-              </div>
+                );
+              })}
             </div>
-            <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder="I pledge to… (be specific — the community will see this and hold you to it)"
-              rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', lineHeight: 1.75, padding: '10px 16px', resize: 'none' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 14px' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Deadline (optional — counts down publicly):</div>
-                <input type="date" value={pledgeDate} onChange={e => setPledgeDate(e.target.value)}
-                  min={new Date().toISOString().slice(0,10)}
-                  style={{ background: C.card, border: `1px solid ${C.purple}44`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
-                style={{ background: C.purple, borderColor: C.purple }}>
-                {submitting ? <Spinner /> : <><Send size={12} /> Make Pledge</>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
+              <Avatar src={avatarUrl} name={displayName} size={30} />
+              <input value={content} onChange={e => setContent(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !submitting && post()}
+                placeholder="What's the story behind this? (optional)"
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+              <Btn size="sm" onClick={post} disabled={submitting}>
+                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
               </Btn>
             </div>
-          </div>
-        )}
-
-        {/* ── TIME CAPSULE MODE ── */}
-        {postMode === 'capsule' && (
-          <div style={{ background: `linear-gradient(135deg,${C.surface},#0C2233)`, border: `1px solid ${C.teal}44`, borderRadius: 18, overflow: 'hidden' }}>
-            <div style={{ height: 3, background: `linear-gradient(90deg,${C.teal},${C.teal}55)` }} />
-            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Avatar src={avatarUrl} name={displayName} size={36} />
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{displayName}</div>
-                <div style={{ fontSize: 10, color: C.teal }}>⏰ Time Capsule — sealed until your chosen date</div>
-              </div>
-            </div>
-            <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder="Dear future me… Write a message, prediction, or goal to be revealed on the unlock date."
-              rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', lineHeight: 1.75, padding: '10px 16px', resize: 'none' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 14px' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Unlock date — when will this be revealed?</div>
-                <input type="date" value={capsuleDate} onChange={e => setCapsuleDate(e.target.value)}
-                  min={new Date(Date.now() + 86400000).toISOString().slice(0,10)}
-                  style={{ background: C.card, border: `1px solid ${C.teal}44`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
-              </div>
-              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
-                style={{ background: C.teal, borderColor: C.teal }}>
-                {submitting ? <Spinner /> : <><Lock size={12} /> Seal It</>}
-              </Btn>
-            </div>
+            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
           </div>
         )}
 
