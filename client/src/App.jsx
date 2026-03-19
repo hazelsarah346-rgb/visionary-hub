@@ -1537,18 +1537,100 @@ const REACTIONS = [
   { key: 'reflect',    emoji: '🌱', label: 'Reflect',   color: C.green   },
 ];
 
-function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId, currentUserAvatar }) {
+function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId, currentUserAvatar, displayName: callerDisplayName, avatarUrl: callerAvatarUrl }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(p.content || '');
   const [saving, setSaving] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  // ── Comments ──────────────────────────────────────────────────────────────
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentCount, setCommentCount] = useState(p.comment_count || 0);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [postingComment, setPostingComment] = useState(false);
+
+  const loadComments = async () => {
+    if (!supabase) return;
+    setLoadingComments(true);
+    const { data } = await supabase.from('post_comments')
+      .select('*').eq('post_id', p.id).order('created_at', { ascending: true });
+    setComments(data || []);
+    setLoadingComments(false);
+  };
+  const toggleComments = () => {
+    const next = !showComments;
+    setShowComments(next);
+    if (next && comments.length === 0) loadComments();
+  };
+  const submitComment = async () => {
+    if (!commentText.trim() || postingComment) return;
+    setPostingComment(true);
+    const name = callerDisplayName || 'Anonymous';
+    const avatar = callerAvatarUrl || null;
+    const newComment = { post_id: p.id, author_id: userId || 'anon', author_name: name, author_avatar: avatar, content: commentText.trim() };
+    if (supabase) {
+      const { data } = await supabase.from('post_comments').insert([newComment]).select().single();
+      if (data) {
+        setComments(prev => [...prev, data]);
+        setCommentCount(c => c + 1);
+        // bump comment_count on the post
+        await supabase.from('posts').update({ comment_count: (p.comment_count || 0) + 1 }).eq('id', p.id);
+      }
+    } else {
+      setComments(prev => [...prev, { ...newComment, id: Date.now(), created_at: new Date().toISOString() }]);
+      setCommentCount(c => c + 1);
+    }
+    setCommentText('');
+    setPostingComment(false);
+  };
+
   const menuRef = useRef(null);
   useEffect(() => {
     const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
     if (menuOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
+
+  // Shared comment section rendered below reaction bars
+  const CommentSection = () => showComments ? (
+    <div style={{ borderTop: `1px solid ${C.border}`, padding: '12px 14px 14px', background: `${C.bg}88` }}>
+      {loadingComments ? (
+        <div style={{ display: 'flex', gap: 4, justifyContent: 'center', padding: '8px 0' }}>
+          {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: C.muted, opacity: 0.5, animation: `bounce 1.2s ${i*0.15}s infinite` }} />)}
+        </div>
+      ) : comments.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+          {comments.map(c => (
+            <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <Avatar src={c.author_avatar} name={c.author_name} size={28} />
+              <div style={{ flex: 1, background: C.surface, borderRadius: '4px 14px 14px 14px', padding: '8px 12px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.text, marginBottom: 2 }}>{c.author_name}</div>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{c.content}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: C.muted, textAlign: 'center', padding: '8px 0 12px' }}>Be the first to reflect on this 🌱</div>
+      )}
+      {/* Comment input */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <Avatar src={callerAvatarUrl} name={callerDisplayName || 'You'} size={28} />
+        <input value={commentText} onChange={e => setCommentText(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && submitComment()}
+          placeholder="Share your reflection…"
+          style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 99, padding: '8px 14px', fontSize: 13, color: C.text, fontFamily: 'inherit', outline: 'none' }}
+          onFocus={e => e.target.style.borderColor = C.blue}
+          onBlur={e => e.target.style.borderColor = C.border} />
+        <button onClick={submitComment} disabled={!commentText.trim() || postingComment}
+          style={{ width: 32, height: 32, borderRadius: '50%', background: commentText.trim() ? `linear-gradient(135deg,${C.blue},${C.purple})` : C.surface, border: `1px solid ${commentText.trim() ? 'transparent' : C.border}`, cursor: commentText.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }}>
+          <Send size={13} color={commentText.trim() ? '#fff' : C.muted} />
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   const saveEdit = async () => {
     if (!editText.trim() || saving) return;
@@ -1763,7 +1845,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
           </div>
         </div>
 
-        {/* Bottom bar — reactions + 3-dot menu */}
+        {/* Bottom bar — reactions + comment + 3-dot menu */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px 10px', flexWrap: 'wrap' }}>
           {REACTIONS.map(r => {
             const myReaction = REACTIONS.find(x => reactions[`${key}_${x.key}`])?.key || null;
@@ -1791,6 +1873,14 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
               </button>
             );
           })}
+          {/* Comment / Reflect bubble */}
+          <button onClick={toggleComments}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: showComments ? `${C.green}18` : 'transparent', border: `1px solid ${showComments ? C.green + '70' : C.border}`, borderRadius: 99, padding: '5px 10px', cursor: 'pointer', color: showComments ? C.green : C.muted, fontSize: 11, fontFamily: 'inherit', fontWeight: showComments ? 700 : 500, transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = `${C.green}14`; e.currentTarget.style.color = C.green; }}
+            onMouseLeave={e => { e.currentTarget.style.background = showComments ? `${C.green}18` : 'transparent'; e.currentTarget.style.color = showComments ? C.green : C.muted; }}>
+            <MessageCircle size={13} />
+            <span>Reflect{commentCount > 0 ? ` ${commentCount}` : ''}</span>
+          </button>
           <div style={{ flex: 1 }} />
           <div ref={menuRef} style={{ position: 'relative' }}>
             <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex' }}>
@@ -1799,6 +1889,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
             {menuDropdown}
           </div>
         </div>
+        <CommentSection />
       </div>
     );
   }
@@ -1890,26 +1981,24 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         </div>
       ) : null}
 
-      {/* Reactions */}
-      <div style={{ display: 'flex', gap: 5, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}` }}>
+      {/* Reactions + Reflect comment */}
+      <div style={{ display: 'flex', gap: 5, padding: '10px 14px 10px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}` }}>
         {REACTIONS.map(r => {
           const myReaction = REACTIONS.find(x => reactions[`${key}_${x.key}`])?.key || null;
           const reacted = myReaction === r.key;
-          const locked  = myReaction !== null && myReaction !== r.key; // already reacted with different one
+          const locked  = myReaction !== null && myReaction !== r.key;
           const count   = (p[r.key] || 0);
           return (
             <button key={r.key} onClick={() => {
-                if (locked) return; // already reacted differently — blocked
+                if (locked) return;
                 if (reacted) {
-                  // toggle OFF — remove this reaction
                   setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
                   unreactToPost(p.id, r.key);
                 } else {
-                  // toggle ON — clear ALL stale reactions for this post first (fixes old multi-click data)
                   setReactions(s => {
                     const next = { ...s };
-                    REACTIONS.forEach(rx => { delete next[`${key}_${rx.key}`]; }); // nuke any stale entries
+                    REACTIONS.forEach(rx => { delete next[`${key}_${rx.key}`]; });
                     next[`${key}_${r.key}`] = true;
                     return next;
                   });
@@ -1918,14 +2007,23 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
                 }
               }}
               style={{ display: 'flex', alignItems: 'center', gap: 5, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 12px', cursor: locked ? 'default' : 'pointer', color: reacted ? r.color : locked ? C.border : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: reacted ? 700 : 500, transition: 'all 0.15s', opacity: locked ? 0.4 : 1 }}
-              onMouseEnter={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; e.currentTarget.style.opacity = '1'; } }}
-              onMouseLeave={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; e.currentTarget.style.opacity = '1'; } }}>
+              onMouseEnter={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; } }}
+              onMouseLeave={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; } }}>
               <span style={{ fontSize: 14 }}>{r.emoji}</span>
               <span>{r.label}{count > 0 ? ` ${count}` : ''}</span>
             </button>
           );
         })}
+        {/* Reflect / comment bubble */}
+        <button onClick={toggleComments}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, background: showComments ? `${C.green}18` : 'transparent', border: `1px solid ${showComments ? C.green + '70' : C.border}`, borderRadius: 99, padding: '6px 12px', cursor: 'pointer', color: showComments ? C.green : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: showComments ? 700 : 500, transition: 'all 0.15s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${C.green}14`; e.currentTarget.style.color = C.green; }}
+          onMouseLeave={e => { e.currentTarget.style.background = showComments ? `${C.green}18` : 'transparent'; e.currentTarget.style.color = showComments ? C.green : C.muted; }}>
+          <MessageCircle size={14} />
+          <span>Reflect{commentCount > 0 ? ` ${commentCount}` : ''}</span>
+        </button>
       </div>
+      <CommentSection />
     </div>
   );
 }
