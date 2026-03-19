@@ -1663,6 +1663,147 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
     );
   }
 
+  // ── FULL-BLEED MEDIA CARD (the wow layout) ──────────────────────────────
+  if (hasMedia) {
+    const menuDropdown = menuOpen && (
+      <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: 200, minWidth: 170 }}>
+        {isOwn ? (<>
+          <button onClick={() => { setMenuOpen(false); setEditText(p.content || ''); setEditing(true); }}
+            style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '12px 12px 0 0' }}
+            onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+            <Edit3 size={13} color={C.blueLight} /> Edit
+          </button>
+          <div style={{ height: 1, background: C.border }} />
+          <button onClick={async () => { setMenuOpen(false); if (!window.confirm('Delete?')) return; await onDelete(); }}
+            style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '0 0 12px 12px' }}
+            onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+            <Trash2 size={13} /> Delete
+          </button>
+        </>) : (
+          <button onClick={async () => {
+            setMenuOpen(false);
+            if (flagged) { alert('Already reported.'); return; }
+            const reason = window.prompt('Why are you reporting this post?');
+            if (!reason) return;
+            if (supabase) {
+              await supabase.from('flagged_posts').insert([{ post_id: p.id, reported_by: userId || 'anonymous', reason }]);
+              const newCount = (p.flag_count || 0) + 1;
+              await supabase.from('posts').update({ flag_count: newCount, hidden: newCount >= 3 }).eq('id', p.id);
+              if (newCount >= 3) setFeed(prev => prev.filter(x => x.id !== p.id));
+            }
+            setFlagged(true); alert('✅ Reported.');
+          }} style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12 }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f59e0b14'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+            <AlertCircle size={13} /> {flagged ? 'Reported' : 'Report'}
+          </button>
+        )}
+      </div>
+    );
+
+    return (
+      <div style={{
+        borderRadius: 22, background: C.surface,
+        border: `1px solid ${isBig ? typeColor + '55' : C.border}`,
+        boxShadow: isBig ? `0 4px 32px ${typeColor}20` : '0 2px 16px rgba(0,0,0,0.18)',
+        transition: 'transform 0.22s, box-shadow 0.22s',
+        overflow: 'visible',
+      }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = isBig ? `0 8px 40px ${typeColor}30` : '0 8px 40px rgba(0,0,0,0.28)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isBig ? `0 4px 32px ${typeColor}20` : '0 2px 16px rgba(0,0,0,0.18)'; }}
+      >
+        {/* Image/video — fills card edge to edge, clipped with border radius */}
+        <div style={{ position: 'relative', borderRadius: '22px 22px 0 0', overflow: 'hidden', background: '#000' }}>
+          {p.mediaType === 'image'
+            ? <img src={p.mediaUrl} alt="post"
+                style={{ width: '100%', aspectRatio: '4/5', objectFit: 'cover', display: 'block' }}
+                onError={e => { e.target.parentElement.style.display = 'none'; }} />
+            : <ReelPlayer src={p.mediaUrl} />
+          }
+
+          {/* Type badge — top left corner */}
+          {typeLabel && (
+            <div style={{ position: 'absolute', top: 12, left: 12, background: typeBg, backdropFilter: 'blur(8px)', color: typeColor, borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 800 }}>
+              {typeLabel}
+            </div>
+          )}
+
+          {/* Gradient overlay — fades in from the bottom */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(5,10,20,0.97) 0%, rgba(5,10,20,0.7) 45%, transparent 100%)', padding: '52px 14px 14px' }}>
+            {/* Author info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer', flexShrink: 0 }}>
+                <Avatar src={displayAvatar} name={p.authorName} size={36} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)}
+                    style={{ fontWeight: 800, fontSize: 13, color: '#fff', cursor: 'pointer' }}>
+                    {p.authorName}
+                  </span>
+                  {isVerifiedMentor && (
+                    <span style={{ background: `${C.blue}30`, border: `1px solid ${C.blue}60`, borderRadius: 99, padding: '1px 6px', fontSize: 9, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{p.time || 'Recently'}</div>
+              </div>
+            </div>
+            {/* Caption */}
+            {editing ? (
+              <div style={{ marginTop: 10 }}>
+                <textarea value={editText} onChange={e => setEditText(e.target.value)} autoFocus rows={2}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: `1.5px solid ${C.blueLight}`, borderRadius: 10, color: '#fff', fontSize: 13, padding: '8px 10px', fontFamily: 'inherit', lineHeight: 1.6, resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
+                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                  <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>{saving ? <Loader2 size={12} /> : <Check size={12} />} Save</Btn>
+                  <Btn size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Btn>
+                </div>
+              </div>
+            ) : p.content ? (
+              <p style={{ margin: '8px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{p.content}</p>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Bottom bar — reactions + 3-dot menu */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px 10px', flexWrap: 'wrap' }}>
+          {REACTIONS.map(r => {
+            const myReaction = REACTIONS.find(x => reactions[`${key}_${x.key}`])?.key || null;
+            const reacted = myReaction === r.key;
+            const locked  = myReaction !== null && myReaction !== r.key;
+            const count   = (p[r.key] || 0);
+            return (
+              <button key={r.key} onClick={() => {
+                  if (locked) return;
+                  if (reacted) {
+                    setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
+                    setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
+                    unreactToPost(p.id, r.key);
+                  } else {
+                    setReactions(s => { const next = { ...s }; REACTIONS.forEach(rx => { delete next[`${key}_${rx.key}`]; }); next[`${key}_${r.key}`] = true; return next; });
+                    setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
+                    reactToPost(p.id, r.key);
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '5px 10px', cursor: locked ? 'default' : 'pointer', color: reacted ? r.color : locked ? C.border : C.muted, fontSize: 11, fontFamily: 'inherit', fontWeight: reacted ? 700 : 500, opacity: locked ? 0.35 : 1, transition: 'all 0.15s' }}
+                onMouseEnter={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; } }}
+                onMouseLeave={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; } }}>
+                <span style={{ fontSize: 13 }}>{r.emoji}</span>
+                <span>{r.label}{count > 0 ? ` ${count}` : ''}</span>
+              </button>
+            );
+          })}
+          <div style={{ flex: 1 }} />
+          <div ref={menuRef} style={{ position: 'relative' }}>
+            <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex' }}>
+              <MoreHorizontal size={16} />
+            </button>
+            {menuDropdown}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STANDARD CARD (no media — pledge/capsule/real/text posts) ────────────
   return (
     <div style={{
       background: C.surface,
@@ -1670,68 +1811,53 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
       borderRadius: 18,
       overflow: 'hidden',
       boxShadow: isBig ? `0 0 0 1px ${typeColor}22, 0 4px 20px ${typeColor}18` : '0 1px 4px rgba(0,0,0,0.12)',
-      transition: 'box-shadow 0.2s, border-color 0.2s',
+      transition: 'box-shadow 0.2s',
     }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = isBig ? `0 0 0 1px ${typeColor}44, 0 8px 30px ${typeColor}28` : '0 2px 12px rgba(0,0,0,0.18)'; }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = isBig ? `0 0 0 1px ${typeColor}44, 0 8px 30px ${typeColor}28` : '0 4px 20px rgba(0,0,0,0.22)'; }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = isBig ? `0 0 0 1px ${typeColor}22, 0 4px 20px ${typeColor}18` : '0 1px 4px rgba(0,0,0,0.12)'; }}
     >
-
-      {/* Colour-coded top accent strip for non-thought posts */}
       {p.post_type && p.post_type !== 'thought' && typeColor && (
         <div style={{ height: 3, background: `linear-gradient(90deg, ${typeColor}, ${typeColor}66)` }} />
       )}
-
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 10px' }}>
         <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer', flexShrink: 0 }}>
           <Avatar src={displayAvatar} name={p.authorName} size={42} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)}
-              style={{ fontWeight: 800, fontSize: 14, color: C.text, cursor: 'pointer' }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ fontWeight: 800, fontSize: 14, color: C.text, cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.color = typeColor || C.accent}
               onMouseLeave={e => e.currentTarget.style.color = C.text}>
               {p.authorName}
             </span>
-            {isVerifiedMentor && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>
-            )}
+            {isVerifiedMentor && <span style={{ background: `${C.blue}18`, border: `1px solid ${C.blue}40`, borderRadius: 99, padding: '2px 7px', fontSize: 10, color: C.blue, fontWeight: 700 }}>✓ Mentor</span>}
           </div>
           <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{p.time || 'Recently'}</div>
         </div>
-
-        {/* Post type badge — prominent, right side */}
-        {typeLabel && (
-          <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', background: typeBg, color: typeColor, borderRadius: 10, padding: '4px 10px', fontSize: 11, fontWeight: 800, letterSpacing: 0.2 }}>{typeLabel}</span>
-        )}
-
-        {/* 3-dot menu */}
+        {typeLabel && <span style={{ flexShrink: 0, background: typeBg, color: typeColor, borderRadius: 10, padding: '4px 10px', fontSize: 11, fontWeight: 800 }}>{typeLabel}</span>}
         <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
-          <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, borderRadius: 6, display: 'flex' }}>
             <MoreHorizontal size={18} />
           </button>
           {menuOpen && (
-            <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 99, minWidth: 170 }}>
+            <div style={{ position: 'absolute', right: 0, top: 28, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 99, minWidth: 160 }}>
               {isOwn ? (<>
                 <button onClick={() => { setMenuOpen(false); setEditText(p.content || ''); setEditing(true); }}
                   style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.text, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '12px 12px 0 0' }}
-                  onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  onMouseEnter={e => e.currentTarget.style.background = `${C.blueLight}14`} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Edit3 size={13} color={C.blueLight} /> Edit post
                 </button>
                 <div style={{ height: 1, background: C.border }} />
                 <button onClick={async () => { setMenuOpen(false); if (!window.confirm('Delete this post?')) return; await onDelete(); }}
                   style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: C.red, fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '0 0 12px 12px' }}
-                  onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  onMouseEnter={e => e.currentTarget.style.background = `${C.red}14`} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <Trash2 size={13} /> Delete post
                 </button>
-              </>) : (<>
+              </>) : (
                 <button onClick={async () => {
                   setMenuOpen(false);
-                  if (flagged) { alert('You already reported this post.'); return; }
-                  const reason = window.prompt('Why are you reporting this post?\n\n• Spam or bot\n• Fake profile\n• Harassment\n• Inappropriate content\n• Other');
+                  if (flagged) { alert('Already reported.'); return; }
+                  const reason = window.prompt('Why are you reporting this post?');
                   if (!reason) return;
                   if (supabase) {
                     await supabase.from('flagged_posts').insert([{ post_id: p.id, reported_by: userId || 'anonymous', reason }]);
@@ -1739,50 +1865,33 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
                     await supabase.from('posts').update({ flag_count: newCount, hidden: newCount >= 3 }).eq('id', p.id);
                     if (newCount >= 3) setFeed(prev => prev.filter(x => x.id !== p.id));
                   }
-                  setFlagged(true);
-                  alert('✅ Reported. Thank you for keeping North Star safe.');
-                }}
-                  style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12 }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f59e0b14'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  setFlagged(true); alert('✅ Reported.');
+                }} style={{ width: '100%', padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', color: flagged ? C.muted : '#f59e0b', fontSize: 13, fontFamily: 'inherit', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12 }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f59e0b14'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                   <AlertCircle size={13} /> {flagged ? 'Reported' : 'Report post'}
                 </button>
-              </>)}
+              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Caption / inline edit — BEFORE media if no media, AFTER header */}
       {editing ? (
         <div style={{ padding: '4px 16px 12px' }}>
           <textarea value={editText} onChange={e => setEditText(e.target.value)} autoFocus rows={3}
             style={{ width: '100%', background: C.card, border: `1.5px solid ${C.blueLight}`, borderRadius: 10, color: C.text, fontSize: 14, padding: '10px 12px', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>{saving ? <Loader2 size={12} className="spin" /> : <Check size={12} />} Save</Btn>
+            <Btn size="sm" onClick={saveEdit} disabled={saving || !editText.trim()}>{saving ? <Loader2 size={12} /> : <Check size={12} />} Save</Btn>
             <Btn size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Btn>
           </div>
         </div>
       ) : p.content ? (
-        <div style={{ padding: hasMedia ? '0 16px 12px' : '0 16px 4px' }}>
+        <div style={{ padding: '0 16px 12px' }}>
           <p style={{ fontSize: 14, color: C.text, lineHeight: 1.8, margin: 0, whiteSpace: 'pre-wrap', fontWeight: isBig ? 600 : 400 }}>{p.content}</p>
         </div>
       ) : null}
 
-      {/* Media — full bleed, no side margins, fills the card */}
-      {hasMedia && p.mediaType === 'image' && (
-        <div style={{ background: '#000', marginTop: p.content ? 0 : 4 }}>
-          <img src={p.mediaUrl} alt="post"
-            style={{ width: '100%', maxHeight: 520, objectFit: 'cover', display: 'block' }}
-            onError={e => { e.target.parentElement.style.display = 'none'; }} />
-        </div>
-      )}
-      {hasMedia && p.mediaType === 'video' && (
-        <ReelPlayer src={p.mediaUrl} />
-      )}
-
-      {/* Reactions — ONE per post, exclusive (like LinkedIn). Click again = remove. */}
-      <div style={{ display: 'flex', gap: 5, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
+      {/* Reactions */}
+      <div style={{ display: 'flex', gap: 5, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}` }}>
         {REACTIONS.map(r => {
           const myReaction = REACTIONS.find(x => reactions[`${key}_${x.key}`])?.key || null;
           const reacted = myReaction === r.key;
@@ -2227,73 +2336,78 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE — photo/video proof only ────────────────────────── */}
-      <div style={{ marginBottom: 18 }}
-        onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
-        onDragLeave={() => setMediaDragging(false)}
-        onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
+      {/* ── FLOATING COMPOSE BUTTON ──────────────────────────────────── */}
+      <button onClick={() => setShowCompose(true)}
+        title="Share your proof"
+        style={{ position: 'fixed', bottom: 32, right: 32, width: 58, height: 58, borderRadius: '50%', background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, animation: 'fabPulse 3s ease-in-out infinite', transition: 'transform 0.2s' }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; e.currentTarget.style.animation = 'none'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.animation = 'fabPulse 3s ease-in-out infinite'; }}>
+        <Plus size={26} color="#fff" strokeWidth={2.5} />
+      </button>
 
-        {!mediaPreview ? (
-          /* Compact row — nothing pops until you pick media */
-          <button onClick={() => mediaInputRef.current?.click()}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, background: mediaDragging ? `${C.blue}10` : C.surface, border: `1px solid ${mediaDragging ? C.blue : C.border}`, borderRadius: 14, padding: '12px 16px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Image size={18} color={C.blue} />
-            </div>
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Share your proof</div>
-              <div style={{ fontSize: 11, color: C.muted }}>Photo or video — your win, your project, your progress</div>
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, background: `${C.blue}14`, border: `1px solid ${C.blue}30`, borderRadius: 8, padding: '5px 10px', flexShrink: 0 }}>Browse</div>
-          </button>
-        ) : (
-          /* Media selected — show preview + label + post */
-          <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
-            <div style={{ position: 'relative', background: '#000' }}>
-              {mediaPreview.type === 'video'
-                ? <ReelPlayer src={mediaPreview.url} />
-                : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
-              }
-              <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-                <X size={14} color="#fff" />
+      {/* ── COMPOSE SHEET (slides up on FAB click) ───────────────────── */}
+      {showCompose && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(5,10,20,0.75)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) { setShowCompose(false); setMediaFile(null); setMediaPreview(null); setContent(''); setPostType(null); } }}>
+          <div style={{ width: '100%', maxWidth: 640, background: C.card, borderRadius: '24px 24px 0 0', border: `1px solid ${C.border}`, borderBottom: 'none', padding: '6px 20px 32px', animation: 'slideUp 0.28s ease', maxHeight: '90vh', overflowY: 'auto' }}
+            onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
+            onDragLeave={() => setMediaDragging(false)}
+            onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
+            {/* Drag handle */}
+            <div style={{ width: 40, height: 4, borderRadius: 99, background: C.border, margin: '10px auto 18px' }} />
+
+            {!mediaPreview ? (
+              <button onClick={() => mediaInputRef.current?.click()}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, background: mediaDragging ? `${C.blue}12` : C.surface, border: `2px dashed ${mediaDragging ? C.blue : C.border}`, borderRadius: 18, padding: '24px 20px', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: `linear-gradient(135deg,${C.blue}22,${C.purple}22)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Image size={22} color={C.blue} />
+                </div>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 3 }}>Drop your proof here</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Photo or video · Screenshots, demos, wins — show don't tell</div>
+                </div>
               </button>
-            </div>
-            {/* Win type chips */}
-            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
-              {[
-                { id: 'achievement', emoji: '🏆', label: 'Win'       },
-                { id: 'project',     emoji: '💡', label: 'Project'   },
-                { id: 'skill',       emoji: '📚', label: 'Skill'     },
-                { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
-                { id: 'thought',     emoji: '💬', label: 'Other'     },
-              ].map(t => {
-                const color = POST_TYPES.find(pt => pt.id === t.id)?.color || C.muted;
-                const active = (postType || 'achievement') === t.id;
-                return (
-                  <button key={t.id} onClick={() => setPostType(t.id)}
-                    style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
-                    {t.emoji} {t.label}
+            ) : (
+              <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ position: 'relative', background: '#000' }}>
+                  {mediaPreview.type === 'video'
+                    ? <ReelPlayer src={mediaPreview.url} />
+                    : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 380, objectFit: 'cover', display: 'block' }} />
+                  }
+                  <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                    style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                    <X size={14} color="#fff" />
                   </button>
-                );
-              })}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
-              <Avatar src={avatarUrl} name={displayName} size={30} />
-              <input value={content} onChange={e => setContent(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !submitting && post()}
-                placeholder="What's the story behind this? (optional)"
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
-              <Btn size="sm" onClick={post} disabled={submitting}>
-                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
-              </Btn>
-            </div>
-            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
+                  {[{ id:'achievement',emoji:'🏆',label:'Win' },{ id:'project',emoji:'💡',label:'Project' },{ id:'skill',emoji:'📚',label:'Skill' },{ id:'milestone',emoji:'🎯',label:'Milestone' },{ id:'thought',emoji:'💬',label:'Other' }].map(t => {
+                    const color = POST_TYPES.find(pt => pt.id === t.id)?.color || C.muted;
+                    const active = (postType || 'achievement') === t.id;
+                    return (
+                      <button key={t.id} onClick={() => setPostType(t.id)}
+                        style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color+'22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                        {t.emoji} {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
+                  <Avatar src={avatarUrl} name={displayName} size={30} />
+                  <input value={content} onChange={e => setContent(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !submitting && post()}
+                    placeholder="What's the story behind this? (optional)"
+                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+                  <Btn size="sm" onClick={post} disabled={submitting}>
+                    {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
+                  </Btn>
+                </div>
+                {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+              </div>
+            )}
           </div>
-        )}
-
-        <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
-      </div>
+          <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
+        </div>
+      )}
 
 
       {/* ── FEED HEADER ──────────────────────────────────────────────── */}
@@ -6001,6 +6115,8 @@ function MainApp({ user, onSignOut }) {
     <div style={{ display: 'flex', background: C.bg, minHeight: '100vh', color: C.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <style>{`
         @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.2);opacity:1} }
+        @keyframes slideUp { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        @keyframes fabPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.5), 0 4px 24px rgba(37,99,235,0.5); } 50% { box-shadow: 0 0 0 10px rgba(37,99,235,0), 0 4px 24px rgba(37,99,235,0.5); } }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 4px; height: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #1E3A5F; border-radius: 99px; }
         .vh-stories { scrollbar-width: none; } .vh-stories::-webkit-scrollbar { display: none; }
