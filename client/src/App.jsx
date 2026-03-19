@@ -136,31 +136,74 @@ const ARCHETYPES = {
 
 const ADMIN_EMAIL = 'hazlesarah346@yahoo.com'; // Only this email sees the admin panel
 
+// ─── STRUCTURED POST TYPES (spec-locked) ────────────────────────────────────
 const POST_TYPES = [
-  { id: 'achievement',  label: '🏆 Win',           color: '#D97706' },
-  { id: 'project',      label: '💡 Project',        color: '#7C3AED' },
-  { id: 'skill',        label: '📚 New Skill',      color: '#2563EB' },
-  { id: 'milestone',    label: '🎯 Milestone',      color: '#059669' },
-  { id: 'real',         label: '💯 The Real',       color: '#EF4444' },
-  { id: 'pledge',       label: '🤝 90-Day Pledge',  color: '#8B5CF6' },
-  { id: 'timecapsule',  label: '⏰ Time Capsule',   color: '#06B6D4' },
-  { id: 'thought',      label: '💬 Thought',        color: '#64748B' },
+  {
+    id: 'build_update', label: '🚀 Build Update', color: '#2563EB',
+    desc: 'Share what you\'re working on',
+    fields: [
+      { key: 'goal',     label: 'Goal',              placeholder: 'What are you building or working toward?', required: true  },
+      { key: 'stage',    label: 'Stage',             placeholder: 'Where are you right now in the process?',  required: true  },
+      { key: 'progress', label: 'Progress',          placeholder: 'What did you actually get done?',          required: true  },
+      { key: 'help',     label: 'Need Help',         placeholder: 'What do you need? (leave blank if none)',  required: false },
+    ],
+  },
+  {
+    id: 'help_request', label: '❓ Help Request', color: '#D97706',
+    desc: 'Ask for what you need',
+    fields: [
+      { key: 'problem',  label: 'Problem',           placeholder: 'What problem are you stuck on?',           required: true  },
+      { key: 'context',  label: 'Context',           placeholder: 'What have you already tried?',             required: true  },
+      { key: 'need',     label: 'What I need',       placeholder: 'What kind of help would move you forward?', required: true },
+    ],
+  },
+  {
+    id: 'milestone', label: '🎉 Milestone', color: '#059669',
+    desc: 'Celebrate a real win',
+    fields: [
+      { key: 'achievement', label: 'Achievement',   placeholder: 'What did you accomplish?',                  required: true  },
+      { key: 'unlocks',     label: 'What it unlocks', placeholder: 'What does this open up for you next?',    required: true  },
+    ],
+  },
 ];
+
 const POST_TYPE_LABELS = {
-  achievement:'🏆 Win', project:'💡 Project', skill:'📚 New Skill',
-  milestone:'🎯 Milestone', thought:'💬 Thought',
-  real:'💯 The Real', pledge:'🤝 Pledge', timecapsule:'⏰ Time Capsule',
+  build_update: '🚀 Build Update',
+  help_request: '❓ Help Request',
+  milestone:    '🎉 Milestone',
+  // legacy support
+  achievement:'🏆 Win', project:'💡 Project', skill:'📚 Skill', thought:'💬 Thought',
 };
 const POST_TYPE_COLORS = {
+  build_update: { bg:'#DBEAFE22', text:'#2563EB' },
+  help_request: { bg:'#FEF3C722', text:'#D97706' },
+  milestone:    { bg:'#D1FAE522', text:'#059669' },
+  // legacy
   achievement:  { bg:'#FEF3C7', text:'#D97706' },
   project:      { bg:'#EDE9FE', text:'#7C3AED' },
   skill:        { bg:'#DBEAFE', text:'#2563EB' },
-  milestone:    { bg:'#D1FAE5', text:'#059669' },
   thought:      { bg:'#F1F5F9', text:'#64748B' },
-  real:         { bg:'#FEE2E2', text:'#EF4444' },
-  pledge:       { bg:'#EDE9FE', text:'#8B5CF6' },
-  timecapsule:  { bg:'#CFFAFE', text:'#06B6D4' },
 };
+
+// Parse structured post content "Field: value\nField2: value2" → object
+const parseStructuredContent = (content = '') => {
+  const lines = content.split('\n');
+  const obj = {};
+  lines.forEach(line => {
+    const idx = line.indexOf(': ');
+    if (idx > -1) {
+      const key = line.slice(0, idx).toLowerCase().replace(/\s+/g, '_');
+      obj[key] = line.slice(idx + 2).trim();
+    }
+  });
+  return obj;
+};
+// Encode structured fields → content string
+const encodeStructuredContent = (fields) =>
+  Object.entries(fields)
+    .filter(([, v]) => v && v.trim())
+    .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g,' ')}: ${v.trim()}`)
+    .join('\n');
 
 // Helper: parse deadline from content "[DEADLINE:YYYY-MM-DD] rest"
 const parsePledgeDeadline = (content = '') => {
@@ -1529,13 +1572,18 @@ function ReelPlayer({ src }) {
   );
 }
 
-// ─── POST CARD (Instagram-style) ───────────────────────────────────────────────
-const REACTIONS = [
-  { key: 'inspired',   emoji: '🔥', label: 'Inspired',  color: C.yellow  },
-  { key: 'encouraged', emoji: '💪', label: 'Encourage', color: '#F97316' },
-  { key: 'learned',    emoji: '📚', label: 'Learn',     color: C.blue    },
-  { key: 'reflect',    emoji: '🌱', label: 'Reflect',   color: C.green   },
+// ─── ACTIONS (no vanity likes — every interaction has purpose) ───────────────
+// Give Insight → opens comment thread
+// Share Resource → opens resource link input in comment thread
+// Collaborate / Join → one-click interest signals with counts
+const ACTIONS = [
+  { key: 'insight_count',  emoji: '💡', label: 'Give Insight',     color: '#F59E0B', type: 'comment'  },
+  { key: 'resource_count', emoji: '🔗', label: 'Share Resource',   color: '#2563EB', type: 'resource' },
+  { key: 'collab_count',   emoji: '🤝', label: 'Collaborate',      color: '#8B5CF6', type: 'signal'   },
+  { key: 'join_count',     emoji: '🔥', label: 'Join',             color: '#EF4444', type: 'signal'   },
 ];
+// Keep for backwards compat reads (old posts stored inspired/encouraged/etc)
+const REACTIONS = ACTIONS; // alias so existing code referencing REACTIONS still works during migration
 
 function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed, onDelete, onProfileClick, onPeerGroups, userId, currentUserAvatar, displayName: callerDisplayName, avatarUrl: callerAvatarUrl }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1545,6 +1593,7 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
   const [flagged, setFlagged] = useState(false);
   // ── Comments ──────────────────────────────────────────────────────────────
   const [showComments, setShowComments] = useState(false);
+  const [commentMode, setCommentMode] = useState('insight'); // 'insight' | 'resource'
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [commentCount, setCommentCount] = useState(p.comment_count || 0);
