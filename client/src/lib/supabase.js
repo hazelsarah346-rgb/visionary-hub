@@ -56,12 +56,18 @@ export async function insertPost({ authorName, authorImg, content, imageUrl, med
 
 export async function reactToPost(id, reaction) {
   if (!supabase) return;
-  // reaction: 'inspired' | 'encouraged' | 'learned' | 'reflect'
   if (!['inspired', 'encouraged', 'learned', 'reflect'].includes(reaction)) return;
-  const col = reaction; // columns match exactly
-  const { data: current } = await supabase.from('posts').select(col).eq('id', id).single();
-  const newVal = ((current || {})[col] || 0) + 1;
-  await supabase.from('posts').update({ [col]: newVal }).eq('id', id);
+  const { data: current } = await supabase.from('posts').select(reaction).eq('id', id).single();
+  const newVal = ((current || {})[reaction] || 0) + 1;
+  await supabase.from('posts').update({ [reaction]: newVal }).eq('id', id);
+}
+
+export async function unreactToPost(id, reaction) {
+  if (!supabase) return;
+  if (!['inspired', 'encouraged', 'learned', 'reflect'].includes(reaction)) return;
+  const { data: current } = await supabase.from('posts').select(reaction).eq('id', id).single();
+  const newVal = Math.max(0, ((current || {})[reaction] || 0) - 1);
+  await supabase.from('posts').update({ [reaction]: newVal }).eq('id', id);
 }
 
 export function subscribePosts(callback) {

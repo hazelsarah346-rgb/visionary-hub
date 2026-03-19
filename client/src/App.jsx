@@ -11,7 +11,7 @@ import {
   MessageSquare, Phone, PhoneCall, VideoIcon,
 } from 'lucide-react';
 import { api } from './api';
-import { supabase, fetchPosts, insertPost, reactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData, checkBanned } from './lib/supabase';
+import { supabase, fetchPosts, insertPost, reactToPost, unreactToPost, subscribePosts, fetchMentors, uploadMedia, deletePost, updatePost, deleteMentor, loadUserData, saveUserData, checkBanned } from './lib/supabase';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const C = {
@@ -1595,28 +1595,27 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
       )}
 
       {/* Reactions — click to react, click again to un-react */}
-      <div style={{ display: 'flex', gap: 4, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
+      <div style={{ display: 'flex', gap: 5, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
         {REACTIONS.map(r => {
           const reacted = !!(reactions[`${key}_${r.key}`]);
           const count = (p[r.key] || 0);
           return (
             <button key={r.key} onClick={() => {
                 if (reacted) {
-                  // Un-react
                   setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
+                  unreactToPost(p.id, r.key);
                 } else {
-                  // React
                   setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
                   reactToPost(p.id, r.key);
                 }
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 11px', cursor: 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: 600, transition: 'all 0.15s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 12px', cursor: 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: reacted ? 700 : 500, transition: 'all 0.15s' }}
               onMouseEnter={e => { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; }}
               onMouseLeave={e => { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; }}>
               <span style={{ fontSize: 14 }}>{r.emoji}</span>
-              {count > 0 && <span style={{ fontWeight: 700, fontSize: 12 }}>{count}</span>}
+              <span>{r.label}{count > 0 ? ` ${count}` : ''}</span>
             </button>
           );
         })}
@@ -1796,7 +1795,13 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
-  const [reactions, setReactions] = useState({});
+  // Persist reactions in localStorage so they survive tab switches
+  const [reactions, setReactionsRaw] = useState(() => { try { return JSON.parse(localStorage.getItem('vh_reactions') || '{}'); } catch { return {}; } });
+  const setReactions = (updater) => setReactionsRaw(prev => {
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    try { localStorage.setItem('vh_reactions', JSON.stringify(next)); } catch { /* quota */ }
+    return next;
+  });
   const [profileModal, setProfileModal] = useState(null); // { author, authorImg }
   const [showPeerGroups, setShowPeerGroups] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
@@ -1826,7 +1831,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   };
 
   const post = async () => {
-    if (!content.trim() && !mediaFile) return; // Need at least text or media
+    if (!mediaFile) return; // Showcase = visual proof only, media required
     if (submitting) return;
     setSubmitting(true);
 
@@ -1923,91 +1928,72 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE BOX — productivity log, one click ──── */}
-      <div style={{ background: C.surface, border: `1px solid ${showCompose ? C.blue + '55' : C.border}`, borderRadius: 16, marginBottom: 18, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+      {/* ── COMPOSE BOX — drop a photo/video, label your win ──── */}
+      <div style={{ marginBottom: 18 }}
+        onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
+        onDragLeave={() => setMediaDragging(false)}
+        onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
 
-        {/* Always-visible prompt row */}
-        <div style={{ display: 'flex', alignItems: showCompose ? 'flex-start' : 'center', gap: 10, padding: showCompose ? '14px 14px 0' : '12px 14px' }}>
-          <Avatar src={avatarUrl} name={displayName} size={34} style={{ flexShrink: 0, marginTop: showCompose ? 3 : 0 }} />
-          {!showCompose ? (
-            <button onClick={() => setShowCompose(true)}
-              style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '9px 16px', textAlign: 'left', color: C.muted, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-              What did you build, learn, or achieve today?
-            </button>
-          ) : (
-            <textarea
-              autoFocus
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && e.metaKey && !submitting && post()}
-              placeholder={{
-                achievement: "What did you achieve? Own it — no win is too small 🏆",
-                project:     "What are you building right now? 💡",
-                skill:       "What did you just learn or level up on? 📚",
-                milestone:   "What checkpoint did you hit on your journey? 🎯",
-                thought:     "What's on your mind? Share your progress, questions, or ideas…",
-              }[postType || 'thought']}
-              rows={3}
-              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', resize: 'none', lineHeight: 1.65 }}
-            />
-          )}
-        </div>
-
-        {showCompose && (
-          <>
-            {/* Attached media preview */}
-            {mediaPreview && (
-              <div style={{ position: 'relative', background: '#000', margin: '10px 0 0' }}>
-                {mediaPreview.type === 'video'
-                  ? <video src={mediaPreview.url} controls style={{ width: '100%', maxHeight: 320, display: 'block' }} />
-                  : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
-                }
-                <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                  style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <X size={12} color="#fff" />
-                </button>
-              </div>
-            )}
-
-            {/* Action bar: type chips + attach + cancel + post */}
-            <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 14px 12px', marginTop: 10 }}>
-              {/* Post type row */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
-                {[
-                  { id: 'thought',     emoji: '💬', label: 'Thought'     },
-                  { id: 'achievement', emoji: '🏆', label: 'Win'          },
-                  { id: 'project',     emoji: '💡', label: 'Project'      },
-                  { id: 'skill',       emoji: '📚', label: 'Skill'        },
-                  { id: 'milestone',   emoji: '🎯', label: 'Milestone'    },
-                ].map(t => {
-                  const color = POST_TYPES.find(p => p.id === t.id)?.color || C.muted;
-                  const active = (postType || 'thought') === t.id;
-                  return (
-                    <button key={t.id} onClick={() => setPostType(t.id)}
-                      style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 11px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '1A' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                      {t.emoji} {t.label}
-                    </button>
-                  );
-                })}
-              </div>
-              {/* Buttons row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button onClick={() => mediaInputRef.current?.click()}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  <Image size={13} /> Attach
-                </button>
-                <div style={{ flex: 1 }} />
-                <button onClick={() => { setShowCompose(false); setContent(''); setMediaFile(null); setMediaPreview(null); setPostType(null); }}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Cancel
-                </button>
-                <Btn size="sm" onClick={post} disabled={submitting || (!content.trim() && !mediaFile)}>
-                  {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : 'Post →'}
-                </Btn>
-              </div>
-              {uploadProgress && <div style={{ marginTop: 6, fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+        {!mediaPreview ? (
+          /* ── No media yet: single drop zone ── */
+          <button onClick={() => mediaInputRef.current?.click()}
+            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: mediaDragging ? `${C.blue}10` : C.surface, border: `2px dashed ${mediaDragging ? C.blue : C.border}`, borderRadius: 18, padding: '28px 20px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: `${C.blue}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Image size={24} color={C.blue} />
             </div>
-          </>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>Share your visual proof</div>
+              <div style={{ fontSize: 12, color: C.muted }}>Drop a photo or video — screenshots, demos, projects, wins</div>
+            </div>
+          </button>
+        ) : (
+          /* ── Media selected: preview + type + caption + post ── */
+          <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
+            {/* Media preview */}
+            <div style={{ position: 'relative', background: '#000' }}>
+              {mediaPreview.type === 'video'
+                ? <ReelPlayer src={mediaPreview.url} />
+                : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+              }
+              <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                <X size={14} color="#fff" />
+              </button>
+            </div>
+
+            {/* Post type chips */}
+            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
+              {[
+                { id: 'achievement', emoji: '🏆', label: 'Win'       },
+                { id: 'project',     emoji: '💡', label: 'Project'   },
+                { id: 'skill',       emoji: '📚', label: 'Skill'     },
+                { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
+                { id: 'thought',     emoji: '💬', label: 'Other'     },
+              ].map(t => {
+                const color = POST_TYPES.find(p => p.id === t.id)?.color || C.muted;
+                const active = (postType || 'achievement') === t.id;
+                return (
+                  <button key={t.id} onClick={() => setPostType(t.id)}
+                    style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                    {t.emoji} {t.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Caption + post */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
+              <Avatar src={avatarUrl} name={displayName} size={30} />
+              <input value={content} onChange={e => setContent(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !submitting && post()}
+                placeholder="What's the story behind this? (optional)"
+                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+              <Btn size="sm" onClick={post} disabled={submitting}>
+                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
+              </Btn>
+            </div>
+            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+          </div>
         )}
 
         <input ref={mediaInputRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => loadMediaFile(e.target.files[0])} />
