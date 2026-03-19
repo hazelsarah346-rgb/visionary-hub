@@ -1594,26 +1594,31 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
         <ReelPlayer src={p.mediaUrl} />
       )}
 
-      {/* Reactions — click to react, click again to un-react */}
+      {/* Reactions — ONE per post, exclusive (like LinkedIn). Click again = remove. */}
       <div style={{ display: 'flex', gap: 5, padding: '10px 14px 14px', alignItems: 'center', flexWrap: 'wrap', borderTop: `1px solid ${C.border}`, marginTop: hasMedia ? 0 : 4 }}>
         {REACTIONS.map(r => {
-          const reacted = !!(reactions[`${key}_${r.key}`]);
-          const count = (p[r.key] || 0);
+          const myReaction = REACTIONS.find(x => reactions[`${key}_${x.key}`])?.key || null;
+          const reacted = myReaction === r.key;
+          const locked  = myReaction !== null && myReaction !== r.key; // already reacted with different one
+          const count   = (p[r.key] || 0);
           return (
             <button key={r.key} onClick={() => {
+                if (locked) return; // already reacted differently — do nothing
                 if (reacted) {
+                  // remove own reaction
                   setReactions(s => { const n = { ...s }; delete n[`${key}_${r.key}`]; return n; });
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: Math.max(0, (x[r.key] || 0) - 1) } : x));
                   unreactToPost(p.id, r.key);
                 } else {
+                  // add reaction
                   setReactions(s => ({ ...s, [`${key}_${r.key}`]: true }));
                   setFeed(prev => prev.map(x => x.id === p.id ? { ...x, [r.key]: (x[r.key] || 0) + 1 } : x));
                   reactToPost(p.id, r.key);
                 }
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 12px', cursor: 'pointer', color: reacted ? r.color : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: reacted ? 700 : 500, transition: 'all 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: reacted ? `${r.color}20` : 'transparent', border: `1px solid ${reacted ? r.color + '70' : C.border}`, borderRadius: 99, padding: '6px 12px', cursor: locked ? 'default' : 'pointer', color: reacted ? r.color : locked ? C.border : C.muted, fontSize: 12, fontFamily: 'inherit', fontWeight: reacted ? 700 : 500, transition: 'all 0.15s', opacity: locked ? 0.4 : 1 }}
+              onMouseEnter={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}30` : `${r.color}14`; e.currentTarget.style.color = r.color; e.currentTarget.style.borderColor = r.color + '55'; e.currentTarget.style.opacity = '1'; } }}
+              onMouseLeave={e => { if (!locked) { e.currentTarget.style.background = reacted ? `${r.color}20` : 'transparent'; e.currentTarget.style.color = reacted ? r.color : C.muted; e.currentTarget.style.borderColor = reacted ? r.color + '70' : C.border; e.currentTarget.style.opacity = '1'; } }}>
               <span style={{ fontSize: 14 }}>{r.emoji}</span>
               <span>{r.label}{count > 0 ? ` ${count}` : ''}</span>
             </button>
