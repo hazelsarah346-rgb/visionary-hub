@@ -137,20 +137,59 @@ const ARCHETYPES = {
 const ADMIN_EMAIL = 'hazlesarah346@yahoo.com'; // Only this email sees the admin panel
 
 const POST_TYPES = [
-  { id: 'achievement', label: '🏆 Achievement', color: '#D97706' },
-  { id: 'project',     label: '💡 Project',     color: '#7C3AED' },
-  { id: 'skill',       label: '📚 New Skill',   color: '#2563EB' },
-  { id: 'milestone',   label: '🎯 Milestone',   color: '#059669' },
-  { id: 'thought',     label: '💬 Thought',     color: '#64748B' },
+  { id: 'achievement',  label: '🏆 Win',           color: '#D97706' },
+  { id: 'project',      label: '💡 Project',        color: '#7C3AED' },
+  { id: 'skill',        label: '📚 New Skill',      color: '#2563EB' },
+  { id: 'milestone',    label: '🎯 Milestone',      color: '#059669' },
+  { id: 'real',         label: '💯 The Real',       color: '#EF4444' },
+  { id: 'pledge',       label: '🤝 90-Day Pledge',  color: '#8B5CF6' },
+  { id: 'timecapsule',  label: '⏰ Time Capsule',   color: '#06B6D4' },
+  { id: 'thought',      label: '💬 Thought',        color: '#64748B' },
 ];
-const POST_TYPE_LABELS = { achievement:'🏆 Achievement', project:'💡 Project', skill:'📚 New Skill', milestone:'🎯 Milestone', thought:'💬 Thought' };
-const POST_TYPE_COLORS = {
-  achievement: { bg:'#FEF3C7', text:'#D97706' },
-  project:     { bg:'#EDE9FE', text:'#7C3AED' },
-  skill:       { bg:'#DBEAFE', text:'#2563EB' },
-  milestone:   { bg:'#D1FAE5', text:'#059669' },
-  thought:     { bg:'#F1F5F9', text:'#64748B' },
+const POST_TYPE_LABELS = {
+  achievement:'🏆 Win', project:'💡 Project', skill:'📚 New Skill',
+  milestone:'🎯 Milestone', thought:'💬 Thought',
+  real:'💯 The Real', pledge:'🤝 Pledge', timecapsule:'⏰ Time Capsule',
 };
+const POST_TYPE_COLORS = {
+  achievement:  { bg:'#FEF3C7', text:'#D97706' },
+  project:      { bg:'#EDE9FE', text:'#7C3AED' },
+  skill:        { bg:'#DBEAFE', text:'#2563EB' },
+  milestone:    { bg:'#D1FAE5', text:'#059669' },
+  thought:      { bg:'#F1F5F9', text:'#64748B' },
+  real:         { bg:'#FEE2E2', text:'#EF4444' },
+  pledge:       { bg:'#EDE9FE', text:'#8B5CF6' },
+  timecapsule:  { bg:'#CFFAFE', text:'#06B6D4' },
+};
+
+// Helper: parse deadline from content "[DEADLINE:YYYY-MM-DD] rest"
+const parsePledgeDeadline = (content = '') => {
+  const m = content.match(/^\[DEADLINE:([\d-]+)\]\s*/);
+  return m ? { deadline: m[1], text: content.replace(m[0], '') } : { deadline: null, text: content };
+};
+// Helper: parse unlock date from time capsule "[UNLOCK:YYYY-MM-DD] rest"
+const parseTimeCapsule = (content = '') => {
+  const m = content.match(/^\[UNLOCK:([\d-]+)\]\s*/);
+  return m ? { unlock: m[1], text: content.replace(m[0], '') } : { unlock: null, text: content };
+};
+// Days between two date strings
+const daysBetween = (a, b) => Math.ceil((new Date(b) - new Date(a)) / 86400000);
+
+// ─── SKILL BADGES ───────────────────────────────────────────────────────────
+// Earned through proof, not claims. Each badge has a condition checked against posts.
+const SKILL_BADGE_DEFS = [
+  { id: 'starter',    emoji: '🌱', label: 'Starter',      desc: 'First post',           check: (ps) => ps.length >= 1 },
+  { id: 'builder',    emoji: '🔨', label: 'Builder',      desc: '5+ posts',             check: (ps) => ps.length >= 5 },
+  { id: 'consistent', emoji: '⚡', label: 'Consistent',   desc: '10+ posts',            check: (ps) => ps.length >= 10 },
+  { id: 'achiever',   emoji: '🏆', label: 'Achiever',     desc: '3 wins logged',        check: (ps) => ps.filter(p => p.post_type === 'achievement').length >= 3 },
+  { id: 'innovator',  emoji: '💡', label: 'Innovator',    desc: '3 projects shared',    check: (ps) => ps.filter(p => p.post_type === 'project').length >= 3 },
+  { id: 'learner',    emoji: '📚', label: 'Learner',      desc: '3 skills logged',      check: (ps) => ps.filter(p => p.post_type === 'skill').length >= 3 },
+  { id: 'milestone',  emoji: '🎯', label: 'Milestoner',   desc: '2 milestones hit',     check: (ps) => ps.filter(p => p.post_type === 'milestone').length >= 2 },
+  { id: 'realOne',    emoji: '💯', label: 'Real One',     desc: 'Posted in The Real',   check: (ps) => ps.some(p => p.post_type === 'real') },
+  { id: 'pledger',    emoji: '🤝', label: 'Pledger',      desc: 'Made a 90-day pledge', check: (ps) => ps.some(p => p.post_type === 'pledge') },
+  { id: 'visionary',  emoji: '🔮', label: 'Visionary',    desc: 'Time capsule sent',    check: (ps) => ps.some(p => p.post_type === 'timecapsule') },
+];
+const getUserBadges = (posts) => SKILL_BADGE_DEFS.filter(b => b.check(posts));
 
 // ─── JOURNEY PHASES ─────────────────────────────────────────────────────────
 // Every user is on a journey. This system reflects back where they are
@@ -1366,36 +1405,91 @@ function PeerGroupsModal({ onClose, canvas, user, feed }) {
 // ─── PROFILE MODAL ────────────────────────────────────────────────────────────
 function ProfileModal({ author, authorImg, posts, onClose }) {
   const authorPosts = (posts || []).filter(p => p.authorName === author);
+  const badges = getUserBadges(authorPosts);
+  const [filter, setFilter] = useState('all');
+
+  // Tally proof by type
+  const tally = POST_TYPES.reduce((acc, t) => { acc[t.id] = authorPosts.filter(p => p.post_type === t.id).length; return acc; }, {});
+  const totalReactions = authorPosts.reduce((s, p) => s + (p.inspired||0) + (p.encouraged||0) + (p.learned||0) + (p.reflect||0), 0);
+
+  const filtered = filter === 'all' ? authorPosts : authorPosts.filter(p => (p.post_type || 'thought') === filter);
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, width: '100%', maxWidth: 420, maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Avatar src={authorImg} name={author} size={56} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: C.text, marginBottom: 2 }}>{author}</div>
-            <div style={{ fontSize: 12, color: C.muted }}>{authorPosts.length} post{authorPosts.length !== 1 ? 's' : ''} in community</div>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 22, width: '100%', maxWidth: 480, maxHeight: '88vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+
+        {/* ── Hero header ── */}
+        <div style={{ background: `linear-gradient(135deg, ${C.blue}18, ${C.purple}14)`, padding: '22px 20px 18px', borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
+            <Avatar src={authorImg} name={author} size={60} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 19, fontWeight: 900, color: C.text, marginBottom: 3 }}>{author}</div>
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>{authorPosts.length} proof{authorPosts.length !== 1 ? 's' : ''} · {totalReactions} reactions</div>
+              {/* Proof tally chips */}
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {POST_TYPES.filter(t => tally[t.id] > 0).map(t => (
+                  <span key={t.id} style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: POST_TYPE_COLORS[t.id]?.bg + '33', color: POST_TYPE_COLORS[t.id]?.text, border: `1px solid ${POST_TYPE_COLORS[t.id]?.text}33` }}>
+                    {tally[t.id]} {t.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, flexShrink: 0 }}><X size={18} /></button>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4 }}><X size={18} /></button>
+
+          {/* Earned badges */}
+          {badges.length > 0 && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 }}>Earned Badges</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {badges.map(b => (
+                  <div key={b.id} title={b.desc} style={{ display: 'flex', alignItems: 'center', gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: '4px 9px', cursor: 'default' }}>
+                    <span style={{ fontSize: 14 }}>{b.emoji}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.text }}>{b.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        {/* Posts grid */}
-        <div style={{ overflowY: 'auto', padding: 16, flex: 1 }}>
-          {authorPosts.length === 0 ? (
+
+        {/* ── Filter by type ── */}
+        <div style={{ display: 'flex', gap: 0, padding: '10px 14px 0', overflowX: 'auto', flexShrink: 0 }}>
+          {[{ id: 'all', label: 'All' }, ...POST_TYPES.filter(t => tally[t.id] > 0)].map(t => (
+            <button key={t.id} onClick={() => setFilter(t.id)}
+              style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 99, border: 'none', background: filter === t.id ? C.blue + '22' : 'transparent', color: filter === t.id ? C.blueLight : C.muted, fontSize: 11, fontWeight: filter === t.id ? 800 : 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 6 }}>
+              {t.label || 'All'} {t.id !== 'all' && tally[t.id] ? `(${tally[t.id]})` : ''}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Proof wall ── */}
+        <div style={{ overflowY: 'auto', padding: '8px 14px 16px', flex: 1 }}>
+          {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: C.muted, fontSize: 13 }}>No posts yet</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {authorPosts.map((post, i) => (
-                <div key={post.id || i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px' }}>
-                  {post.mediaUrl && post.mediaType === 'image' && (
-                    <img src={post.mediaUrl} alt="" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover', marginBottom: 8, display: 'block' }} />
-                  )}
-                  {post.mediaUrl && post.mediaType === 'video' && (
-                    <video src={post.mediaUrl} controls style={{ width: '100%', borderRadius: 8, maxHeight: 200, display: 'block', marginBottom: 8 }} />
-                  )}
-                  {post.content && <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.65 }}>{post.content}</p>}
-                  <div style={{ fontSize: 10, color: C.muted, marginTop: 6 }}>{post.time || 'Recently'}{(post.inspired||0)+(post.encouraged||0)+(post.learned||0)+(post.reflect||0) > 0 ? ` · 🔥${post.inspired||0} 💪${post.encouraged||0} 📚${post.learned||0} 🌱${post.reflect||0}` : ''}</div>
-                </div>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {filtered.map((post, i) => {
+                const tc = POST_TYPE_COLORS[post.post_type];
+                const hasMedia = post.mediaUrl && !post.mediaUrl.startsWith('blob:');
+                return (
+                  <div key={post.id || i} style={{ background: C.surface, border: `1px solid ${tc ? tc.text + '33' : C.border}`, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+                    {hasMedia && post.mediaType === 'image' && (
+                      <img src={post.mediaUrl} alt="" style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }} />
+                    )}
+                    {hasMedia && post.mediaType === 'video' && (
+                      <div style={{ width: '100%', height: 100, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🎥</div>
+                    )}
+                    <div style={{ padding: '8px 10px' }}>
+                      {post.post_type && post.post_type !== 'thought' && (
+                        <div style={{ fontSize: 9, fontWeight: 800, color: tc?.text, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>{POST_TYPE_LABELS[post.post_type]}</div>
+                      )}
+                      {post.content && <p style={{ margin: 0, fontSize: 11, color: C.text, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.content}</p>}
+                      <div style={{ fontSize: 9, color: C.muted, marginTop: 5 }}>{post.time || 'Recently'}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1473,8 +1567,101 @@ function PostCard({ p, isVerifiedMentor, isOwn, reactions, setReactions, setFeed
   const typeColor  = POST_TYPE_COLORS[p.post_type]?.text  || null;
   const typeBg     = POST_TYPE_COLORS[p.post_type]?.bg    || null;
   const typeLabel  = POST_TYPE_LABELS[p.post_type]        || null;
-  const isBig      = ['achievement', 'milestone'].includes(p.post_type); // special glow treatment
+  const isBig      = ['achievement', 'milestone'].includes(p.post_type);
+  const isReal     = p.post_type === 'real';
+  const isPledge   = p.post_type === 'pledge';
+  const isCapsule  = p.post_type === 'timecapsule';
   const hasMedia   = p.mediaUrl && !p.mediaUrl.startsWith('blob:');
+
+  // Parse special types
+  const pledgeData   = isPledge  ? parsePledgeDeadline(p.content)  : null;
+  const capsuleData  = isCapsule ? parseTimeCapsule(p.content)     : null;
+  const today        = new Date().toISOString().slice(0, 10);
+  const capsuleLocked = isCapsule && capsuleData?.unlock && capsuleData.unlock > today;
+  const pledgeDaysLeft = isPledge && pledgeData?.deadline
+    ? daysBetween(today, pledgeData.deadline) : null;
+
+  // "The Real" card: raw/honest styling — dark, no glow, red tint
+  if (isReal) {
+    return (
+      <div style={{ background: '#0D0A0A', border: `1px solid #EF444433`, borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(239,68,68,0.08)' }}>
+        <div style={{ height: 3, background: 'linear-gradient(90deg,#EF4444,#7f1d1d)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 10px' }}>
+          <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer', flexShrink: 0 }}>
+            <Avatar src={displayAvatar} name={p.authorName} size={40} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: '#fff', marginBottom: 1 }}>{p.authorName}</div>
+            <div style={{ fontSize: 10, color: '#64748B' }}>{p.time || 'Recently'}</div>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#EF4444', background: '#EF444418', border: '1px solid #EF444433', borderRadius: 99, padding: '3px 9px' }}>💯 The Real</span>
+        </div>
+        <div style={{ padding: '4px 16px 16px' }}>
+          <p style={{ margin: 0, fontSize: 14, color: '#CBD5E1', lineHeight: 1.8, fontStyle: 'italic' }}>"{p.content}"</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Sealed Time Capsule card
+  if (capsuleLocked) {
+    const daysUntil = daysBetween(today, capsuleData.unlock);
+    return (
+      <div style={{ background: `linear-gradient(135deg,${C.surface},#0C2233)`, border: `1px solid ${C.teal}44`, borderRadius: 18, overflow: 'hidden', boxShadow: `0 0 0 1px ${C.teal}22, 0 4px 20px ${C.teal}10` }}>
+        <div style={{ height: 3, background: `linear-gradient(90deg,${C.teal},${C.teal}55)` }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 10px' }}>
+          <Avatar src={displayAvatar} name={p.authorName} size={40} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: C.text }}>{p.authorName}</div>
+            <div style={{ fontSize: 10, color: C.muted }}>{p.time || 'Recently'}</div>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 800, color: C.teal, background: `${C.teal}18`, border: `1px solid ${C.teal}33`, borderRadius: 99, padding: '3px 9px' }}>⏰ Time Capsule</span>
+        </div>
+        <div style={{ padding: '8px 16px 18px', textAlign: 'center' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 4 }}>Sealed until {capsuleData.unlock}</div>
+          <div style={{ fontSize: 12, color: C.teal }}>{daysUntil} days until it opens</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Pledge card
+  if (isPledge) {
+    const deadlinePast = pledgeData?.deadline && pledgeData.deadline < today;
+    const pct = pledgeData?.deadline ? Math.min(100, Math.round(((90 - Math.max(0, pledgeDaysLeft)) / 90) * 100)) : 0;
+    return (
+      <div style={{ background: C.surface, border: `1px solid ${C.purple}44`, borderRadius: 18, overflow: 'hidden', boxShadow: `0 0 0 1px ${C.purple}22, 0 4px 20px ${C.purple}10` }}>
+        <div style={{ height: 3, background: `linear-gradient(90deg,${C.purple},${C.purple}55)` }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 10px' }}>
+          <div onClick={() => onProfileClick?.(p.authorName, displayAvatar)} style={{ cursor: 'pointer' }}>
+            <Avatar src={displayAvatar} name={p.authorName} size={40} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: C.text }}>{p.authorName}</div>
+            <div style={{ fontSize: 10, color: C.muted }}>{p.time || 'Recently'}</div>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 800, color: C.purple, background: `${C.purple}18`, border: `1px solid ${C.purple}33`, borderRadius: 99, padding: '3px 9px' }}>🤝 90-Day Pledge</span>
+        </div>
+        <div style={{ padding: '0 16px 14px' }}>
+          <p style={{ fontSize: 14, color: C.text, lineHeight: 1.75, margin: '0 0 12px', fontWeight: 600 }}>"{pledgeData?.text || p.content}"</p>
+          {pledgeData?.deadline && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 11, color: C.muted }}>Progress</span>
+                <span style={{ fontSize: 11, color: deadlinePast ? C.green : C.purple, fontWeight: 700 }}>
+                  {deadlinePast ? '✅ Deadline reached!' : `${pledgeDaysLeft} days left · ${pledgeData.deadline}`}
+                </span>
+              </div>
+              <div style={{ height: 6, background: C.border, borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: deadlinePast ? C.green : C.purple, borderRadius: 99, transition: 'width 0.5s' }} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -1817,6 +2004,19 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   const [filterType, setFilterType] = useState('all');
   const [myPortfolio, setMyPortfolio] = useState(false);
   const mediaInputRef = useRef(null);
+  // Compose mode: 'visual' = photo/video proof | 'real' = raw honest text | 'pledge' = 90-day public commitment | 'capsule' = time capsule
+  const [postMode, setPostMode] = useState('visual');
+  const [pledgeDate, setPledgeDate] = useState('');
+  const [capsuleDate, setCapsuleDate] = useState('');
+  // Currently Building — 24h ephemeral building statuses
+  const [buildingInput, setBuildingInput] = useState('');
+  const [buildingStatuses, setBuildingStatuses] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('vh_building') || '[]');
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      return stored.filter(s => s.ts > cutoff);
+    } catch { return []; }
+  });
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || canvas?.name || 'Explorer';
   const avatarUrl   = localStorage.getItem('vh_profile_avatar') || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
@@ -1836,13 +2036,31 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
   };
 
   const post = async () => {
-    if (!mediaFile) return; // Showcase = visual proof only, media required
     if (submitting) return;
+
+    // Determine type + validate
+    let resolvedType = postType || 'thought';
+    let finalContent = content.trim();
+
+    if (postMode === 'visual') {
+      if (!mediaFile) return; // visual proof requires media
+      resolvedType = postType || 'achievement';
+    } else if (postMode === 'real') {
+      if (!finalContent) return;
+      resolvedType = 'real';
+    } else if (postMode === 'pledge') {
+      if (!finalContent) return;
+      if (pledgeDate) finalContent = `[DEADLINE:${pledgeDate}] ${finalContent}`;
+      resolvedType = 'pledge';
+    } else if (postMode === 'capsule') {
+      if (!finalContent) return;
+      if (capsuleDate) finalContent = `[UNLOCK:${capsuleDate}] ${finalContent}`;
+      resolvedType = 'timecapsule';
+    }
+
     setSubmitting(true);
 
-    const resolvedType = postType || 'thought';
-
-    // 1. Upload media if attached
+    // 1. Upload media if visual mode
     let hostedUrl = null;
     if (mediaFile) {
       setUploadProgress('Uploading…');
@@ -1862,7 +2080,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
     // 2. Insert into Supabase
     const saved = await insertPost({
       authorName, authorImg,
-      content: content.trim(),
+      content: finalContent,
       imageUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
       userId: user?.id || null,
@@ -1874,7 +2092,7 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
       id: `temp-${Date.now()}`,
       authorId: user?.id || null,
       authorName, authorImg,
-      content: content.trim(),
+      content: finalContent,
       mediaUrl: hostedUrl,
       mediaType: mediaPreview?.type || null,
       post_type: resolvedType,
@@ -1882,7 +2100,24 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
     };
     setFeed(prev => prev.find(p => p.id === newPost.id) ? prev : [newPost, ...prev]);
 
-    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false); setShowCompose(false); setPostType(null);
+    setContent(''); setMediaFile(null); setMediaPreview(null); setSubmitting(false);
+    setShowCompose(false); setPostType(null); setPledgeDate(''); setCapsuleDate('');
+  };
+
+  // Save building status (24h ephemeral)
+  const submitBuilding = () => {
+    if (!buildingInput.trim()) return;
+    const entry = {
+      userId: user?.id || 'anon',
+      name: displayName,
+      avatar: avatarUrl,
+      text: buildingInput.trim(),
+      ts: Date.now(),
+    };
+    const next = [entry, ...buildingStatuses.filter(s => s.userId !== entry.userId)].slice(0, 20);
+    setBuildingStatuses(next);
+    try { localStorage.setItem('vh_building', JSON.stringify(next)); } catch {}
+    setBuildingInput('');
   };
 
 
@@ -1911,9 +2146,63 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       </div>
 
+      {/* ── COMMUNITY MOMENTUM BAR ──────────────────────────────────── */}
+      {feed.length > 0 && (() => {
+        const uniqueBuilders = new Set(feed.map(p => p.authorId || p.authorName)).size;
+        const milestonesHit  = feed.filter(p => p.post_type === 'milestone' || p.post_type === 'achievement').length;
+        const pledgesActive  = feed.filter(p => p.post_type === 'pledge').length;
+        return (
+          <div style={{ display: 'flex', gap: 0, background: `linear-gradient(90deg,${C.blue}0A,${C.purple}0A)`, border: `1px solid ${C.border}`, borderRadius: 14, padding: '10px 16px', marginBottom: 14, overflowX: 'auto' }}>
+            {[
+              { label: 'builders',  value: uniqueBuilders,  color: C.blue,   emoji: '🔨' },
+              { label: 'proofs',    value: feed.length,     color: C.green,  emoji: '💼' },
+              { label: 'wins',      value: milestonesHit,   color: C.yellow, emoji: '🏆' },
+              { label: 'pledges',   value: pledgesActive,   color: C.purple, emoji: '🤝' },
+            ].map((stat, i, arr) => (
+              <div key={stat.label} style={{ flex: 1, minWidth: 60, textAlign: 'center', borderRight: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', padding: '0 8px' }}>
+                <div style={{ fontSize: 16, fontWeight: 900, color: stat.color, lineHeight: 1 }}>{stat.emoji} {stat.value}</div>
+                <div style={{ fontSize: 10, color: C.muted, fontWeight: 600, marginTop: 2 }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── CURRENTLY BUILDING STRIP ─────────────────────────────────── */}
+      <div style={{ marginBottom: 16 }}>
+        {/* Input row */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: buildingStatuses.length > 0 ? 10 : 0 }}>
+          <div style={{ flex: 1, display: 'flex', gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: '8px 12px', alignItems: 'center' }}>
+            <span style={{ fontSize: 14 }}>🔨</span>
+            <input value={buildingInput} onChange={e => setBuildingInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submitBuilding()}
+              placeholder="What are you building right now? (clears in 24h)"
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 12, fontFamily: 'inherit' }} />
+          </div>
+          <button onClick={submitBuilding} disabled={!buildingInput.trim()}
+            style={{ padding: '8px 14px', borderRadius: 12, background: buildingInput.trim() ? C.blue : C.border, border: 'none', cursor: buildingInput.trim() ? 'pointer' : 'default', color: '#fff', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', transition: 'background 0.2s' }}>
+            Set
+          </button>
+        </div>
+        {/* Live builder strip */}
+        {buildingStatuses.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            {buildingStatuses.map((s, i) => (
+              <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, background: `${C.green}0D`, border: `1px solid ${C.green}28`, borderRadius: 20, padding: '5px 12px 5px 7px' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.green, boxShadow: `0 0 6px ${C.green}`, animation: 'pulse 2s infinite' }} />
+                <Avatar src={s.avatar} name={s.name} size={20} />
+                <span style={{ fontSize: 11, color: C.text, fontWeight: 600, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ color: C.green, fontWeight: 800 }}>{s.name.split(' ')[0]}</span> · {s.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ── FILTER BAR ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
-        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}].map(f => (
+        {[{id:'all',label:'All'}, {id:'achievement',label:'🏆 Wins'}, {id:'project',label:'💡 Projects'}, {id:'skill',label:'📚 Skills'}, {id:'milestone',label:'🎯 Milestones'}, {id:'pledge',label:'🤝 Pledges'}, {id:'real',label:'💯 Real'}].map(f => (
           <button key={f.id} onClick={() => setFilterType(f.id)}
             style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filterType === f.id ? C.accent : C.border}`, background: filterType === f.id ? C.accent : C.card, color: filterType === f.id ? '#fff' : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {f.label}
@@ -1933,71 +2222,172 @@ function ShowcaseTab({ canvas, feed, setFeed, setTab, user, feedLoading, mentors
         </div>
       )}
 
-      {/* ── COMPOSE BOX — drop a photo/video, label your win ──── */}
-      <div style={{ marginBottom: 18 }}
-        onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
-        onDragLeave={() => setMediaDragging(false)}
-        onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
+      {/* ── COMPOSE BOX ─────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 18 }}>
 
-        {!mediaPreview ? (
-          /* ── No media yet: single drop zone ── */
-          <button onClick={() => mediaInputRef.current?.click()}
-            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: mediaDragging ? `${C.blue}10` : C.surface, border: `2px dashed ${mediaDragging ? C.blue : C.border}`, borderRadius: 18, padding: '28px 20px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: `${C.blue}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Image size={24} color={C.blue} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>Share your visual proof</div>
-              <div style={{ fontSize: 12, color: C.muted }}>Drop a photo or video — screenshots, demos, projects, wins</div>
-            </div>
-          </button>
-        ) : (
-          /* ── Media selected: preview + type + caption + post ── */
-          <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
-            {/* Media preview */}
-            <div style={{ position: 'relative', background: '#000' }}>
-              {mediaPreview.type === 'video'
-                ? <ReelPlayer src={mediaPreview.url} />
-                : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
-              }
-              <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
-                style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-                <X size={14} color="#fff" />
+        {/* Mode selector — choose your post type upfront */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 2 }}>
+          {[
+            { mode: 'visual',  emoji: '📸', label: 'Visual Proof',  color: C.blue,   desc: 'Photo or video required' },
+            { mode: 'real',    emoji: '💯', label: 'The Real',       color: '#EF4444',desc: 'Raw & honest, no filter' },
+            { mode: 'pledge',  emoji: '🤝', label: '90-Day Pledge',  color: C.purple, desc: 'Public commitment' },
+            { mode: 'capsule', emoji: '⏰', label: 'Time Capsule',   color: C.teal,   desc: 'Sealed until future date' },
+          ].map(m => {
+            const active = postMode === m.mode;
+            return (
+              <button key={m.mode} onClick={() => { setPostMode(m.mode); setContent(''); setMediaFile(null); setMediaPreview(null); }}
+                title={m.desc}
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 13px', borderRadius: 20, border: `1px solid ${active ? m.color : C.border}`, background: active ? m.color + '1A' : C.surface, color: active ? m.color : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                {m.emoji} {m.label}
               </button>
-            </div>
+            );
+          })}
+        </div>
 
-            {/* Post type chips */}
-            <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
-              {[
-                { id: 'achievement', emoji: '🏆', label: 'Win'       },
-                { id: 'project',     emoji: '💡', label: 'Project'   },
-                { id: 'skill',       emoji: '📚', label: 'Skill'     },
-                { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
-                { id: 'thought',     emoji: '💬', label: 'Other'     },
-              ].map(t => {
-                const color = POST_TYPES.find(p => p.id === t.id)?.color || C.muted;
-                const active = (postType || 'achievement') === t.id;
-                return (
-                  <button key={t.id} onClick={() => setPostType(t.id)}
-                    style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
-                    {t.emoji} {t.label}
+        {/* ── VISUAL PROOF MODE ── */}
+        {postMode === 'visual' && (
+          <div onDragOver={e => { e.preventDefault(); setMediaDragging(true); }}
+            onDragLeave={() => setMediaDragging(false)}
+            onDrop={e => { e.preventDefault(); setMediaDragging(false); const f = e.dataTransfer.files[0]; if (f) loadMediaFile(f); }}>
+            {!mediaPreview ? (
+              <button onClick={() => mediaInputRef.current?.click()}
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: mediaDragging ? `${C.blue}10` : C.surface, border: `2px dashed ${mediaDragging ? C.blue : C.border}`, borderRadius: 18, padding: '28px 20px', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
+                <div style={{ width: 52, height: 52, borderRadius: 16, background: `${C.blue}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Image size={24} color={C.blue} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 3 }}>Share your visual proof</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Drop a photo or video — screenshots, demos, projects, wins</div>
+                </div>
+              </button>
+            ) : (
+              <div style={{ background: C.surface, border: `1px solid ${C.blue}44`, borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ position: 'relative', background: '#000' }}>
+                  {mediaPreview.type === 'video'
+                    ? <ReelPlayer src={mediaPreview.url} />
+                    : <img src={mediaPreview.url} alt="" style={{ width: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+                  }
+                  <button onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                    style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                    <X size={14} color="#fff" />
                   </button>
-                );
-              })}
-            </div>
+                </div>
+                {/* Win type chips */}
+                <div style={{ display: 'flex', gap: 6, padding: '12px 14px 4px', overflowX: 'auto' }}>
+                  {[
+                    { id: 'achievement', emoji: '🏆', label: 'Win'       },
+                    { id: 'project',     emoji: '💡', label: 'Project'   },
+                    { id: 'skill',       emoji: '📚', label: 'Skill'     },
+                    { id: 'milestone',   emoji: '🎯', label: 'Milestone' },
+                    { id: 'thought',     emoji: '💬', label: 'Other'     },
+                  ].map(t => {
+                    const color = POST_TYPES.find(pt => pt.id === t.id)?.color || C.muted;
+                    const active = (postType || 'achievement') === t.id;
+                    return (
+                      <button key={t.id} onClick={() => setPostType(t.id)}
+                        style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: `1px solid ${active ? color : C.border}`, background: active ? color + '22' : 'transparent', color: active ? color : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                        {t.emoji} {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
+                  <Avatar src={avatarUrl} name={displayName} size={30} />
+                  <input value={content} onChange={e => setContent(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !submitting && post()}
+                    placeholder="What's the story behind this? (optional)"
+                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
+                  <Btn size="sm" onClick={post} disabled={submitting}>
+                    {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
+                  </Btn>
+                </div>
+                {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+              </div>
+            )}
+          </div>
+        )}
 
-            {/* Caption + post */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px 14px' }}>
-              <Avatar src={avatarUrl} name={displayName} size={30} />
-              <input value={content} onChange={e => setContent(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !submitting && post()}
-                placeholder="What's the story behind this? (optional)"
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 13, fontFamily: 'inherit' }} />
-              <Btn size="sm" onClick={post} disabled={submitting}>
-                {submitting ? <Spinner /> : uploadProgress ? <Spinner /> : <><Send size={12} /> Post</>}
+        {/* ── THE REAL MODE — raw honest text, no filter ── */}
+        {postMode === 'real' && (
+          <div style={{ background: '#0D0A0A', border: `1px solid #EF444433`, borderRadius: 18, overflow: 'hidden' }}>
+            <div style={{ height: 3, background: 'linear-gradient(90deg,#EF4444,#7f1d1d)' }} />
+            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar src={avatarUrl} name={displayName} size={36} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{displayName}</div>
+                <div style={{ fontSize: 10, color: '#64748B' }}>💯 The Real — keep it honest, no filters</div>
+              </div>
+            </div>
+            <textarea value={content} onChange={e => setContent(e.target.value)}
+              placeholder="What's actually going on? The setbacks, the doubt, the real story behind the highlight reel…"
+              rows={4}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: '#CBD5E1', fontSize: 14, fontFamily: 'inherit', lineHeight: 1.8, fontStyle: 'italic', padding: '10px 16px', resize: 'none' }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px 14px' }}>
+              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
+                style={{ background: '#EF4444', borderColor: '#EF4444' }}>
+                {submitting ? <Spinner /> : <><Send size={12} /> Share it real</>}
               </Btn>
             </div>
-            {uploadProgress && <div style={{ padding: '0 14px 10px', fontSize: 11, color: C.blueLight }}>{uploadProgress}</div>}
+          </div>
+        )}
+
+        {/* ── 90-DAY PLEDGE MODE ── */}
+        {postMode === 'pledge' && (
+          <div style={{ background: C.surface, border: `1px solid ${C.purple}44`, borderRadius: 18, overflow: 'hidden' }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg,${C.purple},${C.purple}55)` }} />
+            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar src={avatarUrl} name={displayName} size={36} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{displayName}</div>
+                <div style={{ fontSize: 10, color: C.muted }}>🤝 Public 90-Day Pledge — hold yourself accountable</div>
+              </div>
+            </div>
+            <textarea value={content} onChange={e => setContent(e.target.value)}
+              placeholder="I pledge to… (be specific — the community will see this and hold you to it)"
+              rows={3}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', lineHeight: 1.75, padding: '10px 16px', resize: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 14px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Deadline (optional — counts down publicly):</div>
+                <input type="date" value={pledgeDate} onChange={e => setPledgeDate(e.target.value)}
+                  min={new Date().toISOString().slice(0,10)}
+                  style={{ background: C.card, border: `1px solid ${C.purple}44`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
+              </div>
+              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
+                style={{ background: C.purple, borderColor: C.purple }}>
+                {submitting ? <Spinner /> : <><Send size={12} /> Make Pledge</>}
+              </Btn>
+            </div>
+          </div>
+        )}
+
+        {/* ── TIME CAPSULE MODE ── */}
+        {postMode === 'capsule' && (
+          <div style={{ background: `linear-gradient(135deg,${C.surface},#0C2233)`, border: `1px solid ${C.teal}44`, borderRadius: 18, overflow: 'hidden' }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg,${C.teal},${C.teal}55)` }} />
+            <div style={{ padding: '14px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar src={avatarUrl} name={displayName} size={36} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{displayName}</div>
+                <div style={{ fontSize: 10, color: C.teal }}>⏰ Time Capsule — sealed until your chosen date</div>
+              </div>
+            </div>
+            <textarea value={content} onChange={e => setContent(e.target.value)}
+              placeholder="Dear future me… Write a message, prediction, or goal to be revealed on the unlock date."
+              rows={3}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', color: C.text, fontSize: 14, fontFamily: 'inherit', lineHeight: 1.75, padding: '10px 16px', resize: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 14px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Unlock date — when will this be revealed?</div>
+                <input type="date" value={capsuleDate} onChange={e => setCapsuleDate(e.target.value)}
+                  min={new Date(Date.now() + 86400000).toISOString().slice(0,10)}
+                  style={{ background: C.card, border: `1px solid ${C.teal}44`, borderRadius: 8, padding: '6px 10px', color: C.text, fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
+              </div>
+              <Btn size="sm" onClick={post} disabled={submitting || !content.trim()}
+                style={{ background: C.teal, borderColor: C.teal }}>
+                {submitting ? <Spinner /> : <><Lock size={12} /> Seal It</>}
+              </Btn>
+            </div>
           </div>
         )}
 
